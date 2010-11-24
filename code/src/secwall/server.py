@@ -41,12 +41,10 @@ class _RequestApp(object):
             self.urls_compiled.append((re.compile(url_pattern), url_config))
 
     def __call__(self, env, start_response, peer_cert=None):
-        """ Executed on each request. Checks whether URL has been invoked yet,
-        reads the config if it has and passes the control on to the main request
-        handler. In case no config for the given URL is found, a 404 Not Found
-        will be returned to the calling side.
+        """ Finds the configuration for the given URL and passes the control on
+        to the main request handler. In case no config for the given URL is
+        found, a 404 Not Found will be returned to the calling side.
         """
-
         for c, url_config in self.urls_compiled:
             match = c.match(env['PATH_INFO'])
             if match:
