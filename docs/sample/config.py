@@ -37,8 +37,11 @@ server_tag = 'sec-wall'
 
 def foobar():
     return {
-        'cert-needed': True,
-        'cert-commonName':'foobar',
+        'ssl': True,
+        'ssl-cert':True,
+        'ssl-cert-commonName':'localhost',
+        'ssl-cert-organizationalUnitName':'sec-wall',
+
         'host': 'http://localhost:17090'
     }
 

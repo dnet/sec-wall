@@ -40,7 +40,7 @@ class _RequestApp(object):
         for url_pattern, url_config in self.config.urls:
             self.urls_compiled.append((re.compile(url_pattern), url_config))
 
-    def __call__(self, env, start_response, peer_cert=None):
+    def __call__(self, env, start_response, client_cert=None):
         """ Finds the configuration for the given URL and passes the control on
         to the main request handler. In case no config for the given URL is
         found, a 404 Not Found will be returned to the calling side.
@@ -48,20 +48,38 @@ class _RequestApp(object):
         for c, url_config in self.urls_compiled:
             match = c.match(env['PATH_INFO'])
             if match:
-                return self._on_request(start_response, env['PATH_INFO'], url_config, peer_cert)
+                return self._on_request(start_response, env, url_config, client_cert)
         else:
             # No config for that URL, we can't let the client in.
             return self._404(start_response)
 
-    def _on_request(self, start_response, path_info, url_config, peer_cert):
+    def _on_request(self, start_response, env, url_config, client_cert):
         """ Checks security, invokes the backend server, returns the response.
         """
 
-        if url_config.get('cert-needed'):
-            if not peer_cert:
+        # Some quick SSL-related checks first.
+        if url_config.get('ssl'):
+
+            # Has the URL been accessed through SSL/TLS?
+            if env.get('wsgi.url_scheme') != 'https':
                 return self._403(start_response)
 
-        req = urllib2.Request(url_config['host'] + path_info)
+            # Is the client cert required?
+            if url_config.get('ssl-cert') and not client_cert:
+                return self._403(start_response)
+
+        for config_type in('ssl-cert', 'basic-auth', 'digest-auth', 'wsse-pwd',
+                           'custom-http', 'xpath'):
+            if config_type in url_config:
+                handler = getattr(self, '_on_' + config_type.replace('-', '_'))
+                ok = handler(env, url_config, client_cert)
+                if not ok:
+                    return self._403(start_response)
+                break
+        else:
+            return self._500(start_response)
+
+        req = urllib2.Request(url_config['host'] + env['PATH_INFO'])
         resp = urllib2.urlopen(req)
         response = resp.read()
         resp.close()
@@ -75,17 +93,57 @@ class _RequestApp(object):
         start_response(code, [('Content-Type', content_type)])
         return [response]
 
+    def _403(self, start_response):
+        """ 404 Forbidden
+        """
+        code, content_type, description = self.config.forbidden
+        return self._response(start_response, code, content_type, description)
+
     def _404(self, start_response):
         """ 404 Not Found
         """
         code, content_type, description = self.config.no_url_match
         return self._response(start_response, code, content_type, description)
 
-    def _403(self, start_response):
-        """ 404 Forbidden
+    def _500(self, start_response):
+        """ 500 Internal Server Error
         """
-        code, content_type, description = self.config.forbidden
+        code, content_type, description = '500', 'text/plain', 'Internal Server Error'
         return self._response(start_response, code, content_type, description)
+
+    def _on_ssl_cert(self, env, url_config, client_cert):
+        """ Validate the client SSL/TLS certificates, its very existence and
+        the values of its fields (commonName, organizationName etc.)
+        """
+        if client_cert:
+            field_prefix = 'ssl-cert-'
+            config_fields = {}
+            for field, value in url_config.items():
+                if field.startswith(field_prefix):
+                    config_fields[field.split(field_prefix)[1]] = value
+
+            # The user just wants the connection be encrypted and the client
+            # use client certificate however they're not interested in the
+            # cert's fields - so as long as the CA is OK (and we know it is
+            # because otherwise we wouldn't have gotten so far) we let the
+            # client in.
+            if not config_fields:
+                return True
+            else:
+                subject =  client_cert.get('subject')
+                if not subject:
+                    return False
+
+                cert_fields = dict(elem[0] for elem in subject)
+
+                for config_field, config_value in config_fields.items():
+                    cert_value = cert_fields.get(config_field)
+                    if not cert_value:
+                        return False
+                    if cert_value != config_value:
+                        return False
+                else:
+                    return True
 
 class _RequestHandler(pywsgi.WSGIHandler):
     """ A subclass which conveniently exposes a client SSL/TLS certificate
@@ -142,7 +200,7 @@ class SSLProxy(pywsgi.WSGIServer):
     """
     def __init__(self, config):
         super(SSLProxy, self).__init__((config.https_host, config.https_starting_port),
-                _RequestApp(config), log=config.https_log,
+                _RequestApp(config), log=config.https_log, handler_class=_RequestHandler,
                 keyfile=config.keyfile, certfile=config.certfile,
                 ca_certs=config.ca_certs, cert_reqs=ssl.CERT_OPTIONAL)
 
