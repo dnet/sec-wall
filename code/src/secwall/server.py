@@ -26,9 +26,15 @@ gevent.monkey.patch_all()
 # stdlib
 import re, ssl, sys, time, traceback, urllib2
 
+# lxml
+from lxml import etree
+
 # gevent
 from gevent import pywsgi
 from gevent.hub import GreenletExit
+
+# sec-wall
+from secwall import SecurityException, wsse
 
 class _RequestApp(object):
     """ A WSGI application executed on each request.
@@ -36,6 +42,7 @@ class _RequestApp(object):
     def __init__(self, config):
         self.config = config
         self.urls_compiled = []
+        self.wsse = wsse.WSSE()
 
         for url_pattern, url_config in self.config.urls:
             self.urls_compiled.append((re.compile(url_pattern), url_config))
@@ -112,7 +119,7 @@ class _RequestApp(object):
         return self._response(start_response, code, content_type, description)
 
     def _on_ssl_cert(self, env, url_config, client_cert):
-        """ Validate the client SSL/TLS certificates, its very existence and
+        """ Validates the client SSL/TLS certificates, its very existence and
         the values of its fields (commonName, organizationName etc.)
         """
         if client_cert:
@@ -144,6 +151,21 @@ class _RequestApp(object):
                         return False
                 else:
                     return True
+
+    def _on_wsse_pwd(self, env, url_config, unused_client_cert):
+        """ Uses WS-Security UsernameToken/Password to validate the request.
+        """
+        request_str = env['wsgi.input'].read()
+        if not request_str:
+            return False
+
+        request = etree.fromstring(request_str)
+        try:
+            ok = self.wsse.validate(request, url_config)
+        except SecurityException, e:
+            return False
+        else:
+            return ok
 
 class _RequestHandler(pywsgi.WSGIHandler):
     """ A subclass which conveniently exposes a client SSL/TLS certificate

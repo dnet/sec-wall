@@ -18,3 +18,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from __future__ import absolute_import, division, print_function, unicode_literals
+
+
+class SecurityException(Exception):
+    """ Indicates problems with validating incoming requests. The 'description'
+    attribute holds textual information suitable for showing to human users.
+    """
+    def __init__(self, description):
+        self.description = description
