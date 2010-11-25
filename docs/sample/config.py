@@ -10,8 +10,14 @@ INSTANCE_SECRET = uuid.uuid4().hex
 
 # Useful constants
 cur_dir = path.dirname(__file__)
-no_url_match = ('404 Not Found', 'text/plain', 'Not Found')
+not_authorized = ('401 Not Authorized', 'text/plain', 'You are not authorized to access this resource')
 forbidden = ('403 Forbidden', 'text/plain', 'You are not allowed to access this resource')
+no_url_match = ('404 Not Found', 'text/plain', 'Not Found')
+
+validation_precedence = ('ssl-cert', 'basic-auth', 'digest-auth', 'wsse-pwd', 'custom-http', 'xpath')
+
+# See discussion at http://www6.ietf.org/mail-archive/web/tls/current/msg05589.html
+client_cert_401_www_auth = 'Transport mode="tls-client-certificate"'
 
 # Logging
 http_log=None
@@ -56,11 +62,12 @@ def baz():
         'wsse-pwd-reject-stale-tokens':True,
         'wsse-pwd-reject-expiry-limit':180,
         'wsse-pwd-nonce-freshness-time':180,
+        'wsse-pwd-realm': 'bazbaz',
 
         'host': 'http://localhost:17090'
     }
 
-def not_authorized():
+def default():
     return {
         'cert-needed': True,
         'cert-commonName':INSTANCE_SECRET,
@@ -70,5 +77,5 @@ def not_authorized():
 urls = (
     ('/foo/bar', foobar()),
     ('/baz', baz()),
-    ('/*', not_authorized())
+    ('/*', default())
 )

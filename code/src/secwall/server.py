@@ -73,15 +73,15 @@ class _RequestApp(object):
 
             # Is the client cert required?
             if url_config.get('ssl-cert') and not client_cert:
-                return self._403(start_response)
+                return self._401(start_response, self._get_www_auth(url_config, 'ssl-cert'))
 
-        for config_type in('ssl-cert', 'basic-auth', 'digest-auth', 'wsse-pwd',
-                           'custom-http', 'xpath'):
+        for config_type in self.config.validation_precedence:
             if config_type in url_config:
                 handler = getattr(self, '_on_' + config_type.replace('-', '_'))
                 ok = handler(env, url_config, client_cert)
                 if not ok:
-                    return self._403(start_response)
+                    www_auth = self._get_www_auth(url_config, config_type)
+                    return self._401(start_response, www_auth)
                 break
         else:
             return self._500(start_response)
@@ -92,31 +92,58 @@ class _RequestApp(object):
         resp.close()
 
         return self._response(start_response, resp.getcode(),
-                              resp.headers['Content-Type'], response)
+                              [('Content-Type', resp.headers['Content-Type'])],
+                              response)
 
-    def _response(self, start_response, code, content_type, response):
+    def _get_www_auth(self, url_config, config_type):
+        www_auth = {
+            'ssl-cert': self.config.client_cert_401_www_auth,
+            'basic-auth': 'Basic realm="{realm}"',
+            'digest-auth': 'TODO',
+            'wsse-pwd': 'WSSE realm="{realm}", profile="UsernameToken"',
+            'custom-http': 'custom-http',
+            'xpath': 'xpath'
+        }
+        header_value = www_auth[config_type]
+
+        if config_type in('basic-auth', 'wsse-pwd'):
+            header_value = header_value.format(realm=url_config[config_type + '-' + 'realm'])
+        elif config_type == 'digest-auth':
+            raise NotImplemented()
+
+        return header_value
+
+    def _response(self, start_response, code, headers, response):
         """ Actually return the response to the client.
         """
-        start_response(code, [('Content-Type', content_type)])
+        start_response(code, headers)
         return [response]
 
+    def _401(self, start_response, www_auth):
+        """ 401 Not Authorized
+        """
+        code, content_type, description = self.config.not_authorized
+        headers = [('Content-Type', content_type), ('WWW-Authenticate', www_auth)]
+
+        return self._response(start_response, code, headers, description)
+
     def _403(self, start_response):
-        """ 404 Forbidden
+        """ 403 Forbidden
         """
         code, content_type, description = self.config.forbidden
-        return self._response(start_response, code, content_type, description)
+        return self._response(start_response, code, [('Content-Type', content_type)], description)
 
     def _404(self, start_response):
         """ 404 Not Found
         """
         code, content_type, description = self.config.no_url_match
-        return self._response(start_response, code, content_type, description)
+        return self._response(start_response, code, [('Content-Type', content_type)], description)
 
     def _500(self, start_response):
         """ 500 Internal Server Error
         """
         code, content_type, description = '500', 'text/plain', 'Internal Server Error'
-        return self._response(start_response, code, content_type, description)
+        return self._response(start_response, code, [('Content-Type', content_type)], description)
 
     def _on_ssl_cert(self, env, url_config, client_cert):
         """ Validates the client SSL/TLS certificates, its very existence and
