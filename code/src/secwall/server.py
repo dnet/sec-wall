@@ -75,10 +75,12 @@ class _RequestApp(object):
             if url_config.get('ssl-cert') and not client_cert:
                 return self._401(start_response, self._get_www_auth(url_config, 'ssl-cert'))
 
+        data = env['wsgi.input'].read()
+
         for config_type in self.config.validation_precedence:
             if config_type in url_config:
                 handler = getattr(self, '_on_' + config_type.replace('-', '_'))
-                ok = handler(env, url_config, client_cert)
+                ok = handler(env, url_config, client_cert, data)
                 if not ok:
                     www_auth = self._get_www_auth(url_config, config_type)
                     return self._401(start_response, www_auth)
@@ -86,7 +88,7 @@ class _RequestApp(object):
         else:
             return self._500(start_response)
 
-        req = urllib2.Request(url_config['host'] + env['PATH_INFO'])
+        req = urllib2.Request(url_config['host'] + env['PATH_INFO'], data)
         resp = urllib2.urlopen(req)
         response = resp.read()
         resp.close()
@@ -145,7 +147,7 @@ class _RequestApp(object):
         code, content_type, description = '500', 'text/plain', 'Internal Server Error'
         return self._response(start_response, code, [('Content-Type', content_type)], description)
 
-    def _on_ssl_cert(self, env, url_config, client_cert):
+    def _on_ssl_cert(self, env, url_config, client_cert, data):
         """ Validates the client SSL/TLS certificates, its very existence and
         the values of its fields (commonName, organizationName etc.)
         """
@@ -179,11 +181,10 @@ class _RequestApp(object):
                 else:
                     return True
 
-    def _on_wsse_pwd(self, env, url_config, unused_client_cert):
+    def _on_wsse_pwd(self, env, url_config, unused_client_cert, data):
         """ Uses WS-Security UsernameToken/Password to validate the request.
         """
-        request_str = env['wsgi.input'].read()
-        if not request_str:
+        if not data:
             return False
 
         request = etree.fromstring(request_str)
