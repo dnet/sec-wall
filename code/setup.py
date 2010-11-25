@@ -31,7 +31,7 @@ setup(
       author_email = "dsuch at gefira.pl",
       url = "https://launchpad.net/sec-wall",
 
-      package_dir = {"":"src"},
+      package_dir = {"":b"src"},
       packages = find_packages("src"),
 
       namespace_packages = ["secwall"],
