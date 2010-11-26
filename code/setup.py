@@ -27,6 +27,8 @@ setup(
       name = "sec-wall",
       version = version,
 
+      scripts = ["scripts/sec-wall.sh"],
+
       author = "Dariusz Suchojad",
       author_email = "dsuch at gefira.pl",
       url = "https://launchpad.net/sec-wall",

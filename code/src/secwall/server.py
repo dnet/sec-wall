@@ -19,10 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-# gevent
-import gevent.monkey
-gevent.monkey.patch_all()
-
 # stdlib
 import re, ssl, sys, time, traceback, urllib2
 
@@ -244,12 +240,12 @@ class _RequestHandler(pywsgi.WSGIHandler):
             self.time_finish = time.time()
             self.log_request()
 
-class SSLProxy(pywsgi.WSGIServer):
+class Proxy(pywsgi.WSGIServer):
     """ An SSL/TLS security proxy. May be configured to use WSSE or HTTP Auth
     in addition to SSL/TLS.
     """
     def __init__(self, config):
-        super(SSLProxy, self).__init__((config.https_host, config.https_starting_port),
+        super(Proxy, self).__init__((config.https_host, config.https_starting_port),
                 _RequestApp(config), log=config.https_log, handler_class=_RequestHandler,
                 keyfile=config.keyfile, certfile=config.certfile,
                 ca_certs=config.ca_certs, cert_reqs=ssl.CERT_OPTIONAL)

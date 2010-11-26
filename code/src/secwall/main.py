@@ -19,18 +19,37 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+# gevent
+import gevent.monkey
+gevent.monkey.patch_all()
+
 # stdlib
-import imp, os, sys
+import argparse, os
+
+# Spring Python
+from springpython.context import ApplicationContext
 
 # sec-wall
-from secwall.server import SSLProxy
+from secwall import app_context, cli, version
 
 if __name__ == '__main__':
 
-    config_dir = os.path.dirname(os.path.abspath(sys.argv[1]))
+    description = 'sec-wall {0}- A feature packed high-performance security proxy'.format(version)
 
-    f, p, d = imp.find_module('config', [config_dir])
-    config_mod = imp.load_module('config', f, p, d)
+    parser = argparse.ArgumentParser(prog='sec-wall.sh', description=description)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--init', help='Initializes a config directory')
+    group.add_argument('--start', help='Starts sec-wall in a given directory')
+    group.add_argument('--stop', help='Stops a sec-wall instance running in a given directory')
 
-    s = SSLProxy(config_mod)
-    s.serve_forever()
+    args = parser.parse_args()
+
+    # Using a mutually exclusive group above gurantees that we'll have exactly
+    # one option to pick here.
+    command, config_dir = [(k, v) for k, v in args._get_kwargs() if v][0]
+    config_dir = os.path.abspath(config_dir)
+
+    app_ctx = ApplicationContext(app_context.SecWallContext())
+
+    handler = getattr(cli, command.capitalize())()
+    handler.run(config_dir, app_ctx)
