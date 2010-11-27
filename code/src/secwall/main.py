@@ -36,10 +36,10 @@ if __name__ == '__main__':
 
     class MyFormatter(argparse.ArgumentDefaultsHelpFormatter):
         """ A nicer help formatter, setting 'max_help_position' to that value
-        ensures the help doesn't span multiple lines.
+        ensures the help doesn't span multiple lines in an awkward way.
         """
         def __init__(self, **kwargs):
-            super(MyFormatter, self).__init__(max_help_position=34, **kwargs)
+            super(MyFormatter, self).__init__(max_help_position=35, **kwargs)
 
         def _get_help_string(self, action):
             """ Overridden from the super-class to prevent showing of defaults,
@@ -60,16 +60,24 @@ if __name__ == '__main__':
     group.add_argument('--init', help=init_help)
     group.add_argument('--start', help=start_help)
     group.add_argument('--stop', help=stop_help)
-    group.add_argument('--fork', help=subprocess_help, nargs=2, metavar=('config_dir', 'port'))
+    group.add_argument('--fork', help=subprocess_help, nargs=3,
+                       metavar=('config_dir', 'port', 'is_https'))
 
     args = parser.parse_args()
 
     # Using a mutually exclusive group above gurantees that we'll have exactly
     # one option to pick here.
-    command, config_dir = [(k, v) for k, v in args._get_kwargs() if v][0]
+    command, config_info = [(k, v) for k, v in args._get_kwargs() if v][0]
+    if command == 'fork':
+        config_dir, bind_port, is_https = config_info
+    else:
+        config_dir = config_info
+        bind_port = None
+        is_https = None
+
     config_dir = os.path.abspath(config_dir)
 
     app_ctx = ApplicationContext(app_context.SecWallContext())
 
     handler_class = getattr(cli, command.capitalize())
-    handler_class(config_dir, app_ctx).run()
+    handler_class(config_dir, app_ctx, bind_port, is_https).run()

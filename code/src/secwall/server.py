@@ -206,8 +206,9 @@ class _RequestHandler(pywsgi.WSGIHandler):
 
         try:
             try:
-                self.result = self.application(self.environ,
-                                self.start_response, self.socket.getpeercert())
+                cert = self.socket.getpeercert() if hasattr(self.socket, 'getpeercert') \
+                     else None
+                self.result = self.application(self.environ, self.start_response, None)
                 for data in self.result:
                     if data:
                         self.write(data)
@@ -241,14 +242,18 @@ class _RequestHandler(pywsgi.WSGIHandler):
             self.log_request()
 
 class Proxy(pywsgi.WSGIServer):
-    """ An SSL/TLS security proxy. May be configured to use WSSE or HTTP Auth
-    in addition to SSL/TLS.
+    """ An SSL/TLS security proxy. May be configured to use WSSE, HTTP Auth
+    or any other scheme in addition to SSL/TLS.
     """
-    def __init__(self, config):
-        super(Proxy, self).__init__((config.https_host, config.https_starting_port),
-                _RequestApp(config), log=config.https_log, handler_class=_RequestHandler,
-                keyfile=config.keyfile, certfile=config.certfile,
-                ca_certs=config.ca_certs, cert_reqs=ssl.CERT_OPTIONAL)
+    def __init__(self, config, port, is_https):
+        if is_https:
+            super(Proxy, self).__init__((config.https_host, port),
+                    _RequestApp(config), log=config.https_log, handler_class=_RequestHandler,
+                    keyfile=config.keyfile, certfile=config.certfile,
+                    ca_certs=config.ca_certs, cert_reqs=ssl.CERT_OPTIONAL)
+        else:
+            super(Proxy, self).__init__((config.http_host, port),
+                    _RequestApp(config), log=config.http_log, handler_class=_RequestHandler)
 
     def handle(self, socket, address):
         handler = self.handler_class(socket, address, self)

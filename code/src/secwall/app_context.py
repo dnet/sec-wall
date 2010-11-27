@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-from os import path
+import multiprocessing, os.path as path
 
 # Spring Python
 from springpython.config import Object, PythonConfig
@@ -32,6 +32,18 @@ from secwall import version
 class SecWallContext(PythonConfig):
     """ A Spring Python's application context for sec-wall.
     """
+
+    @Object
+    def http_subproc_number(self):
+        """ How many subprocesses should be started for plain HTTP traffic.
+        """
+        return multiprocessing.cpu_count()
+
+    @Object
+    def https_subproc_number(self):
+        """ How many subprocesses should be started for encrypted HTTPS traffic.
+        """
+        return multiprocessing.cpu_count()
 
     @Object
     def start_http(self):
@@ -268,4 +280,20 @@ frontend front_https
 
     bind {https_host}:{https_port}
     maxconn 1000
+"""
+
+    @Object
+    def zdaemon_conf_template(self):
+        return """
+<runner>
+    program python -m secwall.main --fork {config_dir} {port} {is_https}
+    socket-name {config_dir}/zdaemon-{port}.sock
+    transcript {config_dir}/logs/proxy-{port}.log
+</runner>
+
+<eventlog>
+    <logfile>
+        path {config_dir}/zdaemon-{port}.log
+    </logfile>
+</eventlog>
 """
