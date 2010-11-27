@@ -224,7 +224,7 @@ class Start(_Command):
                     self._zdaemon_command('start', zdaemon_conf_file)
 
 class Fork(_Command):
-    """ Handles the 'sec-wall --fork /path/to/config/dir port' command.
+    """ Handles the 'sec-wall --fork /path/to/config/dir port is_https' command.
     """
     def run(self):
         proxy = Proxy(self.config_mod, self.bind_port, self.is_https)
