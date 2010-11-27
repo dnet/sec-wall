@@ -34,6 +34,18 @@ class SecWallContext(PythonConfig):
     """
 
     @Object
+    def start_http(self):
+        """ Whether to start a plain HTTP server.
+        """
+        return True
+
+    @Object
+    def start_https(self):
+        """ Whether to start an HTTPS server.
+        """
+        return False
+
+    @Object
     def http_host(self):
         """ Address to bind to for handling plain HTTP traffic.
         """
@@ -157,3 +169,103 @@ class SecWallContext(PythonConfig):
         """ How will sec-wall introduce itself to client and backend applications.
         """
         return 'sec-wall/{0}'.format(version)
+
+    @Object
+    def config_py_template(self):
+        return """# -*- coding: utf-8 -*-
+
+# stdlib
+import os.path as path, uuid
+
+# The value will be regenerated on each server's startup.
+# Don't share it with anyone.
+INSTANCE_SECRET = uuid.uuid4().hex
+
+# Useful constants
+cur_dir = path.dirname(__file__)
+
+# Crypto
+keyfile = path.join(cur_dir, './crypto/server-priv.pem')
+certfile = path.join(cur_dir, './crypto/server-cert.pem')
+ca_certs = path.join(cur_dir, './crypto/ca-cert.pem')
+
+# ##############################################################################
+
+def default():
+    return {
+        'ssl': True,
+        'ssl-cert': True,
+        'ssl-cert-commonName':INSTANCE_SECRET,
+        'host': 'http://' + INSTANCE_SECRET
+    }
+
+urls = [
+    ('/*', default())
+]
+"""
+
+    @Object
+    def haproxy_conf_template(self):
+        return """
+# ##############################################################################
+
+global
+    log {syslog_host}:{syslog_port} {syslog_facility} {syslog_level}
+
+# ##############################################################################
+
+defaults
+    log global
+    option httpclose
+
+    stats uri /sec-wall-lb-stats
+
+    timeout connect 5000
+    timeout client 5000
+    timeout server 5000
+
+    stats enable
+    stats realm Haproxy\ Statistics
+
+    # The value below is not a hash of the password, it's the password itself.
+    stats auth admin1:{stats_password}
+
+
+    stats refresh 5s
+
+# ##############################################################################
+
+backend bck_https
+    mode tcp
+    balance roundrobin
+
+    {bck_https}
+
+backend bck_http_plain
+    mode tcp
+    balance roundrobin
+
+    {bck_http_plain}
+
+# ##############################################################################
+
+frontend front_http_plain
+
+    mode http
+    default_backend bck_http_plain
+    option httplog
+
+    bind {http_plain_host}:{http_plain_port}
+    maxconn 1000
+
+    monitor-uri /sec-wall-alive
+
+frontend front_https
+
+    mode tcp
+    default_backend bck_https
+    option tcplog
+
+    bind {https_host}:{https_port}
+    maxconn 1000
+"""

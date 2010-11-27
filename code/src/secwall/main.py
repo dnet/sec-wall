@@ -34,13 +34,33 @@ from secwall import app_context, cli, version
 
 if __name__ == '__main__':
 
+    class MyFormatter(argparse.ArgumentDefaultsHelpFormatter):
+        """ A nicer help formatter, setting 'max_help_position' to that value
+        ensures the help doesn't span multiple lines.
+        """
+        def __init__(self, **kwargs):
+            super(MyFormatter, self).__init__(max_help_position=34, **kwargs)
+
+        def _get_help_string(self, action):
+            """ Overridden from the super-class to prevent showing of defaults,
+            as there are no default values.
+            """
+            return action.help
+
     description = 'sec-wall {0}- A feature packed high-performance security proxy'.format(version)
 
-    parser = argparse.ArgumentParser(prog='sec-wall.sh', description=description)
+    init_help = 'Initializes a config directory'
+    start_help = 'Starts sec-wall in a given directory'
+    stop_help = 'Stops a sec-wall instance running in a given directory'
+    subprocess_help = "Starts one of the sec-wall's subprocesses"
+
+    parser = argparse.ArgumentParser(prog='sec-wall.sh', description=description,
+                                     formatter_class=MyFormatter)
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--init', help='Initializes a config directory')
-    group.add_argument('--start', help='Starts sec-wall in a given directory')
-    group.add_argument('--stop', help='Stops a sec-wall instance running in a given directory')
+    group.add_argument('--init', help=init_help)
+    group.add_argument('--start', help=start_help)
+    group.add_argument('--stop', help=stop_help)
+    group.add_argument('--fork', help=subprocess_help, nargs=2, metavar=('config_dir', 'port'))
 
     args = parser.parse_args()
 
@@ -51,5 +71,5 @@ if __name__ == '__main__':
 
     app_ctx = ApplicationContext(app_context.SecWallContext())
 
-    handler = getattr(cli, command.capitalize())()
-    handler.run(config_dir, app_ctx)
+    handler_class = getattr(cli, command.capitalize())
+    handler_class(config_dir, app_ctx).run()
