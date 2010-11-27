@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-import glob, imp, os, subprocess, sys
+import glob, imp, os, subprocess, sys, uuid
 
 # sec-wall
 from secwall.server import Proxy
@@ -111,12 +111,12 @@ class _Command(object):
 
         names = ('http_subproc_number', 'https_subproc_number', 'start_http',
                  'start_https', 'http_host', 'https_host',
-                 'http_starting_port', 'https_starting_port', 'http_log',
-                 'https_log', 'crypto_dir', 'keyfile', 'certfile', 'ca_certs',
-                 'not_authorized', 'forbidden', 'no_url_match',
+                 'http_starting_port', 'https_starting_port', 'haproxy_increment',
+                 'http_log', 'https_log', 'crypto_dir', 'keyfile', 'certfile',
+                 'ca_certs', 'not_authorized', 'forbidden', 'no_url_match',
                  'validation_precedence', 'client_cert_401_www_auth',
                  'syslog_host', 'syslog_port', 'syslog_facility',
-                 'syslog_level', 'server_tag')
+                 'syslog_level', 'server_tag', 'haproxy_command')
 
         for name in names:
             attr = getattr(config_mod, name, None)
@@ -136,7 +136,7 @@ class _Command(object):
         sys.exit(3)
 
     def run(self):
-        """ Must be overridden in subclasses.
+        """ Actually runs the command. Must be overridden in subclasses.
         """
         raise NotImplementedError()
 
@@ -154,6 +154,7 @@ class Init(_Command):
 
         config_py_template = self.app_ctx.get_object('config_py_template')
         haproxy_conf_template = self.app_ctx.get_object('haproxy_conf_template')
+        haproxy_conf_template = haproxy_conf_template % uuid.uuid4().hex
 
         open(os.path.join(self.config_dir, 'config.py'), 'w').write(config_py_template)
         open(os.path.join(self.config_dir, 'haproxy.conf-template'), 'w').write(haproxy_conf_template)
@@ -187,6 +188,9 @@ class Start(_Command):
             self._error(msg)
         else:
             ports = []
+            https, http_plain = 1, 0
+            haproxy_backend_template = self.app_ctx.get_object('haproxy_backend_template')
+            haproxy_backends = {https:[], http_plain:[]}
 
             if not any((self.config_mod.start_http, self.config_mod.start_https)):
                 msg = "Config is not valid, make sure at least one of 'start_http'"
@@ -201,7 +205,7 @@ class Start(_Command):
                 else:
                     start = self.config_mod.http_starting_port
                     stop = start + self.config_mod.http_subproc_number
-                    ports.append([start, stop, 0]) # is_https -> boolean False
+                    ports.append([start, stop, http_plain])
 
             if self.config_mod.start_https:
                 if not self.config_mod.https_subproc_number >= 1:
@@ -211,17 +215,60 @@ class Start(_Command):
                 else:
                     start = self.config_mod.https_starting_port
                     stop = start + self.config_mod.https_subproc_number
-                    ports.append([start, stop, 1]) # is_https -> boolean True
+                    ports.append([start, stop, https])
 
             for start, stop, is_https in ports:
                 for port in range(start, stop):
-                    zdaemon_conf = self.app_ctx.get_object('zdaemon_conf_template')
+
+                    # Prepare teh zdaemon's config for proxy.
+                    zdaemon_conf = self.app_ctx.get_object('zdaemon_conf_proxy_template')
                     zdaemon_conf = zdaemon_conf.format(config_dir=self.config_dir,
                                                        port=port, is_https=is_https)
                     zdaemon_conf_file = os.path.join(self.config_dir, 'zdaemon-{0}.conf'.format(port))
                     open(zdaemon_conf_file, 'w').write(zdaemon_conf)
 
+                    # Start the proxy.
                     self._zdaemon_command('start', zdaemon_conf_file)
+
+                    # Append the proxy to the list of HAProxy backends.
+                    server_name = ('https' if is_https else 'http') + '-' + str(port)
+                    haproxy_backend = haproxy_backend_template.format(server_name=server_name,
+                                                                      port=port)
+                    haproxy_backends[is_https].append(haproxy_backend)
+
+        # Gather all the pieces of HAProxy config..
+
+        bck_https = '\n'.join(haproxy_backends[https])
+        bck_http = '\n'.join(haproxy_backends[http_plain])
+
+        haproxy_conf_template = open(os.path.join(self.config_dir, 'haproxy.conf-template')).read()
+        haproxy_conf = haproxy_conf_template.format(
+            syslog_host=self.app_ctx.get_object('syslog_host'),
+            syslog_port=self.app_ctx.get_object('syslog_port'),
+            syslog_facility=self.app_ctx.get_object('syslog_facility'),
+            syslog_level=self.app_ctx.get_object('syslog_level'),
+            bck_https=bck_https,
+            bck_http=bck_http,
+            http_host=self.app_ctx.get_object('https_host'),
+            http_port=self.config_mod.http_starting_port + self.config_mod.haproxy_increment,
+            https_host=self.app_ctx.get_object('https_host'),
+            https_port=self.config_mod.https_starting_port + self.config_mod.haproxy_increment)
+
+        # .. write out the HAProxy config ..
+        open(os.path.join(self.config_dir, 'haproxy.conf'), 'w').write(haproxy_conf)
+
+        # .. and finally, start HAProxy through zdaemon.
+        zdaemon_haproxy_conf_file = os.path.join(self.config_dir, 'zdaemon-haproxy.conf')
+        zdaemon_conf_haproxy_template = self.app_ctx.get_object('zdaemon_conf_haproxy_template')
+        zdaemon_conf_haproxy = zdaemon_conf_haproxy_template.format(
+            config_dir=self.config_dir,
+            haproxy_command=self.config_mod.haproxy_command,
+            haproxy_config=os.path.join(self.config_dir, 'haproxy.conf'))
+
+        open(zdaemon_haproxy_conf_file, 'w').write(zdaemon_conf_haproxy)
+
+        # Start HAProxy.
+        self._zdaemon_command('start', zdaemon_haproxy_conf_file)
 
 class Fork(_Command):
     """ Handles the 'sec-wall --fork /path/to/config/dir port is_https' command.
