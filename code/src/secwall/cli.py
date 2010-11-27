@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-import imp, os, subprocess, sys
+import glob, imp, os, subprocess, sys
 
 # sec-wall
 from secwall.server import Proxy
@@ -29,7 +29,7 @@ class _Command(object):
     """ A base class for all CLI commands.
     """
 
-    # Most of the commands need direct access to the configuration module,
+    # Some commands need direct access to the configuration module,
     # thus if 'needs_config_mod' is not False, the config will be read in
     # the command's __init__ method.
     needs_config_mod = True
@@ -233,3 +233,13 @@ class Fork(_Command):
 class Stop(_Command):
     """ Handles the 'sec-wall --stop /path/to/config/dir' command.
     """
+    needs_config_mod = False
+
+    def run(self):
+        listing = glob.glob(os.path.join(self.config_dir, 'zdaemon-*.conf'))
+        if not listing:
+            msg = 'No sec-wall processes are running in {0}.\n'.format(self.config_dir)
+            self._error(msg, False)
+
+        for zdaemon_conf_file in listing:
+            self._zdaemon_command('stop', zdaemon_conf_file)
