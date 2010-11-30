@@ -60,8 +60,7 @@ if __name__ == '__main__':
     group.add_argument('--init', help=init_help)
     group.add_argument('--start', help=start_help)
     group.add_argument('--stop', help=stop_help)
-    group.add_argument('--fork', help=subprocess_help, nargs=3,
-                       metavar=('config_dir', 'port', 'is_https'))
+    group.add_argument('--fork', help=subprocess_help, nargs=2, metavar=('config_dir', 'is_https'))
 
     args = parser.parse_args()
 
@@ -69,10 +68,9 @@ if __name__ == '__main__':
     # one option to pick here.
     command, config_info = [(k, v) for k, v in args._get_kwargs() if v][0]
     if command == 'fork':
-        config_dir, bind_port, is_https = config_info
+        config_dir, is_https = config_info
     else:
         config_dir = config_info
-        bind_port = None
         is_https = None
 
     config_dir = os.path.abspath(config_dir)
@@ -80,4 +78,4 @@ if __name__ == '__main__':
     app_ctx = ApplicationContext(app_context.SecWallContext())
 
     handler_class = getattr(cli, command.capitalize())
-    handler_class(config_dir, app_ctx, bind_port, is_https).run()
+    handler_class(config_dir, app_ctx, is_https).run()

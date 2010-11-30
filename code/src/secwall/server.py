@@ -245,15 +245,15 @@ class Proxy(pywsgi.WSGIServer):
     """ An SSL/TLS security proxy. May be configured to use WSSE, HTTP Auth
     or any other scheme in addition to SSL/TLS.
     """
-    def __init__(self, config, port, is_https):
+    def __init__(self, config, is_https):
         if is_https:
-            super(Proxy, self).__init__((config.https_host, port),
-                    _RequestApp(config), log=config.https_log, handler_class=_RequestHandler,
+            super(Proxy, self).__init__((config.host, config.port),
+                    _RequestApp(config), log=config.log, handler_class=_RequestHandler,
                     keyfile=config.keyfile, certfile=config.certfile,
                     ca_certs=config.ca_certs, cert_reqs=ssl.CERT_OPTIONAL)
         else:
-            super(Proxy, self).__init__((config.http_host, port),
-                    _RequestApp(config), log=config.http_log, handler_class=_RequestHandler)
+            super(Proxy, self).__init__((config.host, config.port),
+                    _RequestApp(config), log=config.log, handler_class=_RequestHandler)
 
     def handle(self, socket, address):
         handler = self.handler_class(socket, address, self)

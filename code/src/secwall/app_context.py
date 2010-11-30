@@ -34,71 +34,27 @@ class SecWallContext(PythonConfig):
     """
 
     @Object
-    def http_subproc_number(self):
-        """ How many subprocesses should be started for plain HTTP traffic.
+    def server_type(self):
+        """ Whether to start a plain HTTP (http) server or an SSL/TLS one (https).
+        Defaults to 'http'.
         """
-        return multiprocessing.cpu_count() * 2
+        return 'http'
 
     @Object
-    def https_subproc_number(self):
-        """ How many subprocesses should be started for encrypted HTTPS traffic.
-        """
-        return multiprocessing.cpu_count() * 2
-
-    @Object
-    def start_http(self):
-        """ Whether to start a plain HTTP server.
-        """
-        return True
-
-    @Object
-    def start_https(self):
-        """ Whether to start an HTTPS server.
-        """
-        return False
-
-    @Object
-    def http_host(self):
-        """ Address to bind to for handling plain HTTP traffic.
+    def host(self):
+        """ Host to bind to.
         """
         return '0.0.0.0'
 
     @Object
-    def https_host(self):
-        """ Address to bind to for handling encrypted HTTPS traffic.
-        """
-        return '0.0.0.0'
-
-    @Object
-    def http_starting_port(self):
-        """ First free port to bind to for handling plain HTTP traffic.
+    def port(self):
+        """ Port to bind to.
         """
         return 15100
 
     @Object
-    def https_starting_port(self):
-        """ First free port to bind to for handling encrypted HTTPS traffic.
-        """
-        return 15200
-
-    @Object
-    def haproxy_increment(self):
-        """ A starting port will be incremented by this value which will will
-        result in the port for HAProxy to bind to. For instance,
-        if 'http_starting_port' is 15100 and 'haproxy_increment' is 1000
-        than HAProxy will listen on port 16100 for plain HTTP traffic.
-        """
-        return 1000
-
-    @Object
-    def http_log(self):
+    def log(self):
         """ Whether to log plain HTTP traffic.
-        """
-        return None
-
-    @Object
-    def https_log(self):
-        """ Whether to log HTTPS traffic.
         """
         return None
 
@@ -163,19 +119,19 @@ class SecWallContext(PythonConfig):
 
     @Object
     def syslog_host(self):
-        """ Syslog host, for HAProxy logging.
+        """ Syslog host.
         """
         return '127.0.0.1'
 
     @Object
     def syslog_port(self):
-        """ Syslog port, for HAProxy logging.
+        """ Syslog port.
         """
         return 514
 
     @Object
     def syslog_facility(self):
-        """ Syslog facility, for HAProxy logging.
+        """ Syslog facility.
         """
         return 'local0'
 
@@ -190,12 +146,6 @@ class SecWallContext(PythonConfig):
         """ How will sec-wall introduce itself to client and backend applications.
         """
         return 'sec-wall/{0}'.format(version)
-
-    @Object
-    def haproxy_command(self):
-        """ Command to invoke for starting HAProxy.
-        """
-        return 'haproxy'
 
     @Object
     def config_py_template(self):
@@ -232,103 +182,17 @@ urls = [
 """
 
     @Object
-    def haproxy_conf_template(self):
-        return """
-# ##############################################################################
-
-global
-    log {syslog_host}:{syslog_port} {syslog_facility} {syslog_level}
-
-# ##############################################################################
-
-defaults
-    log global
-    option httpclose
-
-    stats uri /sec-wall-lb-stats
-
-    timeout connect 5000
-    timeout client 5000
-    timeout server 5000
-
-    stats enable
-    stats realm Haproxy\ Statistics
-
-    # The value below is not a hash of the password, it's the password itself.
-    stats auth admin1:%s
-
-
-    stats refresh 5s
-
-# ##############################################################################
-
-backend bck_https
-    mode tcp
-    balance roundrobin
-
-    {bck_https}
-
-backend bck_http_plain
-    mode http
-    balance roundrobin
-
-    {bck_http}
-
-# ##############################################################################
-
-frontend front_http_plain
-
-    mode http
-    default_backend bck_http_plain
-    option httplog
-
-    bind {http_host}:{http_port}
-    maxconn 1000
-
-    monitor-uri /sec-wall-alive
-
-frontend front_https
-
-    mode tcp
-    default_backend bck_https
-    option tcplog
-
-    bind {https_host}:{https_port}
-    maxconn 1000
-"""
-
-    @Object
-    def haproxy_backend_template(self):
-        return 'server {server_name} 127.0.0.1:{port} check inter 2s rise 2 fall 2'
-
-    @Object
     def zdaemon_conf_proxy_template(self):
         return """
 <runner>
-    program python -m secwall.main --fork {config_dir} {port} {is_https}
-    socket-name {config_dir}/zdaemon-{port}.sock
-    transcript {config_dir}/logs/proxy-{port}.log
+    program python -m secwall.main --fork {config_dir} {is_https}
+    socket-name {config_dir}/zdaemon.sock
+    transcript {config_dir}/logs/proxy.log
 </runner>
 
 <eventlog>
     <logfile>
-        path {config_dir}/zdaemon-{port}.log
-    </logfile>
-</eventlog>
-"""
-
-    @Object
-    def zdaemon_conf_haproxy_template(self):
-        return """
-<runner>
-    program {haproxy_command} -f {haproxy_config}
-    socket-name {config_dir}/zdaemon-haproxy.sock
-    transcript {config_dir}/logs/haproxy.log
-</runner>
-
-<eventlog>
-    <logfile>
-        path {config_dir}/zdaemon-haproxy.log
+        path {config_dir}/zdaemon.log
     </logfile>
 </eventlog>
 """
