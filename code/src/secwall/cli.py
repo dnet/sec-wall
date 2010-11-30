@@ -42,7 +42,7 @@ class _Command(object):
         config_dir = os.path.abspath(config_dir)
         if not os.path.exists(config_dir):
             msg = "Path {0} doesn't exist.\n".format(config_dir)
-            self._error(msg)
+            self._error(msg, False)
 
         self.config_dir = config_dir
         self.app_ctx = app_ctx
