@@ -87,21 +87,21 @@ class SecWallContext(PythonConfig):
         """ HTTP code, the content type and a user friendly description
         for 401 error.
         """
-        return ['401 Not Authorized', 'text/plain', 'You are not authorized to access this resource']
+        return ['401 Not Authorized', 'text/plain', str('You are not authorized to access this resource')]
 
     @Object
     def forbidden(self):
         """ HTTP code, the content type and a user friendly description
         for 403 error.
         """
-        return ['403 Forbidden', 'text/plain', 'You are not allowed to access this resource']
+        return ['403 Forbidden', 'text/plain', str('You are not allowed to access this resource')]
 
     @Object
     def no_url_match(self):
         """ HTTP code, the content type and a user friendly description
         for 401 error.
         """
-        return ['404 Not Found', 'text/plain', 'Not Found']
+        return ['404 Not Found', 'text/plain', str('Not Found')]
 
     @Object
     def validation_precedence(self):
