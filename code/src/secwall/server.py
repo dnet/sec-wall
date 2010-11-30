@@ -26,7 +26,7 @@ import re, ssl, sys, time, traceback, urllib2
 from lxml import etree
 
 # gevent
-from gevent import pywsgi
+from gevent import pywsgi, wsgi
 from gevent.hub import GreenletExit
 
 # sec-wall
@@ -241,19 +241,21 @@ class _RequestHandler(pywsgi.WSGIHandler):
             self.time_finish = time.time()
             self.log_request()
 
-class Proxy(pywsgi.WSGIServer):
-    """ An SSL/TLS security proxy. May be configured to use WSSE, HTTP Auth
-    or any other scheme in addition to SSL/TLS.
+class HTTPProxy(wsgi.WSGIServer):
+    """ A plain HTTP proxy.
     """
-    def __init__(self, config, is_https):
-        if is_https:
-            super(Proxy, self).__init__((config.host, config.port),
-                    _RequestApp(config), log=config.log, handler_class=_RequestHandler,
-                    keyfile=config.keyfile, certfile=config.certfile,
-                    ca_certs=config.ca_certs, cert_reqs=ssl.CERT_OPTIONAL)
-        else:
-            super(Proxy, self).__init__((config.host, config.port),
-                    _RequestApp(config), log=config.log, handler_class=_RequestHandler)
+    def __init__(self, config):
+        super(HTTPProxy, self).__init__((config.host, config.port),
+                _RequestApp(config), log=config.log)
+
+class HTTPSProxy(pywsgi.WSGIServer):
+    """ An SSL/TLS proxy.
+    """
+    def __init__(self, config):
+        super(HTTPSProxy, self).__init__((config.host, config.port),
+                _RequestApp(config), log=config.log, handler_class=_RequestHandler,
+                keyfile=config.keyfile, certfile=config.certfile,
+                ca_certs=config.ca_certs, cert_reqs=ssl.CERT_OPTIONAL)
 
     def handle(self, socket, address):
         handler = self.handler_class(socket, address, self)

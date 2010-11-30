@@ -23,7 +23,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import glob, imp, os, subprocess, sys, uuid
 
 # sec-wall
-from secwall.server import Proxy
+from secwall.server import HTTPProxy, HTTPSProxy
 
 class _Command(object):
     """ A base class for all CLI commands.
@@ -200,11 +200,11 @@ class Start(_Command):
             self._zdaemon_command('start', zdaemon_conf_file)
 
 class Fork(_Command):
-    """ Handles the 'sec-wall --fork /path/to/config/dir port is_https' command.
+    """ Handles the 'sec-wall --fork /path/to/config/dir is_https' command.
     """
     def run(self):
-        proxy = Proxy(self.config_mod, self.is_https)
-        proxy.serve_forever()
+        proxy_class = HTTPSProxy if self.is_https else HTTPProxy
+        proxy_class(self.config_mod).serve_forever()
 
 class Stop(_Command):
     """ Handles the 'sec-wall --stop /path/to/config/dir' command.
