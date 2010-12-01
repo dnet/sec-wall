@@ -27,7 +27,7 @@ setup(
       name = "sec-wall",
       version = version,
 
-      scripts = ["scripts/sec-wall.sh"],
+      scripts = ["scripts/sec-wall"],
 
       author = "Dariusz Suchojad",
       author_email = "dsuch at gefira.pl",

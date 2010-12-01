@@ -54,7 +54,7 @@ if __name__ == '__main__':
     stop_help = 'Stops a sec-wall instance running in a given directory'
     subprocess_help = "Starts one of the sec-wall's subprocesses"
 
-    parser = argparse.ArgumentParser(prog='sec-wall.sh', description=description,
+    parser = argparse.ArgumentParser(prog='sec-wall', description=description,
                                      formatter_class=MyFormatter)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--init', help=init_help)
