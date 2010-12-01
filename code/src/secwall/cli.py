@@ -189,7 +189,7 @@ class Start(_Command):
 
             self._error(msg)
         else:
-            # Prepare teh zdaemon's config for proxy.
+            # Prepare the zdaemon's config for proxy.
             zdaemon_conf = self.app_ctx.get_object('zdaemon_conf_proxy_template')
             zdaemon_conf = zdaemon_conf.format(config_dir=self.config_dir,
                                                is_https=is_https)
