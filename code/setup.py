@@ -34,9 +34,9 @@ setup(
       url = "https://launchpad.net/sec-wall",
 
       package_dir = {"":b"src"},
-      packages = find_packages("src"),
+      packages = find_packages(b"src"),
 
-      namespace_packages = ["secwall"],
+      namespace_packages = [b"secwall"],
 
       zip_safe = False,
 )
