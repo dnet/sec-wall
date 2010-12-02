@@ -89,7 +89,9 @@ class _RequestApp(object):
         response = resp.read()
         resp.close()
 
-        return self._response(start_response, resp.getcode(),
+        code_status = '{0} {1}'.format(resp.getcode(), resp.msg)
+
+        return self._response(start_response, code_status,
                               [('Content-Type', resp.headers['Content-Type'])],
                               response)
 
@@ -183,7 +185,7 @@ class _RequestApp(object):
         if not data:
             return False
 
-        request = etree.fromstring(request_str)
+        request = etree.fromstring(data)
         try:
             ok = self.wsse.validate(request, url_config)
         except SecurityException, e:
