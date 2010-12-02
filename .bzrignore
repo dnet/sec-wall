@@ -1,3 +1,4 @@
 code/src/sec_wall.egg-info
 build
 dist
+.coverage
