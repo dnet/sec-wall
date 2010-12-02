@@ -35,10 +35,10 @@ from secwall import SecurityException, wsse
 class _RequestApp(object):
     """ A WSGI application executed on each request.
     """
-    def __init__(self, config):
+    def __init__(self, config=None, wsse=None):
         self.config = config
         self.urls_compiled = []
-        self.wsse = wsse.WSSE()
+        self.wsse = wsse
 
         for url_pattern, url_config in self.config.urls:
             self.urls_compiled.append((re.compile(url_pattern), url_config))
@@ -246,18 +246,19 @@ class _RequestHandler(pywsgi.WSGIHandler):
 class HTTPProxy(wsgi.WSGIServer):
     """ A plain HTTP proxy.
     """
-    def __init__(self, config):
+    def __init__(self, config, app_ctx):
         super(HTTPProxy, self).__init__((config.host, config.port),
-                _RequestApp(config), log=config.log)
+                _RequestApp(config, app_ctx), log=config.log)
 
 class HTTPSProxy(pywsgi.WSGIServer):
     """ An SSL/TLS proxy.
     """
-    def __init__(self, config):
+    def __init__(self, config, app_ctx):
         super(HTTPSProxy, self).__init__((config.host, config.port),
-                _RequestApp(config), log=config.log, handler_class=_RequestHandler,
-                keyfile=config.keyfile, certfile=config.certfile,
-                ca_certs=config.ca_certs, cert_reqs=ssl.CERT_OPTIONAL)
+                _RequestApp(config, app_ctx), log=config.log,
+                handler_class=_RequestHandler, keyfile=config.keyfile,
+                certfile=config.certfile, ca_certs=config.ca_certs,
+                cert_reqs=ssl.CERT_OPTIONAL)
 
     def handle(self, socket, address):
         handler = self.handler_class(socket, address, self)

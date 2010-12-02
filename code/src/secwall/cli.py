@@ -204,7 +204,7 @@ class Fork(_Command):
     """
     def run(self):
         proxy_class = HTTPSProxy if self.is_https else HTTPProxy
-        proxy_class(self.config_mod).serve_forever()
+        proxy_class(self.config_mod, self.app_ctx.get_object('wsse')).serve_forever()
 
 class Stop(_Command):
     """ Handles the 'sec-wall --stop /path/to/config/dir' command.
