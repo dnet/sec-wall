@@ -27,7 +27,8 @@ from springpython.config import Object, PythonConfig
 from springpython.context import scope
 
 # sec-wall
-from secwall import version, wsse
+from secwall import wsse
+from secwall.core import version
 
 class SecWallContext(PythonConfig):
     """ A Spring Python's application context for sec-wall.

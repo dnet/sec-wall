@@ -30,7 +30,8 @@ from gevent import pywsgi, wsgi
 from gevent.hub import GreenletExit
 
 # sec-wall
-from secwall import SecurityException, wsse
+from secwall import wsse
+from secwall.core import SecurityException
 
 class _RequestApp(object):
     """ A WSGI application executed on each request.

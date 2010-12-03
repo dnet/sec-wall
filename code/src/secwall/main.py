@@ -30,7 +30,8 @@ import argparse, os
 from springpython.context import ApplicationContext
 
 # sec-wall
-from secwall import app_context, cli, version
+from secwall import app_context, cli
+from secwall.core import version
 
 if __name__ == '__main__':
 

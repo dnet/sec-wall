@@ -19,22 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-# stdlib
-from uuid import uuid4
+version_info = ('1', '0', '0')
+version = '.'.join(version_info)
 
-# nose
-from nose.tools import assert_true, eq_
-
-# sec-wall
-from secwall import version_info, version, SecurityException
-
-def test_secwall():
-    eq_(version_info, ('1', '0', '0'))
-    eq_(version, '1.0.0')
-
-    assert_true(SecurityException, Exception)
-
-    description = uuid4().hex
-
-    e = SecurityException(description)
-    eq_(e.description, description)
+class SecurityException(Exception):
+    """ Indicates problems with validating incoming requests. The 'description'
+    attribute holds textual information suitable for showing to human users.
+    """
+    def __init__(self, description):
+        self.description = description

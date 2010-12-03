@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Copyright (C) 2010 Dariusz Suchojad <dsuch at gefira.pl>
 
@@ -14,3 +16,25 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+# stdlib
+from uuid import uuid4
+
+# nose
+from nose.tools import assert_true, eq_
+
+# sec-wall
+from secwall.core import version_info, version, SecurityException
+
+def test_secwall():
+    eq_(version_info, ('1', '0', '0'))
+    eq_(version, '1.0.0')
+
+    assert_true(SecurityException, Exception)
+
+    description = uuid4().hex
+
+    e = SecurityException(description)
+    eq_(e.description, description)

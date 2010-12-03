@@ -29,7 +29,7 @@ from datetime import datetime, timedelta
 from lxml import etree
 
 # secwall
-from secwall import SecurityException
+from secwall.core import SecurityException
 
 soap_date_time_format = "%Y-%m-%dT%H:%M:%S.%fZ"
 
