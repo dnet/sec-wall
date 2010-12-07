@@ -66,9 +66,6 @@ wsse_nonce_xpath = etree.XPath(wsse_nonce_path, namespaces=wss_namespaces)
 wsu_username_created_path = '/soapenv:Envelope/soapenv:Header/wsse:Security/wsse:UsernameToken/wsu:Created'
 wsu_username_created_xpath = etree.XPath(wsu_username_created_path, namespaces=wss_namespaces)
 
-wsu_expires_path = '/soapenv:Envelope/soapenv:Header/wsse:Security/wsu:Timestamp/wsu:Expires'
-wsu_expires_xpath = etree.XPath(wsu_expires_path, namespaces=wss_namespaces)
-
 class WSSE(object):
     """ Implements authentication using WS-Security.
     """
@@ -113,10 +110,13 @@ class WSSE(object):
         """ A utility function for exceptions in erronous situations. May be
         subclassed if error reporting needs to be customized. The 'soap'
         parameter is guaranteed to have WSSE password and token replaced
-        with '***' characters.
+        with '***' characters. Note that default implementation doesn't use
+        the 'soap' parameter however the subclasses are free to do so.
         """
         msg = description
         if expected_element:
+            if description:
+                msg += '. '
             msg += 'Element [{0}] doesn\'t exist'.format(expected_element)
 
         raise SecurityException(msg)
@@ -146,7 +146,7 @@ class WSSE(object):
     def on_nonce_non_unique(self, config, nonce, now, message):
         """ Invoked when the nonce has been found not to be unique.
         """
-        self.error('Nonce is not unique')
+        self.error('Nonce [{0}] is not unique'.format(nonce))
 
     def validate(self, soap, config):
 
@@ -178,7 +178,7 @@ class WSSE(object):
             self.error('No password type sent', wsse_password_type_path, soap)
 
         if not wsse_password_type in supported_wsse_password_types:
-            msg = 'Unsupported password type=[0], not in [1]'.format(wsse_password_type, supported_wsse_password_types)
+            msg = 'Unsupported password type=[{0}], not in [{1}]'.format(wsse_password_type, supported_wsse_password_types)
             self.error(msg, soap=soap)
 
         wsu_username_created = wsu_username_created_xpath(soap)
@@ -187,10 +187,6 @@ class WSSE(object):
         else:
             if wsu_username_created:
                 wsu_username_created = wsu_username_created[0].text
-
-        wsu_expires = wsu_expires_xpath(soap)
-        if wsu_expires:
-            wsu_expires = wsu_expires[0].text
 
         # Check nonce freshness and report error if the UsernameToken is stale.
         now = datetime.utcnow()
