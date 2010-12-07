@@ -83,17 +83,49 @@ class CLITestCase(unittest.TestCase):
             exists = os.path.exists(os.path.join(self.test_dir, 'zdaemon.conf'))
             eq_(exists, False)
 
+        # The return code of the 'wait' call on a Popen object returned None.
+        # Doesn't even matter that there were too few arguments in the call
+        # to 'zdaemon' command as we hadn't even got as far as to actually call
+        # it.
         with Replacer() as r:
             def _wait(self):
                 self.returncode = None
 
             r.replace('subprocess.Popen.wait', _wait)
 
-            command = cli._Command(self.test_dir, self.app_ctx, False)
-
             try:
+                command = cli._Command(self.test_dir, self.app_ctx, False)
                 command._execute_zdaemon_command(['zdaemon'])
             except Exception, e:
                 eq_(e.args[0], 'Could not execute command [u\'zdaemon\'] (p.returncode is None)')
+            else:
+                raise Exception('An exception was expected here.')
+
+        # Too few arguments to the 'zdaemon' command.
+        with Replacer() as r:
+            stdout = uuid.uuid4().hex
+            stderr = uuid.uuid4().hex
+
+            def _communicate(self):
+                return [stdout, stderr]
+
+            r.replace('subprocess.Popen.communicate', _communicate)
+
+            try:
+                command = cli._Command(self.test_dir, self.app_ctx, False)
+                command._execute_zdaemon_command(['zdaemon'])
+            except Exception, e:
+                msg = e.args[0]
+                expected_start = 'Failed to execute command [u\'zdaemon\']. return code=['
+                expected_end = '], stdout=[{0}], stderr=[{1}]'.format(stdout, stderr)
+                assert_true(msg.startswith(expected_start))
+                assert_true(msg.endswith(expected_end))
+
+                return_code = msg[len(expected_start):-len(expected_end)]
+
+                # We caught an error so the return_code must be a positive integer.
+                return_code = int(return_code)
+                assert_true(return_code > 0)
+
             else:
                 raise Exception('An exception was expected here.')
