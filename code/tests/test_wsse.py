@@ -285,7 +285,7 @@ def test_wsse_auth():
         print(etree.fromstring(data))
         wsse2.validate(etree.fromstring(data), copy.deepcopy(base_config))
     except SecurityException, e:
-        eq_(len(e.description), e.description)
+        eq_(len(e.description), 67)
         assert_true(e.description.startswith('Nonce ['))
         assert_true(e.description.endswith('] is not unique'))
     else:
