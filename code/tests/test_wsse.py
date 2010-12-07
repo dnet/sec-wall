@@ -74,7 +74,7 @@ def test_wsse_auth():
     raw_username = 'foo'
     raw_password = 'bar'
 
-    def get_data(header=True, nonce=True, created=True, stale_token=False, password_digest=True,
+    def get_data(header=True, nonce=True, created=True, password_digest=True,
                  valid_password=True, valid_username=True, send_password_type=True,
                  supported_password_type=True):
 
@@ -98,7 +98,7 @@ def test_wsse_auth():
 
             if created:
                 created_value = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime())
-                created_value += '.011Z'
+                created_value += '.000Z'
                 created = wsu_created.format(created_value)
             else:
                 created = ''
@@ -280,10 +280,10 @@ def test_wsse_auth():
 
     wsse2 = _WSSE()
     data = get_data()
+    config = copy.deepcopy(base_config)
 
     try:
-        print(etree.fromstring(data))
-        wsse2.validate(etree.fromstring(data), copy.deepcopy(base_config))
+        wsse2.validate(etree.fromstring(data), config)
     except SecurityException, e:
         eq_(len(e.description), 67)
         assert_true(e.description.startswith('Nonce ['))
