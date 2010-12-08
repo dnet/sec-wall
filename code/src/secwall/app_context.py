@@ -182,7 +182,7 @@ def default():
     }
 
 urls = [
-    ('/*', default())
+    ('/*', default()),
 ]
 """
 

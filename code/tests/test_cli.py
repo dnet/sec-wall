@@ -20,8 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-from contextlib import nested
-import os, tempfile, shutil, subprocess, unittest, uuid
+import glob, imp, os, tempfile, shutil, subprocess, unittest, uuid
 
 # nose
 from nose.tools import assert_raises, assert_true, eq_
@@ -38,18 +37,35 @@ from springpython.context import ApplicationContext
 # sec-wall
 from secwall import app_context, cli
 
-class CommandTestCase(unittest.TestCase):
+class _BaseTestCase(unittest.TestCase):
+    """ A base class for all CLI-related test cases.
+    """
+    temp_dir_prefix = 'tmp-sec-wall-'
+
+    def tearDown(self):
+        temp_dir = tempfile.gettempdir()
+        pattern = os.path.join(temp_dir, self.temp_dir_prefix) + '*'
+        temp_dirs = glob.glob(pattern)
+
+        for temp_dir in temp_dirs:
+            shutil.rmtree(temp_dir)
+
+class CommandTestCase(_BaseTestCase):
+    """ Tests for the secwall.cli._Command class.
+    """
 
     def setUp(self):
         self.app_ctx = ApplicationContext(app_context.SecWallContext())
-        self.test_dir = tempfile.mkdtemp(prefix='tmp-sec-wall-')
+        self.test_dir = tempfile.mkdtemp(prefix=self.temp_dir_prefix)
         open(os.path.join(self.test_dir, '.sec-wall-config'), 'w')
         open(os.path.join(self.test_dir, 'config.py'), 'w')
-
         open(os.path.join(self.test_dir, 'zdaemon.conf'), 'w')
 
-    def tearDown(self):
-        shutil.rmtree(self.test_dir)
+    def test_defaults(self):
+        """ Tests the correct values of the default class-level objects.
+        """
+        eq_(cli._Command.needs_config_mod, True)
+        eq_(cli._Command._config_marker, '.sec-wall-config')
 
     def test_command_init(self):
         """ Tests the cli._Command.__init__ method.
@@ -77,7 +93,7 @@ class CommandTestCase(unittest.TestCase):
             command = cli._Command(self.test_dir, self.app_ctx, False)
             given_pid = command._zdaemon_command(command_name, 'foo.conf')
 
-            eq_(expected_pid, given_pid)
+            eq_(given_pid, expected_pid)
             eq_(mock_method.called, True)
             mock_method.assert_called_with(
                 [u'zdaemon', u'-C', os.path.join(self.test_dir, 'foo.conf'), command_name])
@@ -189,7 +205,7 @@ class CommandTestCase(unittest.TestCase):
             given_pid = int(command._execute_zdaemon_command(['zdaemon']))
 
             # PIDs must be the same.
-            eq_(expected_pid, given_pid)
+            eq_(given_pid, expected_pid)
 
     def test_enrichment(self):
         """ Tests whether enrichment of the config module works fine.
@@ -197,7 +213,7 @@ class CommandTestCase(unittest.TestCase):
         command = cli._Command(self.test_dir, self.app_ctx, False)
         config_mod = command._get_config_mod()
         elems = [elem for elem in dir(config_mod) if not elem.startswith('__')]
-        eq_(18, len(elems))
+        eq_(len(elems), 18)
 
         names = ('server_type', 'host', 'port', 'log', 'crypto_dir', 'keyfile',
                  'certfile', 'ca_certs', 'not_authorized', 'forbidden',
@@ -216,8 +232,65 @@ class CommandTestCase(unittest.TestCase):
         command = cli._Command(self.test_dir, self.app_ctx, False)
         assert_raises(NotImplementedError, command.run)
 
+class InitTestCase(_BaseTestCase):
+    """ Tests for the secwall.cli.Init class.
+    """
+
+    def setUp(self):
+        self.app_ctx = ApplicationContext(app_context.SecWallContext())
+        self.test_dir = tempfile.mkdtemp(prefix='tmp-sec-wall-')
+
     def test_defaults(self):
-        """ Tests the correct values of the default class-level objects.
+        """ Tests the class-level defaults.
         """
-        eq_(cli._Command.needs_config_mod, True)
-        eq_(cli._Command._config_marker, '.sec-wall-config')
+        eq_(cli.Init.needs_config_mod, False)
+
+    def test_run_dir_non_empty(self):
+        """ Running the command in a non-empty dir should result in an
+        exception being raised.
+        """
+        open(os.path.join(self.test_dir, uuid.uuid4().hex), 'w').close()
+        init = cli.Init(self.test_dir, self.app_ctx, False)
+        try:
+            init.run()
+        except SystemExit, e:
+            return_code = e.args[0]
+            eq_(int(return_code), 3)
+        else:
+            raise Exception('Expected a SystemExit here')
+
+    def test_run_dir_empty(self):
+        """ Simulates the actual user's executing the command in an empty
+        directory and tests whether the files created by the command are fine.
+        """
+        init = cli.Init(self.test_dir, self.app_ctx, False)
+        init.run()
+
+        f, p, d = imp.find_module('config', [self.test_dir])
+        config_mod = imp.load_module('config', f, p, d)
+
+        instance_secret = getattr(config_mod, 'INSTANCE_SECRET')
+        cur_dir = getattr(config_mod, 'cur_dir')
+        keyfile = getattr(config_mod, 'keyfile')
+        certfile = getattr(config_mod, 'certfile')
+        ca_certs = getattr(config_mod, 'ca_certs')
+        default_handler = getattr(config_mod, 'default')
+        urls = getattr(config_mod, 'urls')
+
+        # Instance secret is a UUID4 by default
+        eq_(len(instance_secret), 32)
+        eq_(uuid.UUID(instance_secret, version=4).hex, instance_secret)
+
+        eq_(cur_dir, self.test_dir)
+        eq_(os.path.normpath(keyfile), os.path.join(self.test_dir, 'crypto', 'server-priv.pem'))
+        eq_(os.path.normpath(certfile), os.path.join(self.test_dir, 'crypto', 'server-cert.pem'))
+        eq_(os.path.normpath(ca_certs), os.path.join(self.test_dir, 'crypto', 'ca-cert.pem'))
+
+        default_config = default_handler()
+        eq_(len(default_config), 4)
+        eq_(default_config['ssl'], True)
+        eq_(default_config['ssl-cert'], True)
+        eq_(default_config['ssl-cert-commonName'], instance_secret)
+        eq_(default_config['host'], 'http://' + instance_secret)
+
+        eq_(urls, [('/*', default_config),])

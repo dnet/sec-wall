@@ -140,6 +140,9 @@ class Init(_Command):
     needs_config_mod = False
 
     def run(self):
+        """ Runs the command. Overridden from the super-class.
+        """
+
         listing = os.listdir(self.config_dir)
         if listing:
             msg = '{0} is not empty. Please re-run the command in an empty directory.\n'
@@ -157,6 +160,8 @@ class Start(_Command):
     """ Handles the 'sec-wall --start /path/to/config/dir' command.
     """
     def run(self):
+        """ Runs the command. Overridden from the super-class.
+        """
 
         allowed_types = ('http', 'https')
 
@@ -202,7 +207,11 @@ class Start(_Command):
 class Fork(_Command):
     """ Handles the 'sec-wall --fork /path/to/config/dir is_https' command.
     """
+
     def run(self):
+        """ Runs the command. Overridden from the super-class.
+        """
+
         proxy_class = HTTPSProxy if self.is_https else HTTPProxy
         proxy_class(self.config_mod, self.app_ctx.get_object('wsse')).serve_forever()
 
@@ -212,6 +221,9 @@ class Stop(_Command):
     needs_config_mod = False
 
     def run(self):
+        """ Runs the command. Overridden from the super-class.
+        """
+
         zdaemon_conf = os.path.join(self.config_dir, 'zdaemon.conf')
         if not os.path.exists(zdaemon_conf):
             msg = 'No sec-wall processes are running in {0}.\n'.format(self.config_dir)
