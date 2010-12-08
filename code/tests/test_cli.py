@@ -219,5 +219,5 @@ class CommandTestCase(unittest.TestCase):
     def test_defaults(self):
         """ Tests the correct values of the default class-level objects.
         """
-        eq(cli._Command.needs_config_mod, True)
-        eq(cli._Command._config_marker, '.sec-wall-config')
+        eq_(cli._Command.needs_config_mod, True)
+        eq_(cli._Command._config_marker, '.sec-wall-config')
