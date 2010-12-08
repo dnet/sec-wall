@@ -215,3 +215,9 @@ class CommandTestCase(unittest.TestCase):
         # The 'run' method must be implemented by subclasses.
         command = cli._Command(self.test_dir, self.app_ctx, False)
         assert_raises(NotImplementedError, command.run)
+
+    def test_defaults(self):
+        """ Tests the correct values of the default class-level objects.
+        """
+        eq(cli._Command.needs_config_mod, True)
+        eq(cli._Command._config_marker, '.sec-wall-config')
