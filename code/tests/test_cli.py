@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-import glob, imp, os, tempfile, shutil, subprocess, unittest, uuid
+import glob, imp, itertools, os, tempfile, shutil, subprocess, unittest, uuid
 
 # nose
 from nose.tools import assert_raises, assert_true, eq_
@@ -232,6 +232,21 @@ class CommandTestCase(_BaseTestCase):
         command = cli._Command(self.test_dir, self.app_ctx, False)
         assert_raises(NotImplementedError, command.run)
 
+    def test_config_mod_missing(self):
+        """ A SystemExit should be raised when the config directory doesn't
+        contain a config marker file.
+        """
+        command = cli._Command(self.test_dir, self.app_ctx, False)
+        command.config_dir = tempfile.mkdtemp()
+
+        try:
+            command._get_config_mod()
+        except SystemExit, e:
+            return_code = e.args[0]
+            eq_(int(return_code), 3)
+        else:
+            raise Exception('Expected a SystemExit here')
+
 class InitTestCase(_BaseTestCase):
     """ Tests for the secwall.cli.Init class.
     """
@@ -294,3 +309,94 @@ class InitTestCase(_BaseTestCase):
         eq_(default_config['host'], 'http://' + instance_secret)
 
         eq_(urls, [('/*', default_config),])
+
+class StartTestCase(_BaseTestCase):
+    """ Tests for the secwall.cli.Start class.
+    """
+
+    def setUp(self):
+        self.app_ctx = ApplicationContext(app_context.SecWallContext())
+        self.test_dir = tempfile.mkdtemp(prefix='tmp-sec-wall-')
+
+        cli.Init(self.test_dir, self.app_ctx, False).run()
+
+    def test_run_invalid_server_type(self):
+        """ The config's server type is of invalid type (should be either 'http'
+        or 'https').
+        """
+        start = cli.Start(self.test_dir, self.app_ctx, False)
+        setattr(start.config_mod, 'server_type', uuid.uuid4().hex)
+
+        try:
+            start.run()
+        except SystemExit, e:
+            return_code = e.args[0]
+            eq_(int(return_code), 3)
+        else:
+            raise Exception('Expected a SystemExit here')
+
+    def test_missing_https_options(self):
+        """ Several crypto-related files must always be present if the config's
+        server_type is 'https'.
+        """
+
+        os.mkdir(os.path.join(self.test_dir, 'crypto'))
+
+        valid_combinations = [
+            os.path.join(self.test_dir, 'crypto', 'server-priv.pem'),
+            os.path.join(self.test_dir, 'crypto', 'server-cert.pem'),
+            os.path.join(self.test_dir, 'crypto', 'ca-cert.pem')
+        ]
+
+        for invalid_dimension in range(len(valid_combinations)):
+            invalid_combinations = list(itertools.combinations(valid_combinations, invalid_dimension))
+
+            for invalid_combination in invalid_combinations:
+                for file_name in invalid_combination:
+                    open(file_name, 'w')
+
+                start = cli.Start(self.test_dir, self.app_ctx, False)
+                setattr(start.config_mod, 'server_type', 'https')
+                try:
+                    start.run()
+                except SystemExit, e:
+                    return_code = e.args[0]
+                    eq_(int(return_code), 3)
+
+                    shutil.rmtree(os.path.join(self.test_dir, 'crypto'))
+                    os.mkdir(os.path.join(self.test_dir, 'crypto'))
+
+                else:
+                    msg = 'Expected a SystemExit here, invalid_combination=[{0}]'
+                    msg = msg.format(invalid_combination)
+                    raise Exception(msg)
+
+    def test_run_ok(self):
+        """ Tests whether starting a server off a valid config file works fine.
+        """
+        test_dir = self.test_dir
+
+        with Replacer() as r:
+            def _zdaemon_command(self, zdaemon_command, conf_file):
+                eq_(zdaemon_command, 'start')
+                eq_(conf_file, os.path.join(test_dir, 'zdaemon.conf'))
+
+            r.replace('secwall.cli.Start._zdaemon_command', _zdaemon_command)
+            start = cli.Start(self.test_dir, self.app_ctx, False)
+
+            setattr(start.config_mod, 'server_type', 'http')
+            start.run()
+
+            crypto_files = [
+                os.path.join(self.test_dir, 'crypto', 'server-priv.pem'),
+                os.path.join(self.test_dir, 'crypto', 'server-cert.pem'),
+                os.path.join(self.test_dir, 'crypto', 'ca-cert.pem')
+            ]
+
+            os.mkdir(os.path.join(self.test_dir, 'crypto'))
+
+            for name in crypto_files:
+                open(name, 'w')
+
+            setattr(start.config_mod, 'server_type', 'https')
+            start.run()
