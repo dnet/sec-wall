@@ -31,8 +31,6 @@ from nose.tools import assert_true, eq_
 
 # sec-wall
 from secwall.core import SecurityException
-
-# sec-wall
 from secwall.wsse import soap_date_time_format, soapenv_namespace, \
      soap_body_path, soap_body_xpath, wsse_namespace, wsu_namespace, \
      wss_namespaces, wsse_password_type_text, wsse_password_type_digest, \
@@ -41,6 +39,100 @@ from secwall.wsse import soap_date_time_format, soapenv_namespace, \
      wsse_password_path, wsse_password_xpath, wsse_password_type_path, \
      wsse_password_type_xpath, wsse_nonce_path, wsse_nonce_xpath, \
      wsu_username_created_path, wsu_username_created_xpath, WSSE
+
+raw_username = 'foo'
+raw_password = 'bar'
+
+base_config = {}
+base_config['wsse-pwd-username'] = raw_username
+base_config['wsse-pwd-password'] = raw_password
+base_config['wsse-pwd-reject-expiry-limit'] = 1200
+base_config['wsse-pwd-reject-empty-nonce-creation'] = True
+base_config['wsse-pwd-reject-stale-tokens'] = True
+base_config['wsse-pwd-password-digest'] = False
+base_config['wsse-pwd-nonce-freshness-time'] = 1
+
+def get_data(header=True, nonce=True, created=True, password_digest=True,
+             valid_password=True, valid_username=True, send_password_type=True,
+             supported_password_type=True):
+
+    if header:
+
+        wsse_username = '<wsse:Username>{0}</wsse:Username>'
+        wsse_password = '<wsse:Password Type="{password_type}">{password_value}</wsse:Password>'
+        wsu_created = '<wsu:Created>{0}</wsu:Created>'
+        wsse_nonce = '<wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">{0}</wsse:Nonce>'
+
+        if valid_username:
+            username = wsse_username.format(raw_username)
+        else:
+            username = wsse_username.format(uuid4().hex)
+
+        if nonce:
+            nonce_value = uuid4().hex.encode('base64')
+            nonce = wsse_nonce.format(nonce_value)
+        else:
+            nonce = ''
+
+        if created:
+            created_value = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime())
+            created_value += '.000Z'
+            created = wsu_created.format(created_value)
+        else:
+            created = ''
+
+        if password_digest:
+            if send_password_type:
+                if supported_password_type:
+                    password_type = wsse_password_type_digest
+                else:
+                    password_type = 'abcdef'
+            else:
+                password_type = ''
+            if valid_password:
+                password_value = raw_password
+            else:
+                password_value = uuid4().hex
+        else:
+            if send_password_type:
+                password_type = wsse_password_type_text
+            else:
+                password_type = ''
+            if valid_password:
+                password_value = wsse._get_digest(raw_password, nonce_value, created_value)
+            else:
+                password_value = wsse._get_digest(uuid4().hex, nonce_value, created_value)
+
+        password = wsse_password.format(password_type=password_type, password_value=password_value)
+
+        return """
+        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+          <soapenv:Header>
+            <wsse:Security soapenv:mustUnderstand="1" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+              <wsse:UsernameToken wsu:Id="UsernameToken-1" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+                {username}
+                {password}
+                {created}
+                {nonce}
+              </wsse:UsernameToken>
+            </wsse:Security>
+          </soapenv:Header>
+          <soapenv:Body>
+            <foo>
+              <bar>123</bar>
+            </foo>
+          </soapenv:Body>
+        </soapenv:Envelope>""".format(username=username, password=password,
+                                      created=created, nonce=nonce)
+    else:
+        return """
+          <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+            <soapenv:Body>
+              <foo>
+                <bar>123</bar>
+              </foo>
+            </soapenv:Body>
+          </soapenv:Envelope>"""
 
 def test_wsse_constants():
     eq_(soap_date_time_format, '%Y-%m-%dT%H:%M:%S.%fZ')
@@ -69,93 +161,20 @@ def test_wsse_constants():
     eq_(wsu_username_created_path, '/soapenv:Envelope/soapenv:Header/wsse:Security/wsse:UsernameToken/wsu:Created')
     eq_(wsu_username_created_xpath.path, '/soapenv:Envelope/soapenv:Header/wsse:Security/wsse:UsernameToken/wsu:Created')
 
-def test_wsse_auth():
+def test_replace_username_token_elem_ok():
+    """ Tests whether replacing the username token works fine.
+    """
+    wsse = WSSE()
+    soap = etree.fromstring(get_data(True))
 
-    raw_username = 'foo'
-    raw_password = 'bar'
+    wsse_password = wsse_password_xpath(soap)
+    old_elem, attr = wsse._replace_username_token_elem(soap, wsse_password, 'Type')
+    eq_(old_elem, raw_password)
 
-    def get_data(header=True, nonce=True, created=True, password_digest=True,
-                 valid_password=True, valid_username=True, send_password_type=True,
-                 supported_password_type=True):
-
-        if header:
-
-            wsse_username = '<wsse:Username>{0}</wsse:Username>'
-            wsse_password = '<wsse:Password Type="{password_type}">{password_value}</wsse:Password>'
-            wsu_created = '<wsu:Created>{0}</wsu:Created>'
-            wsse_nonce = '<wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">{0}</wsse:Nonce>'
-
-            if valid_username:
-                username = wsse_username.format(raw_username)
-            else:
-                username = wsse_username.format(uuid4().hex)
-
-            if nonce:
-                nonce_value = uuid4().hex.encode('base64')
-                nonce = wsse_nonce.format(nonce_value)
-            else:
-                nonce = ''
-
-            if created:
-                created_value = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime())
-                created_value += '.000Z'
-                created = wsu_created.format(created_value)
-            else:
-                created = ''
-
-            if password_digest:
-                if send_password_type:
-                    if supported_password_type:
-                        password_type = wsse_password_type_digest
-                    else:
-                        password_type = 'abcdef'
-                else:
-                    password_type = ''
-                if valid_password:
-                    password_value = raw_password
-                else:
-                    password_value = uuid4().hex
-            else:
-                if send_password_type:
-                    password_type = wsse_password_type_text
-                else:
-                    password_type = ''
-                if valid_password:
-                    password_value = wsse._get_digest(raw_password, nonce_value, created_value)
-                else:
-                    password_value = wsse._get_digest(uuid4().hex, nonce_value, created_value)
-
-            password = wsse_password.format(password_type=password_type, password_value=password_value)
-
-            return """
-            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-              <soapenv:Header>
-                <wsse:Security soapenv:mustUnderstand="1" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
-                  <wsse:UsernameToken wsu:Id="UsernameToken-1" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
-                    {username}
-                    {password}
-                    {created}
-                    {nonce}
-                  </wsse:UsernameToken>
-                </wsse:Security>
-              </soapenv:Header>
-              <soapenv:Body>
-                <foo>
-                  <bar>123</bar>
-                </foo>
-              </soapenv:Body>
-            </soapenv:Envelope>""".format(username=username, password=password,
-                                          created=created, nonce=nonce)
-        else:
-            return """
-              <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-                <soapenv:Body>
-                  <foo>
-                    <bar>123</bar>
-                  </foo>
-                </soapenv:Body>
-              </soapenv:Envelope>"""
-
+def test_replace_username_token_elem_missing_type():
+    """ Tests whether the expected exception is being raized while replacing
+    the username token which doesn't have the 'Type' attribute.
+    """
     wsse = WSSE()
     soap = etree.fromstring(get_data(True))
 
@@ -177,12 +196,21 @@ def test_wsse_auth():
     else:
         raise Exception('A SecurityException was expected here')
 
+def test_get_digest():
+    """ Checks whether computing the digest works fine.
+    """
+    wsse = WSSE()
+
     # _get_digest
     nonce = 'NTA5OTA3YTk4Zjk5NGVhYWJhNTZkMTVkZGIzZjM2NzY=\n'
     digest = wsse._get_digest(raw_password, nonce, '2010-12-03T20:13:10.602Z')
     eq_(digest, 'OGhlMsnX6G7l859oktI6dUBfSjs=')
 
-    # error
+def test_error():
+    """ Checks whether raising exceptions works fine.
+    """
+    wsse = WSSE()
+
     description = uuid4().hex
     elem = '/foo/bar/baz'
 
@@ -200,11 +228,43 @@ def test_wsse_auth():
     else:
         raise Exception('A SecurityException was expected here')
 
+def test_nonce_default_unique():
+    """ By default every nonce is considered to be unique and wsse.check_nonce
+    should always return False, regardless of the input data.
+    """
+    wsse = WSSE()
+
     dummy1, dummy, dummy3 = range(3)
     eq_(wsse.check_nonce(dummy1, dummy, dummy3), False)
 
-    # on_invalid_username, on_invalid_password, on_username_token_expired,
-    # on_nonce_non_unique
+def test_nonce_not_unique():
+    """ Subclasses of secwall.wsse.WSSE are free to override the 'check_nonce'.
+    This particular subclass always returns True.
+    """
+
+    class _WSSE(WSSE):
+        """ Simulates a subclass that actually validates used nonces.
+        """
+        def check_nonce(*ignored):
+            return True
+
+    wsse2 = _WSSE()
+    data = get_data()
+    config = copy.deepcopy(base_config)
+
+    try:
+        wsse2.validate(etree.fromstring(data), config)
+    except SecurityException, e:
+        eq_(len(e.description), 67)
+        assert_true(e.description.startswith('Nonce ['))
+        assert_true(e.description.endswith('] is not unique'))
+    else:
+        raise Exception('A SecurityException was expected here')
+
+def test_invalid_input():
+    """ Tests whether correct exceptions are being raised on invalid input.
+    """
+    wsse = WSSE()
 
     # a list of [method, how_many_param_sit_needs, description] elements
     test_data = [
@@ -224,15 +284,13 @@ def test_wsse_auth():
             msg = 'A SecurityException was expected here, meth={0}'.format(meth)
             raise Exception(msg)
 
-    # validate
-    base_config = {}
-    base_config['wsse-pwd-username'] = raw_username
-    base_config['wsse-pwd-password'] = raw_password
-    base_config['wsse-pwd-reject-expiry-limit'] = 1200
-    base_config['wsse-pwd-reject-empty-nonce-creation'] = True
-    base_config['wsse-pwd-reject-stale-tokens'] = True
-    base_config['wsse-pwd-password-digest'] = False
-    base_config['wsse-pwd-nonce-freshness-time'] = 1
+def test_validate_invalid_input():
+    """ Tests whether validating with invalid input data raises expected
+    exceptions.
+    """
+
+    wsse = WSSE()
+    soap = etree.fromstring(get_data(True))
 
     def _check_validate(data, expected):
         config = copy.deepcopy(base_config)
@@ -271,22 +329,3 @@ def test_wsse_auth():
 
     for data, config in test_data:
         _check_validate(data, config)
-
-    class _WSSE(WSSE):
-        """ Simulates a subclass that actually validates used nonces.
-        """
-        def check_nonce(*ignored):
-            return True
-
-    wsse2 = _WSSE()
-    data = get_data()
-    config = copy.deepcopy(base_config)
-
-    try:
-        wsse2.validate(etree.fromstring(data), config)
-    except SecurityException, e:
-        eq_(len(e.description), 67)
-        assert_true(e.description.startswith('Nonce ['))
-        assert_true(e.description.endswith('] is not unique'))
-    else:
-        raise Exception('A SecurityException was expected here')
