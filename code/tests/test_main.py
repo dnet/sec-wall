@@ -20,13 +20,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-import copy, uuid
+import argparse, copy, tempfile, uuid
 
 # nose
 from nose.tools import assert_true, eq_
 
+# textfixtures
+from testfixtures import Replacer
+
+# Spring Python
+from springpython.context import ApplicationContext
+
 # sec-wall
-from secwall import core, main
+from secwall import core, main, app_context
 
 def test_global():
     """ Checks global constants.
@@ -96,3 +102,63 @@ def test_parser():
         expected_actions.remove(action.dest)
 
     eq_(len(expected_actions), 0, expected_actions)
+
+def test_name_main():
+    """ Tests the main module's behaviour when run directly.
+    """
+    if main.__file__.endswith('pyc'):
+        main_file = main.__file__[:-1]
+    else:
+        main_file = main.__file__
+
+    # A SystemExit is expected below because no command line arguments are given.
+    try:
+        d = {'__name__': '__main__'}
+        execfile(main_file, d)
+    except SystemExit:
+        pass
+    else:
+        raise Exception('Expected a SystemExit here')
+
+def test_main():
+    """ Tests the behaviour of the main module's function which is invoked
+    when the module's being rung directly, from the command line or using
+    python -m switch.
+    """
+    base_args = {'fork':None, 'init':None, 'start':None, 'stop':None}
+
+    for arg in base_args:
+        for expected_is_https in ('1', '0'):
+
+            args = copy.deepcopy(base_args)
+            expected_config_dir = tempfile.mkdtemp()
+
+            if arg == 'fork':
+                args['fork'] = (expected_config_dir, expected_is_https)
+            else:
+                args[arg] = expected_config_dir
+
+            with Replacer() as r:
+
+                class _DummyParser(object):
+                    def parse_args(*ignored_args, **ignored_kwargs):
+                        return argparse.Namespace(**args)
+
+                class _DummyCommand(object):
+                    def __init__(self, config_dir, app_ctx, is_https):
+                        eq_(config_dir, expected_config_dir)
+                        assert_true(isinstance(app_ctx, ApplicationContext))
+
+                        if arg == 'fork':
+                            eq_(is_https, expected_is_https)
+
+                    def run(self):
+                        pass
+
+                r.replace('secwall.main.get_parser', _DummyParser)
+                r.replace('secwall.cli.Init', _DummyCommand)
+                r.replace('secwall.cli.Start', _DummyCommand)
+                r.replace('secwall.cli.Stop', _DummyCommand)
+                r.replace('secwall.cli.Fork', _DummyCommand)
+
+                main.run()
