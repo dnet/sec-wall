@@ -70,12 +70,12 @@ def get_parser():
 
     return parser
 
-def main():
+def run():
     parser = get_parser()
     args = parser.parse_args()
 
-    # Using a mutually exclusive group above gurantees that we'll have exactly
-    # one option to pick here.
+    # Using a mutually exclusive group in 'get_parser' gurantees that we'll have
+    # exactly one option to pick here.
     command, config_info = [(k, v) for k, v in args._get_kwargs() if v][0]
     if command == 'fork':
         config_dir, is_https = config_info
@@ -91,4 +91,4 @@ def main():
     handler_class(config_dir, app_ctx, is_https).run()
 
 if __name__ == '__main__':
-    main()
+    run()
