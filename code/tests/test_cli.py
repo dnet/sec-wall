@@ -35,7 +35,7 @@ from mock import Mock, mocksignature, patch
 from springpython.context import ApplicationContext
 
 # sec-wall
-from secwall import app_context, cli
+from secwall import app_context, cli, server
 
 class _BaseTestCase(unittest.TestCase):
     """ A base class for all CLI-related test cases.
@@ -400,3 +400,24 @@ class StartTestCase(_BaseTestCase):
 
             setattr(start.config_mod, 'server_type', 'https')
             start.run()
+
+class ForkTestCase(_BaseTestCase):
+    """ Tests for the secwall.cli.Fork class.
+    """
+
+    def setUp(self):
+        self.app_ctx = ApplicationContext(app_context.SecWallContext())
+        self.test_dir = tempfile.mkdtemp(prefix='tmp-sec-wall-')
+
+        cli.Init(self.test_dir, self.app_ctx, False).run()
+
+    def test_run(self):
+        """ Tests whether running the command works fine.
+        """
+        with patch.object(server.HTTPProxy, 'serve_forever') as mock_method:
+            fork = cli.Fork(self.test_dir, self.app_ctx, False)
+            fork.run()
+
+        with patch.object(server.HTTPSProxy, 'serve_forever') as mock_method:
+            fork = cli.Fork(self.test_dir, self.app_ctx, True)
+            fork.run()
