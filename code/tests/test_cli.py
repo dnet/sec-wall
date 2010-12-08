@@ -408,7 +408,6 @@ class ForkTestCase(_BaseTestCase):
     def setUp(self):
         self.app_ctx = ApplicationContext(app_context.SecWallContext())
         self.test_dir = tempfile.mkdtemp(prefix='tmp-sec-wall-')
-
         cli.Init(self.test_dir, self.app_ctx, False).run()
 
     def test_run(self):
@@ -421,3 +420,43 @@ class ForkTestCase(_BaseTestCase):
         with patch.object(server.HTTPSProxy, 'serve_forever') as mock_method:
             fork = cli.Fork(self.test_dir, self.app_ctx, True)
             fork.run()
+
+
+class StopTestCase(_BaseTestCase):
+    """ Tests for the secwall.cli.Stop class.
+    """
+    def setUp(self):
+        self.app_ctx = ApplicationContext(app_context.SecWallContext())
+        self.test_dir = tempfile.mkdtemp(prefix='tmp-sec-wall-')
+
+    def test_run_ok(self):
+        """ Tests whether running the command with all files in their expected
+        locations.
+        """
+
+        test_dir = self.test_dir
+        open(os.path.join(self.test_dir, 'zdaemon.conf'), 'w')
+
+        with Replacer() as r:
+            def _zdaemon_command(self, zdaemon_command, conf_file):
+                eq_(zdaemon_command, 'stop')
+                eq_(conf_file, os.path.join(test_dir, 'zdaemon.conf'))
+
+            r.replace('secwall.cli.Stop._zdaemon_command', _zdaemon_command)
+
+            stop = cli.Stop(self.test_dir, self.app_ctx, False)
+            stop.run()
+
+    def test_run_zdaemon_conf_missing(self):
+        """ Running the command with the 'zdaemon.conf' file missing should
+        result in a SystemExit being raised.
+        """
+        stop = cli.Stop(self.test_dir, self.app_ctx, False)
+
+        try:
+            stop.run()
+        except SystemExit, e:
+            return_code = e.args[0]
+            eq_(int(return_code), 3)
+        else:
+            raise Exception('Expected a SystemExit here')
