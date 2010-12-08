@@ -237,7 +237,7 @@ class CommandTestCase(_BaseTestCase):
         contain a config marker file.
         """
         command = cli._Command(self.test_dir, self.app_ctx, False)
-        command.config_dir = tempfile.mkdtemp()
+        command.config_dir = tempfile.mkdtemp(prefix=self.temp_dir_prefix)
 
         try:
             command._get_config_mod()
