@@ -52,9 +52,9 @@ base_config['wsse-pwd-reject-stale-tokens'] = True
 base_config['wsse-pwd-password-digest'] = False
 base_config['wsse-pwd-nonce-freshness-time'] = 1
 
-def get_data(header=True, nonce=True, created=True, password_digest=True,
-             valid_password=True, valid_username=True, send_password_type=True,
-             supported_password_type=True):
+def get_data(header=True, username=True, nonce=True, created=True,
+             password_digest=False, valid_password=True, valid_username=True,
+             send_password_type=True, supported_password_type=True):
 
     if header:
 
@@ -63,10 +63,13 @@ def get_data(header=True, nonce=True, created=True, password_digest=True,
         wsu_created = '<wsu:Created>{0}</wsu:Created>'
         wsse_nonce = '<wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">{0}</wsse:Nonce>'
 
-        if valid_username:
-            username = wsse_username.format(raw_username)
+        if username:
+            if valid_username:
+                username = wsse_username.format(raw_username)
+            else:
+                username = wsse_username.format(uuid4().hex)
         else:
-            username = wsse_username.format(uuid4().hex)
+            username = ''
 
         if nonce:
             nonce_value = uuid4().hex.encode('base64')
@@ -80,6 +83,7 @@ def get_data(header=True, nonce=True, created=True, password_digest=True,
             created = wsu_created.format(created_value)
         else:
             created = ''
+            created_value = ''
 
         if password_digest:
             if send_password_type:
@@ -89,19 +93,26 @@ def get_data(header=True, nonce=True, created=True, password_digest=True,
                     password_type = 'abcdef'
             else:
                 password_type = ''
-            if valid_password:
-                password_value = raw_password
-            else:
-                password_value = uuid4().hex
-        else:
-            if send_password_type:
-                password_type = wsse_password_type_text
-            else:
-                password_type = ''
+
+            wsse = WSSE()
+
             if valid_password:
                 password_value = wsse._get_digest(raw_password, nonce_value, created_value)
             else:
                 password_value = wsse._get_digest(uuid4().hex, nonce_value, created_value)
+
+        else:
+            if send_password_type:
+                if supported_password_type:
+                    password_type = wsse_password_type_text
+                else:
+                    password_type = 'abcdef'
+            else:
+                password_type = ''
+            if valid_password:
+                password_value = raw_password
+            else:
+                password_value = uuid4().hex
 
         password = wsse_password.format(password_type=password_type, password_value=password_value)
 
@@ -165,7 +176,7 @@ def test_replace_username_token_elem_ok():
     """ Tests whether replacing the username token works fine.
     """
     wsse = WSSE()
-    soap = etree.fromstring(get_data(True))
+    soap = etree.fromstring(get_data())
 
     wsse_password = wsse_password_xpath(soap)
     old_elem, attr = wsse._replace_username_token_elem(soap, wsse_password, 'Type')
@@ -290,7 +301,7 @@ def test_validate_invalid_input():
     """
 
     wsse = WSSE()
-    soap = etree.fromstring(get_data(True))
+    soap = etree.fromstring(get_data())
 
     def _check_validate(data, expected):
         config = copy.deepcopy(base_config)
@@ -301,12 +312,15 @@ def test_validate_invalid_input():
         except SecurityException, e:
             eq_(e.description, expected)
         else:
-            msg = 'A SecurityException was expected here, config=[{0}]'.format(config)
+            msg = 'A SecurityException was expected here, config=[{0}], expected=[{1}]'.format(config, expected)
             raise Exception(msg)
 
     test_data = [
             # Empty nonce creation time is given on input but config forbids it.
             [get_data(created=False), 'Both nonce and creation timestamp must be given'],
+
+            # No username.
+            [get_data(username=False), 'No username sent. Element [/soapenv:Envelope/soapenv:Header/wsse:Security/wsse:UsernameToken/wsse:Username] doesn\'t exist'],
 
             # Invalid username.
             [get_data(valid_username=False), 'Invalid username or password'],
@@ -329,3 +343,33 @@ def test_validate_invalid_input():
 
     for data, config in test_data:
         _check_validate(data, config)
+
+def test_reject_expiry_limit():
+    """ Tests whether expired messages are being rejected on validation.
+    """
+    soap = etree.fromstring(get_data())
+    config = copy.deepcopy(base_config)
+    config['wsse-pwd-reject-expiry-limit'] = 0.001
+
+    # Make sure the message expires.
+    time.sleep(1)
+
+    wsse = WSSE()
+
+    try:
+        wsse.validate(soap, config)
+    except SecurityException, e:
+        eq_(e.description, 'UsernameToken has expired')
+    else:
+        raise Exception('A SecurityException was expected here')
+
+def test_validate_password_digest_ok():
+    """ Successfully validates a message whose password is of type PasswordDigest.
+    """
+    soap = etree.fromstring(get_data(password_digest=True))
+    config = copy.deepcopy(base_config)
+    config['wsse-pwd-password-digest'] = True
+
+    wsse = WSSE()
+    return_value = wsse.validate(soap, config)
+    eq_(return_value, True)

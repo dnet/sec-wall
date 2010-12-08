@@ -156,18 +156,14 @@ class WSSE(object):
         wsse_password = wsse_password_xpath(soap)
         if wsse_password:
             wsse_password, wsse_password_type = self._replace_username_token_elem(soap, wsse_password, 'Type')
-        else:
-            wsse_password_type = None
 
         wsse_nonce = wsse_nonce_xpath(soap)
         if wsse_nonce:
             wsse_nonce, wsse_encoding_type = self._replace_username_token_elem(soap, wsse_nonce, 'EncodingType')
-        else:
-            wsse_encoding_type = None
 
         wsse_username = wsse_username_xpath(soap)
         if not wsse_username:
-            self.error('No username sent', soap, wsse_username_path)
+            self.error('No username sent', wsse_username_path, soap)
 
         wsse_username = wsse_username[0].text
 
