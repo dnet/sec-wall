@@ -33,36 +33,39 @@ from springpython.context import ApplicationContext
 from secwall import app_context, cli
 from secwall.core import version
 
-if __name__ == '__main__':
+description = 'sec-wall {0}- A feature packed high-performance security proxy'.format(version)
 
-    class MyFormatter(argparse.ArgumentDefaultsHelpFormatter):
-        """ A nicer help formatter, setting 'max_help_position' to that value
-        ensures the help doesn't span multiple lines in an awkward way.
+init_help = 'Initializes a config directory'
+start_help = 'Starts sec-wall in the given directory'
+stop_help = 'Stops a sec-wall instance running in the given directory'
+fork_help = "Starts one of the sec-wall's subprocesses"
+
+class MyFormatter(argparse.ArgumentDefaultsHelpFormatter):
+    """ A nicer help formatter, setting 'max_help_position' to that value
+    ensures the help doesn't span multiple lines in an awkward way.
+    """
+    def __init__(self, **kwargs):
+        super(MyFormatter, self).__init__(max_help_position=35, **kwargs)
+
+    def _get_help_string(self, action):
+        """ Overridden from the super-class to prevent showing of defaults,
+        as there are no default values.
         """
-        def __init__(self, **kwargs):
-            super(MyFormatter, self).__init__(max_help_position=35, **kwargs)
+        return action.help
 
-        def _get_help_string(self, action):
-            """ Overridden from the super-class to prevent showing of defaults,
-            as there are no default values.
-            """
-            return action.help
-
-    description = 'sec-wall {0}- A feature packed high-performance security proxy'.format(version)
-
-    init_help = 'Initializes a config directory'
-    start_help = 'Starts sec-wall in a given directory'
-    stop_help = 'Stops a sec-wall instance running in a given directory'
-    subprocess_help = "Starts one of the sec-wall's subprocesses"
-
+def get_parser():
     parser = argparse.ArgumentParser(prog='sec-wall', description=description,
                                      formatter_class=MyFormatter)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--init', help=init_help)
     group.add_argument('--start', help=start_help)
     group.add_argument('--stop', help=stop_help)
-    group.add_argument('--fork', help=subprocess_help, nargs=2, metavar=('config_dir', 'is_https'))
+    group.add_argument('--fork', help=fork_help, nargs=2, metavar=('config_dir', 'is_https'))
 
+    return parser
+
+def main():
+    parser = get_parser()
     args = parser.parse_args()
 
     # Using a mutually exclusive group above gurantees that we'll have exactly
@@ -80,3 +83,6 @@ if __name__ == '__main__':
 
     handler_class = getattr(cli, command.capitalize())
     handler_class(config_dir, app_ctx, is_https).run()
+
+if __name__ == '__main__':
+    main()
