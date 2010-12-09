@@ -36,10 +36,11 @@ from secwall.core import SecurityException
 class _RequestApp(object):
     """ A WSGI application executed on each request.
     """
-    def __init__(self, config=None, wsse=None):
+    def __init__(self, config=None, app_ctx=None):
         self.config = config
         self.urls_compiled = []
-        self.wsse = wsse
+        self.app_ctx = app_ctx
+        self.wsse = self.app_ctx.get_object('wsse')
 
         for url_pattern, url_config in self.config.urls:
             self.urls_compiled.append((re.compile(url_pattern), url_config))
@@ -109,15 +110,13 @@ class _RequestApp(object):
 
         if config_type in('basic-auth', 'wsse-pwd'):
             header_value = header_value.format(realm=url_config[config_type + '-' + 'realm'])
-        elif config_type == 'digest-auth':
-            raise NotImplemented()
 
         return header_value
 
-    def _response(self, start_response, code, headers, response):
+    def _response(self, start_response, code_status, headers, response):
         """ Actually return the response to the client.
         """
-        start_response(code, headers)
+        start_response(code_status, headers)
         return [response]
 
     def _401(self, start_response, www_auth):
@@ -193,6 +192,26 @@ class _RequestApp(object):
             return False
         else:
             return ok
+
+    def _on_basic_auth(self):
+        """ Handles HTTP Basic Authentication.
+        """
+        raise NotImplementedError()
+
+    def _on_digest_auth(self):
+        """ Handles HTTP Digest Authentication.
+        """
+        raise NotImplementedError()
+
+    def _on_custom_http(self):
+        """ Handles the authentication based on custom HTTP headers.
+        """
+        raise NotImplementedError()
+
+    def _on_xpath(self):
+        """ Handles the authentication based on XPath expressions.
+        """
+        raise NotImplementedError()
 
 class _RequestHandler(pywsgi.WSGIHandler):
     """ A subclass which conveniently exposes a client SSL/TLS certificate
