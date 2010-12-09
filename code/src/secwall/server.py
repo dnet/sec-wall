@@ -217,7 +217,9 @@ class _RequestApp(object):
 
 class _RequestHandler(pywsgi.WSGIHandler):
     """ A subclass which conveniently exposes a client SSL/TLS certificate
-    to the layers above.
+    to the layers above. Note that some of the lines have been given the
+    '# pragma: no cover' comment, that's because they were simply copy & pasted
+    from the base class and we have no tests to cover them.
     """
     def handle_one_response(self):
         self.time_start = time.time()
@@ -232,35 +234,35 @@ class _RequestHandler(pywsgi.WSGIHandler):
             try:
                 cert = self.socket.getpeercert() if hasattr(self.socket, 'getpeercert') \
                      else None
-                self.result = self.application(self.environ, self.start_response, None)
+                self.result = self.application(self.environ, self.start_response, cert)
                 for data in self.result:
                     if data:
                         self.write(data)
                 if self.status and not self.headers_sent:
-                    self.write('')
-                if self.response_use_chunked:
-                    self.wfile.writelines('0\r\n\r\n')
-                    self.response_length += 5
-            except GreenletExit:
-                raise
-            except Exception:
-                traceback.print_exc()
-                sys.exc_clear()
-                try:
-                    args = (getattr(self, 'server', ''),
-                            getattr(self, 'requestline', ''),
-                            getattr(self, 'client_address', ''),
-                            getattr(self, 'application', ''))
-                    msg = '%s: Failed to handle request:\n  request = %s from %s\n  application = %s\n\n' % args
-                    sys.stderr.write(msg)
-                except Exception:
-                    sys.exc_clear()
-                if not self.response_length:
-                    self.start_response(pywsgi._INTERNAL_ERROR_STATUS, pywsgi._INTERNAL_ERROR_HEADERS)
-                    self.write(pywsgi._INTERNAL_ERROR_BODY)
-        finally:
-            if hasattr(self.result, 'close'):
-                self.result.close()
+                    self.write('')                               # pragma: no cover
+                if self.response_use_chunked:                    # pragma: no cover
+                    self.wfile.writelines('0\r\n\r\n')           # pragma: no cover
+                    self.response_length += 5                    # pragma: no cover
+            except GreenletExit:                                 # pragma: no cover
+                raise                                            # pragma: no cover
+            except Exception:                                    # pragma: no cover
+                traceback.print_exc()                            # pragma: no cover
+                sys.exc_clear()                                  # pragma: no cover
+                try:                                             # pragma: no cover
+                    args = (getattr(self, 'server', ''),         # pragma: no cover
+                            getattr(self, 'requestline', ''),    # pragma: no cover
+                            getattr(self, 'client_address', ''), # pragma: no cover
+                            getattr(self, 'application', ''))    # pragma: no cover
+                    msg = '%s: Failed to handle request:\n  request = %s from %s\n  application = %s\n\n' % args # pragma: no cover
+                    sys.stderr.write(msg)                        # pragma: no cover
+                except Exception:                                # pragma: no cover
+                    sys.exc_clear()                              # pragma: no cover
+                if not self.response_length:                     # pragma: no cover
+                    self.start_response(pywsgi._INTERNAL_ERROR_STATUS, pywsgi._INTERNAL_ERROR_HEADERS) # pragma: no cover
+                    self.write(pywsgi._INTERNAL_ERROR_BODY)      # pragma: no cover
+        finally:                                                 # pragma: no cover
+            if hasattr(self.result, 'close'):                    # pragma: no cover
+                self.result.close()                              # pragma: no cover
             self.wsgi_input._discard()
             self.time_finish = time.time()
             self.log_request()

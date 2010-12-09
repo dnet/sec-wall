@@ -672,3 +672,83 @@ class HTTPSProxyTestCase(unittest.TestCase):
 
             proxy = server.HTTPSProxy(_config, _app_ctx)
             proxy.handle(_socket, _address)
+
+class HTTPRequestHandlerTestCase(unittest.TestCase):
+    """ Tests related to the the secwall.server._HTTPRequestHandler class,
+    a custom subclass of gevent.pywsgi.WSGIHandler which adds support for fetching
+    client certificates and passing them to a WSGI application.
+    """
+    def test_handle_one_response_certs(self):
+        """ Tests whether the overridden method returns client certificates.
+        """
+        for _cert in True, False:
+            _data = uuid.uuid4().hex
+            _env = {uuid.uuid4().hex:uuid.uuid4().hex}
+
+            class _Socket(object):
+                def __init__(self):
+                    # Dynamicall create the 'getpeercert' method depending on
+                    # whether in this iteration the client cert should be
+                    # returned or not.
+                    if _cert:
+                        def getpeercert():
+                            return _cert
+                        self.getpeercert = getpeercert
+
+                def makefile(*ignored_args, **ignored_kwargs):
+                    pass
+
+            class _WSGIInput(object):
+                def _discard(*ignored_args, **ignored_kwargs):
+                    pass
+
+            class _Server(object):
+                def __init__(self, *ignored_args, **ignored_kwargs):
+                    class _Log(object):
+                        def write(*ignored_args, **ignored_kwargs):
+                            pass
+                    self.log = _Log()
+
+            class _RequestApp(object):
+                def __init__(self, config, app_ctx):
+                    pass
+
+                def __call__(self, environ, start_response, client_cert):
+                    eq_(sorted(environ.items()), sorted(_env.items()))
+
+                    expected_cert = _cert if _cert else None
+                    eq_(client_cert, expected_cert)
+
+                    start_response('200 OK', {})
+                    return [_data]
+
+            class _WFile(object):
+                def __init__(self):
+                    self.data = ''
+
+                def writelines(self, data):
+                    for datum in data:
+                        self.data += datum
+
+            _socket = _Socket()
+            _server = _Server()
+            _address = uuid.uuid4().hex
+            _config = {}
+
+            handler = server._RequestHandler(_socket, _address, _server)
+            handler.application = _RequestApp(_config, app_ctx)
+            handler.environ = _env
+            handler.wsgi_input = _WSGIInput()
+            handler.requestline = uuid.uuid4().hex
+            handler.request_version = uuid.uuid4().hex
+            handler.wfile = _WFile()
+            handler.status = True
+            handler.headers_sent = False
+            handler.response_use_chunked = True
+
+            handler.handle_one_response()
+
+            # This will be equal to the expected value only if the
+            # handler.application.__call__ above will have been succeeded.
+            assert_true(handler.wfile.data.startswith(handler.request_version + ' ' + '200 OK'),
+                        (handler.request_version, handler.wfile.data))
