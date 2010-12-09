@@ -48,6 +48,7 @@ def test_app_context():
     eq_(ctx.get_object('not_authorized'), ['401 Not Authorized', 'text/plain', str('You are not authorized to access this resource')])
     eq_(ctx.get_object('forbidden'), ['403 Forbidden', 'text/plain', str('You are not allowed to access this resource')])
     eq_(ctx.get_object('no_url_match'), ['404 Not Found', 'text/plain', str('Not Found')])
+    eq_(ctx.get_object('internal_server_error'), ['500 Internal Server Error', 'text/plain', str('Internal Server Error')])
     eq_(ctx.get_object('validation_precedence'), ['ssl-cert', 'basic-auth', 'digest-auth', 'wsse-pwd', 'custom-http', 'xpath'])
     eq_(ctx.get_object('client_cert_401_www_auth'), 'Transport mode="tls-client-certificate"')
     eq_(ctx.get_object('syslog_host'), '127.0.0.1')

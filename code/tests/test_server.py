@@ -42,6 +42,10 @@ class _DummyConfig(object):
         self.no_url_match = app_ctx.get_object('no_url_match')
         self.client_cert_401_www_auth = app_ctx.get_object('client_cert_401_www_auth')
         self.validation_precedence = app_ctx.get_object('validation_precedence')
+        self.not_authorized = app_ctx.get_object('not_authorized')
+        self.forbidden = app_ctx.get_object('forbidden')
+        self.no_url_match = app_ctx.get_object('no_url_match')
+        self.internal_server_error = app_ctx.get_object('internal_server_error')
 
 class _DummyCertInfo(object):
     pass
@@ -153,7 +157,7 @@ class RequestAppTestCase(unittest.TestCase):
 
                     def _x_start_response(code_status, headers):
                         if config_type == invalid_auth_type:
-                            eq_(code_status, '500')
+                            eq_(code_status, '500 Internal Server Error')
                         else:
                             eq_(code_status, _code + ' ' + _status)
                             eq_(sorted(headers), sorted(_headers.items()))
@@ -237,3 +241,114 @@ class RequestAppTestCase(unittest.TestCase):
 
                         finally:
                             wsgi_input.close()
+
+    def test_get_www_auth(self):
+        """ Tests the correctness of returning a value of the WWW-Authenticate
+        header.
+        """
+        basic_auth_realm = uuid.uuid4().hex
+        wsse_pwd_realm = uuid.uuid4().hex
+        url_config = {'basic-auth-realm':basic_auth_realm, 'wsse-pwd-realm':wsse_pwd_realm}
+
+        expected = {
+            'ssl-cert': self.config.client_cert_401_www_auth,
+            'basic-auth': 'Basic realm="{0}"'.format(basic_auth_realm),
+            'digest-auth': 'TODO',
+            'wsse-pwd': 'WSSE realm="{0}", profile="UsernameToken"'.format(wsse_pwd_realm),
+            'custom-http': 'custom-http',
+            'xpath': 'xpath'
+        }
+
+        req_app = server._RequestApp(self.config, app_ctx)
+
+        for config_type in app_ctx.get_object('validation_precedence'):
+            value = req_app._get_www_auth(url_config, config_type)
+            eq_(value, expected[config_type])
+
+    def test_get_www_auth(self):
+        """ Tests the '_response' method.
+        """
+        _code_status, _headers, _response = (uuid.uuid4().hex for x in range(3))
+
+        def _start_response(code_status, headers):
+            eq_(code_status, _code_status)
+            eq_(headers, _headers)
+
+        req_app = server._RequestApp(self.config, app_ctx)
+
+        response = req_app._response(_start_response, _code_status, _headers, _response)
+        eq_(response, [_response])
+
+    def test_401(self):
+        """ Tests the '_401' method.
+        """
+        www_auth = uuid.uuid4().hex
+
+        _code_status, _content_type, _description = app_ctx.get_object('not_authorized')
+
+        with Replacer() as r:
+
+            def _response(self, start_response, code_status, headers, response):
+                eq_(start_response, _start_response)
+                eq_(code_status, _code_status)
+                eq_(sorted(headers), [('Content-Type', _content_type), ('WWW-Authenticate', www_auth)])
+                eq_(response, _description)
+
+            r.replace('secwall.server._RequestApp._response', _response)
+
+            req_app = server._RequestApp(self.config, app_ctx)
+            req_app._401(_start_response, www_auth)
+
+    def test_403(self):
+        """ Tests the '_403' method.
+        """
+        _code_status, _content_type, _description = app_ctx.get_object('forbidden')
+
+        with Replacer() as r:
+
+            def _response(self, start_response, code_status, headers, response):
+                eq_(start_response, _start_response)
+                eq_(code_status, _code_status)
+                eq_(sorted(headers), [('Content-Type', _content_type)])
+                eq_(response, _description)
+
+            r.replace('secwall.server._RequestApp._response', _response)
+
+            req_app = server._RequestApp(self.config, app_ctx)
+            req_app._403(_start_response)
+
+    def test_404(self):
+        """ Tests the '_404' method.
+        """
+        _code_status, _content_type, _description = app_ctx.get_object('no_url_match')
+
+        with Replacer() as r:
+
+            def _response(self, start_response, code_status, headers, response):
+                eq_(start_response, _start_response)
+                eq_(code_status, _code_status)
+                eq_(sorted(headers), [('Content-Type', _content_type)])
+                eq_(response, _description)
+
+            r.replace('secwall.server._RequestApp._response', _response)
+
+            req_app = server._RequestApp(self.config, app_ctx)
+            req_app._404(_start_response)
+
+    def test_500(self):
+        """ Tests the '_500' method.
+        """
+        _code_status, _content_type, _description = app_ctx.get_object('internal_server_error')
+
+        with Replacer() as r:
+
+            def _response(self, start_response, code_status, headers, response):
+                eq_(start_response, _start_response)
+                eq_(code_status, _code_status)
+                eq_(sorted(headers), [('Content-Type', _content_type)])
+                eq_(response, _description)
+
+            r.replace('secwall.server._RequestApp._response', _response)
+
+            req_app = server._RequestApp(self.config, app_ctx)
+            req_app._500(_start_response)

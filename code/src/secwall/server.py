@@ -98,6 +98,8 @@ class _RequestApp(object):
                               response)
 
     def _get_www_auth(self, url_config, config_type):
+        """ Returns a value of the WWW-Authenticate header to use upon a 401 error.
+        """
         www_auth = {
             'ssl-cert': self.config.client_cert_401_www_auth,
             'basic-auth': 'Basic realm="{realm}"',
@@ -114,7 +116,7 @@ class _RequestApp(object):
         return header_value
 
     def _response(self, start_response, code_status, headers, response):
-        """ Actually return the response to the client.
+        """ Actually returns the response to the client.
         """
         start_response(code_status, headers)
         return [response]
@@ -142,7 +144,7 @@ class _RequestApp(object):
     def _500(self, start_response):
         """ 500 Internal Server Error
         """
-        code, content_type, description = '500', 'text/plain', 'Internal Server Error'
+        code, content_type, description = self.config.internal_server_error
         return self._response(start_response, code, [('Content-Type', content_type)], description)
 
     def _on_ssl_cert(self, env, url_config, client_cert, data):

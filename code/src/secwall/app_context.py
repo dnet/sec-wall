@@ -109,6 +109,13 @@ class SecWallContext(PythonConfig):
         return ['404 Not Found', 'text/plain', str('Not Found')]
 
     @Object
+    def internal_server_error(self):
+        """ HTTP code, the content type and a user friendly description
+        for 500 error.
+        """
+        return ['500 Internal Server Error', 'text/plain', str('Internal Server Error')]
+
+    @Object
     def validation_precedence(self):
         """ The order of types of security configuration. If there's more than
         one configuration for the given URL, only one will be used and it will
