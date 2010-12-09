@@ -34,6 +34,15 @@ from springpython.context import ApplicationContext
 # sec-wall
 from secwall import app_context, server
 
+client_cert = {'notAfter': 'May  8 23:59:59 2019 GMT',
+ 'subject': ((('serialNumber', '12345678'),),
+             (('countryName', 'US'),),
+             (('postalCode', '12345'),),
+             (('stateOrProvinceName', 'California'),),
+             (('localityName', 'Mountain View'),),
+             (('organizationName', 'Foobar, Inc.'),),
+             (('commonName', 'foobar-baz'),))}
+
 app_ctx = ApplicationContext(app_context.SecWallContext())
 
 class _DummyConfig(object):
@@ -352,3 +361,103 @@ class RequestAppTestCase(unittest.TestCase):
 
             req_app = server._RequestApp(self.config, app_ctx)
             req_app._500(_start_response)
+
+    def test_ssl_cert_no_cert(self):
+        """ Config says a client cert is required but none is given on input.
+        Such a request must be outright rejected.
+        """
+        _env = {}
+        _url_config = {}
+        _client_cert = None
+        _data = None
+
+        req_app = server._RequestApp(self.config, app_ctx)
+        is_ok = req_app._on_ssl_cert(_env, _url_config, _client_cert, _data)
+
+        eq_(bool(is_ok), False)
+
+    def test_ssl_cert_any_cert(self):
+        """ Config says the calling app must use a client certificate, but any
+        certificate signed off by a known CA will do.
+        """
+        _env = {}
+        _url_config = {}
+        _client_cert = True
+        _data = None
+
+        req_app = server._RequestApp(self.config, app_ctx)
+        is_ok = req_app._on_ssl_cert(_env, _url_config, _client_cert, _data)
+
+        eq_(bool(is_ok), True)
+
+    def test_ssl_cert_all_fields_valid(self):
+        """ Config says a client cert is needed and its fields must match the
+        config. Clients sends a valid certificate - all of fields required by
+        config are being sent in.
+        """
+        _env = {}
+        _url_config = {'ssl-cert-commonName':'foobar-baz',
+                       'ssl-cert-serialNumber': '12345678',
+                       'ssl-cert-localityName':'Mountain View'
+                       }
+        _data = None
+
+        req_app = server._RequestApp(self.config, app_ctx)
+        is_ok = req_app._on_ssl_cert(_env, _url_config, client_cert, _data)
+
+        eq_(bool(is_ok), True)
+
+    def test_ssl_cert_some_fields_invalid_value(self):
+        """ Config says a client cert is needed and its fields must match the
+        config. Clients sends an invalid certificate - not all of the fields
+        required by config have the correct values.
+        """
+        _env = {}
+        _url_config = {'ssl-cert-commonName':'foobar-baz',
+                       'ssl-cert-serialNumber': '12345678',
+                       'ssl-cert-localityName':uuid.uuid4().hex,
+                       'ssl-cert-postalCode':uuid.uuid4().hex,
+                       }
+        _data = None
+
+        req_app = server._RequestApp(self.config, app_ctx)
+        is_ok = req_app._on_ssl_cert(_env, _url_config, client_cert, _data)
+
+        eq_(bool(is_ok), False)
+
+    def test_ssl_cert_some_fields_missing(self):
+        """ Config says a client cert is needed and its fields must match the
+        config. Clients sends an invalid certificate - some of the fields
+        required by config are missing.
+        """
+        _env = {}
+        _url_config = {'ssl-cert-commonName':'foobar-baz',
+                       'ssl-cert-serialNumber': '12345678',
+                       'ssl-cert-' + uuid.uuid4().hex:uuid.uuid4().hex,
+                       'ssl-cert-' + uuid.uuid4().hex:uuid.uuid4().hex,
+                       }
+        _data = None
+
+        req_app = server._RequestApp(self.config, app_ctx)
+        is_ok = req_app._on_ssl_cert(_env, _url_config, client_cert, _data)
+
+        eq_(bool(is_ok), False)
+
+    def test_ssl_cert_no_subject(self):
+        """ Config says a client cert is needed and its fields must match the
+        config. Clients sends an invalid certificate - somehow the 'subject'
+        group is missing.
+        """
+        _env = {}
+        _url_config = {'ssl-cert-commonName':'foobar-baz',
+                       'ssl-cert-serialNumber': '12345678',
+                       'ssl-cert-' + uuid.uuid4().hex:uuid.uuid4().hex,
+                       'ssl-cert-' + uuid.uuid4().hex:uuid.uuid4().hex,
+                       }
+        _data = None
+        _client_cert = {'notAfter': 'May  8 23:59:59 2019 GMT'}
+
+        req_app = server._RequestApp(self.config, app_ctx)
+        is_ok = req_app._on_ssl_cert(_env, _url_config, _client_cert, _data)
+
+        eq_(bool(is_ok), False)
