@@ -161,7 +161,7 @@ class _RequestApp(object):
             # The user just wants the connection be encrypted and the client
             # use client certificate however they're not interested in the
             # cert's fields - so as long as the CA is OK (and we know it is
-            # because otherwise we wouldn't have gotten so far) we let the
+            # because otherwise we wouldn't have gotten so far), we let the
             # client in.
             if not config_fields:
                 return True
