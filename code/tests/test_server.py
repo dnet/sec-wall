@@ -116,7 +116,7 @@ class RequestAppTestCase(unittest.TestCase):
             req_app(_env, _start_response)
 
     def test_on_request_ssl_scheme_not_https(self):
-        """ A URL should be accessed through HTTPS only if config says so.
+        """ A URL should be accessed through HTTPS if the config says so.
         """
         with Replacer() as r:
             def _403(self, start_response):
