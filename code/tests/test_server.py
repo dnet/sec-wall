@@ -20,10 +20,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-import cStringIO, unittest, uuid
+import cStringIO, ssl, unittest, uuid
+
+# gevent
+from gevent import wsgi
 
 # nose
-from nose.tools import assert_true, eq_
+from nose.tools import assert_raises, assert_true, eq_
 
 # testfixtures
 from testfixtures import Replacer
@@ -32,7 +35,7 @@ from testfixtures import Replacer
 from springpython.context import ApplicationContext
 
 # sec-wall
-from secwall import app_context, server
+from secwall import app_context, core, server
 
 client_cert = {'notAfter': 'May  8 23:59:59 2019 GMT',
  'subject': ((('serialNumber', '12345678'),),
@@ -461,3 +464,211 @@ class RequestAppTestCase(unittest.TestCase):
         is_ok = req_app._on_ssl_cert(_env, _url_config, _client_cert, _data)
 
         eq_(bool(is_ok), False)
+
+    def test_on_wsse_pwd_no_data(self):
+        """ Post data must be sent in when using WSSE.
+        """
+        _env = {}
+        _url_config = {}
+        _unused_client_cert = None
+        _data = None
+
+        req_app = server._RequestApp(self.config, app_ctx)
+        is_ok = req_app._on_wsse_pwd(_env, _url_config, _unused_client_cert, _data)
+
+        eq_(is_ok, False)
+
+    def test_on_wsse_pwd_returns_validate_output(self):
+        """ The '_on_wsse_pwd' method should return exactly what the
+        'self.wsse.validate' method returns when no exception has been caught.
+        """
+        _env = {}
+        _url_config = {}
+        _unused_client_cert = None
+        _data = uuid.uuid4().hex
+
+        validate_response = uuid.uuid4().hex
+
+        with Replacer() as r:
+            def _fromstring(*ignored_args, **ignored_kwargs):
+                pass
+
+            def _validate(*ignored_args, **ignored_kwargs):
+                return validate_response
+
+            r.replace('lxml.etree.fromstring', _fromstring)
+            r.replace('secwall.wsse.WSSE.validate', _validate)
+
+            req_app = server._RequestApp(self.config, app_ctx)
+            is_ok = req_app._on_wsse_pwd(_env, _url_config, _unused_client_cert, _data)
+            eq_(is_ok, validate_response)
+
+    def test_on_wsse_pwd_returns_false_on_security_exception(self):
+        """ The '_on_wsse_pwd' method should return False when a SecurityException
+        has been caught.
+        """
+        _env = {}
+        _url_config = {}
+        _unused_client_cert = None
+        _data = uuid.uuid4().hex
+
+        with Replacer() as r:
+            def _fromstring(*ignored_args, **ignored_kwargs):
+                pass
+
+            def _validate(*ignored_args, **ignored_kwargs):
+                raise core.SecurityException(uuid.uuid4().hex)
+
+            r.replace('lxml.etree.fromstring', _fromstring)
+            r.replace('secwall.wsse.WSSE.validate', _validate)
+
+            req_app = server._RequestApp(self.config, app_ctx)
+            is_ok = req_app._on_wsse_pwd(_env, _url_config, _unused_client_cert, _data)
+            eq_(is_ok, False)
+
+    def test_not_implemented(self):
+        """ Some of the authentication schemes haven't been implemented yet.
+        """
+        req_app = server._RequestApp(self.config, app_ctx)
+        for meth_name in('_on_basic_auth', '_on_digest_auth', '_on_custom_http', '_on_xpath'):
+            meth = getattr(req_app, meth_name)
+            assert_raises(NotImplementedError, meth)
+
+class HTTPProxyTestCase(unittest.TestCase):
+    """ Tests related to the the secwall.server.HTTPProxy class, the plain
+    HTTP proxy.
+    """
+    def test_init_parameters(self):
+        """ Tests the secwall.server.HTTPProxy.__init__ method, that is passes
+        the parameters correctly to the super-class.
+        """
+        _host = uuid.uuid4().hex
+        _port = uuid.uuid4().hex
+        _log = uuid.uuid4().hex
+        _app_ctx = app_ctx
+
+        class _Config(object):
+            def __init__(self):
+                self.host = _host
+                self.port = _port
+                self.log = _log
+
+        class _RequestApp(object):
+            def __init__(self, config, app_ctx):
+                pass
+
+        _config = _Config()
+
+        with Replacer() as r:
+
+            def _init(self, listener, application, log):
+                host, port = listener
+                eq_(host, _host)
+                eq_(port, _port)
+                assert_true(isinstance(application, _RequestApp))
+                eq_(log, _log)
+
+            r.replace('gevent.wsgi.WSGIServer.__init__', _init)
+            r.replace('secwall.server._RequestApp', _RequestApp)
+
+            server.HTTPProxy(_config, _app_ctx)
+
+class HTTPSProxyTestCase(unittest.TestCase):
+    """ Tests related to the the secwall.server.HTTPSProxy class, the SSL/TLS proxy.
+    """
+    def test_init_parameters(self):
+        """ Tests the secwall.server.HTTPSProxy.__init__ method, that is passes
+        the parameters correctly to the super-class.
+        """
+        _host = uuid.uuid4().hex
+        _port = uuid.uuid4().hex
+        _log = uuid.uuid4().hex
+        _keyfile = uuid.uuid4().hex
+        _certfile = uuid.uuid4().hex
+        _ca_certs = uuid.uuid4().hex
+
+        _app_ctx = app_ctx
+        _cert_reqs = ssl.CERT_OPTIONAL
+
+        class _Config(object):
+            def __init__(self):
+                self.host = _host
+                self.port = _port
+                self.log = _log
+                self.keyfile = _keyfile
+                self.certfile = _certfile
+                self.ca_certs = _ca_certs
+
+        class _RequestApp(object):
+            def __init__(self, config, app_ctx):
+                pass
+
+        _config = _Config()
+
+        with Replacer() as r:
+
+            def _init(self, listener, application, log, handler_class, keyfile,
+                      certfile, ca_certs, cert_reqs):
+                host, port = listener
+                eq_(host, _host)
+                eq_(port, _port)
+                assert_true(isinstance(application, _RequestApp))
+                eq_(log, _log)
+                eq_(handler_class, server._RequestHandler)
+                eq_(keyfile, _keyfile)
+                eq_(certfile, _certfile)
+                eq_(ca_certs, _ca_certs)
+                eq_(cert_reqs, _cert_reqs)
+
+            r.replace('gevent.pywsgi.WSGIServer.__init__', _init)
+            r.replace('secwall.server._RequestApp', _RequestApp)
+
+            server.HTTPSProxy(_config, _app_ctx)
+
+    def test_handle(self):
+        """ The handle method should create an instance of the 'handler_class'
+        and invoke the newly created instance's 'handle' method.
+        """
+        _host = uuid.uuid4().hex
+        _port = uuid.uuid4().hex
+        _log = uuid.uuid4().hex
+        _keyfile = uuid.uuid4().hex
+        _certfile = uuid.uuid4().hex
+        _ca_certs = uuid.uuid4().hex
+
+        _socket = uuid.uuid4().hex
+        _address = uuid.uuid4().hex
+
+        _app_ctx = app_ctx
+        _cert_reqs = ssl.CERT_OPTIONAL
+
+        class _Config(object):
+            def __init__(self):
+                self.host = _host
+                self.port = _port
+                self.log = _log
+                self.keyfile = _keyfile
+                self.certfile = _certfile
+                self.ca_certs = _ca_certs
+
+        class _RequestApp(object):
+            def __init__(self, config, app_ctx):
+                pass
+
+        class _RequestHandler(object):
+            def __init__(self, socket, address, proxy):
+                eq_(socket, _socket)
+                eq_(address, _address)
+                assert_true(isinstance(proxy, server.HTTPSProxy))
+
+            def handle(self):
+                pass
+
+        _config = _Config()
+
+        with Replacer() as r:
+            r.replace('secwall.server._RequestApp', _RequestApp)
+            r.replace('secwall.server._RequestHandler', _RequestHandler)
+
+            proxy = server.HTTPSProxy(_config, _app_ctx)
+            proxy.handle(_socket, _address)
