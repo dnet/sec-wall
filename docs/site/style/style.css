@@ -7,7 +7,7 @@ html
 
 body
 { font: normal .80em 'trebuchet ms', arial, sans-serif;
-  background: #646557 url(pattern.png) repeat fixed;
+  background: #646557 url(../gfx/pattern.png) repeat fixed;
   color: #5D5D5D;}
 
 p
@@ -45,14 +45,15 @@ h6
 { color: #362C20;}
 
 a, a:hover
-{ background: transparent;
-  outline: none;
-  text-decoration: underline;
-  color: #51A9FB;}
+{
+  color: #003366;
+  font-weight:500;
+  }
 
 a:hover
-{ text-decoration: none;
-  color: #5D5D5D;}
+{ color: #000000;
+  background-color:#ffff33;
+}
 
 ul
 { margin: 2px 0 22px 17px;}
@@ -93,12 +94,12 @@ ol li
 
 #header
 {
-  height: 121px;}
+  height: 101px;}
 
 #logo
 {
   position: relative;
-  height: 100px;
+  height: 80px;
   background: transparent;
   padding: 10px 0 10px 0;}
 
@@ -112,7 +113,9 @@ ol li
 { padding: 0px 0 0 0;
   color: #A8AA94;
   letter-spacing: 0.1em;
-  text-decoration: none;}
+  text-decoration: none;
+  background-color:inherit;
+  }
 
 #logo_text h1 a .logo_colour
 { color: #FFF;}
@@ -126,7 +129,7 @@ ol li
 { height: 46px;
   width: 100%;
   margin: 1px auto 0 auto;
-  background: transparent url(tab.png);}
+  background: transparent url(../gfx/tab.png);}
 
 ul#menu
 { float: left;
@@ -146,18 +149,22 @@ ul#menu li a
   padding: 12px 28px 5px 22px;
   text-align: center;
   color: #FFF;
+  font-weight:600;
   border-right: 1px solid #636363;
   text-decoration: none;}
 
 ul#menu li.tab_selected a
 { height: 27px;
-  padding: 6px 28px 5px 22px;}
+  padding: 6px 28px 5px 22px;
+  }
 
 ul#menu li.selected a, ul#menu li.selected a:hover
 { color: #ECEF01;}
 
 ul#menu li a:hover
-{ color: #ECEF01;}
+{ color: #ECEF01;
+background-color:transparent
+}
 
 #site_content
 {
@@ -177,10 +184,10 @@ ul#menu li a:hover
 .sidebar_top, .sidebar_base
 { width: 222px;
   height: 14px;
-  background: transparent url(side_top.png) no-repeat;}
+  background: transparent url(../gfx/side_top.png) no-repeat;}
 
 .sidebar_base
-{ background: url(side_base.png) no-repeat;}
+{ background: url(../gfx/side_base.png) no-repeat;}
 
 .sidebar
 { float: right;
@@ -205,7 +212,7 @@ ul#menu li a:hover
 .sidebar_item li a, .sidebar_item li a:hover
 { padding: 0 0 0 35px;
   display: block;
-  background: transparent url(link.png) no-repeat left center;}
+  background: transparent url(../gfx/link.png) no-repeat left center;}
 
 .sidebar_item li a.selected
 { color: #444;
@@ -214,7 +221,7 @@ ul#menu li a:hover
 #content
 { text-align: left;
 
-  padding: 15px 0 20px 0;
+  padding: 15px 10px 20px 20px;
   margin: 0;}
 
 #content ul
@@ -222,7 +229,7 @@ ul#menu li a:hover
 
 #content ul li
 { list-style-type: none;
-  background: url(bullet.png) no-repeat;
+  background: url(../gfx/bullet.png) no-repeat;
   margin: 0 0 2px 0;
   padding: 0 0 4px 25px;
   line-height: 1.5em;}
@@ -234,7 +241,7 @@ ul#menu li a:hover
   padding: 20px 0 5px 0;
   text-align: center;
   color: #FFF;
-  background: transparent url(tab.png) repeat;}
+  background: transparent url(../gfx/tab.png) repeat;}
 
 #footer p
 { padding: 0 0 10px 0;}
@@ -245,7 +252,8 @@ ul#menu li a:hover
 
 #footer a:hover
 { color: #FFF;
-  text-decoration: none;}
+  text-decoration: none;
+  background-color:transparent}
 
 .search
 { color: #5D5D5D;
@@ -318,3 +326,16 @@ table tr td
 { background: #DDD;
   color: #47433F;
   border-top: 1px solid #FFF;}
+
+
+hr {
+  position: relative;
+  padding: 0;
+  margin: 8px auto;
+  border: none;
+  border-top: 1px solid #AAA;
+  border-bottom: 1px solid #FFF;
+  font-size: 1px;
+  line-height: 0;
+  overflow: visible;
+}

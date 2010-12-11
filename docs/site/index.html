@@ -1,4 +1,7 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html PUBLIC
+  "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
 <html>
 
 <head>
@@ -16,7 +19,7 @@
       <div id="logo">
         <div id="logo_text">
           <!-- class="logo_colour", allows you to change the colour of the text -->
-          <h1><a href="index.html">sec-wall</a></h1>
+          <h1><a href="index.html"><strong>sec-wall</strong></a></h1>
           <h2>A feature packed high-performance security proxy</h2>
         </div>
       </div>
@@ -24,11 +27,12 @@
         <ul id="menu">
           <!-- put class="selected" in the li tag for the selected page - to highlight which page you're on -->
           <li class="selected"><a href="index.html">Home</a></li>
-          <li><a href="examples.html">Download</a></li>
-          <li><a href="page.html">Documentation</a></li>
-          <li><a href="another_page.html">Support</a></li>
-          <li><a href="contact.html">Blog</a></li>
-          <li><a href="contact.html">Twitter</a></li>
+          <li><a href="#">Downloads</a></li>
+          <li><a href="#">Documentation</a></li>
+          <li><a href="#">Support</a></li>
+          <li><a href="#">Get involved</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Twitter</a></li>
         </ul>
       </div>
     </div>
@@ -37,61 +41,93 @@
         <div class="sidebar">
           <div class="sidebar_top"></div>
           <div class="sidebar_item">
-            <!-- insert your sidebar items here -->
             <h3>Getting started</h3>
-            <p><img src="style/logo-ubuntu.png" style="vertical-align:middle"/>&nbsp;<a href="#">Ubuntu</a></p>
-            <p><img src="style/logo-centos.png" style="vertical-align:middle"/>&nbsp;<a href="#">CentOS</a></p>
-            <p><img src="style/logo-windows.png" style="vertical-align:middle"/>&nbsp;<a href="#">Windows</a></p>
+            <p><img src="gfx/logo-ubuntu.png" style="vertical-align:middle" alt="Ubuntu Linux logo" />&nbsp;<a href="#">Ubuntu</a></p>
+            <p><img src="gfx/logo-centos.png" style="vertical-align:middle" alt="CentOS logo"/>&nbsp;<a href="#">CentOS</a></p>
+            <p><img src="gfx/logo-windows.png" style="vertical-align:middle"  alt="Windows logo"/>&nbsp;<a href="#">Windows</a></p>
+            <p><img src="gfx/logo-any.png" style="vertical-align:middle" alt="A generic bubble icon used as an icon for systems other than Ubuntu, CentOS and Windows, short of ideas of how to represent those other systems"/>&nbsp;<a href="#">Other systems</a></p>
           </div>
           <div class="sidebar_base"></div>
         </div>
         <div class="sidebar">
           <div class="sidebar_top"></div>
           <div class="sidebar_item">
-            <h3>Useful Links</h3>
-            <ul>
-              <li><a href="#">link 1</a></li>
-              <li><a href="#">link 2</a></li>
-              <li><a href="#">link 3</a></li>
-              <li><a href="#">link 4</a></li>
-            </ul>
-          </div>
-          <div class="sidebar_base"></div>
-        </div>
-        <div class="sidebar">
-          <div class="sidebar_top"></div>
-          <div class="sidebar_item">
-            <h3>Search</h3>
-            <form method="post" action="#" id="search_form">
-              <p>
-                <input class="search" type="text" name="search_field" value="Enter keywords....." />
-                <input name="search" type="image" style="border: 0; margin: 0 0 -9px 5px;" src="style/search.png" alt="Search" title="Search" />
-              </p>
-            </form>
+            <h3>Downloads</h3>
+            <p>
+              Latest version: <a href="#">1.0.0</a>
+            </p>
           </div>
           <div class="sidebar_base"></div>
         </div>
       </div>
       <div id="content">
         <h1>Welcome to sec-wall</h1>
-        <p>This standards compliant, simple, fixed width website template is released as an 'open source' design (under a <a href="http://creativecommons.org/licenses/by/3.0">Creative Commons Attribution 3.0 Licence</a>), which means that you are free to download and use it for anything you want (including modifying and amending it). All I ask is that you leave the 'design from HTML5webtemplates.co.uk' link in the footer of the template, but other than that...</p>
-        <p>This template is written entirely in <strong>HTML5</strong> and <strong>CSS</strong>, and can be validated using the links in the footer.</p>
-        <p>You can view more free HTML5 web templates <a href="http://www.html5webtemplates.co.uk">here</a>.</p>
-        <p>This template is a fully functional 5 page website, with an <a href="examples.html">examples</a> page that gives examples of all the styles available with this design.</p>
-        <h2>Browser Compatibility</h2>
-        <p>This template has been tested in the following browsers:</p>
-        <ul>
-          <li>Internet Explorer 8</li>
-          <li>Internet Explorer 7</li>
-          <li>FireFox 3.5</li>
-          <li>Google Chrome 6</li>
-          <li>Safari 4</li>
-        </ul>
+        <p>
+<strong>sec-wall</strong> is a feature packed high-performance security proxy supporting <a href="#">SSL/TLS</a>, <a href="#">WSSE</a>,
+<a href="#">HTTP Auth Basic</a>/<a href="#">Digest</a>, extensible authentication schemes based on <a href="#">custom HTTP
+headers</a> and <a href="#">XPath</a> expressions, powerful <a href="#">URL matching</a>/<a href="#">rewriting</a> and an
+optional <a href="#">headers enrichment</a>. It's a security wall you can conveniently fence
+the otherwise defenseless backend servers with.
+        </p>
+
+        <p>
+          Although best suited for securing middleware and backend application
+          servers, sec-wall can be used anywhere the ubiquitous HTTP protocol is being used.
+        </p>
+
+        <p>
+          sec-wall is open source software, distributed under the terms of a
+          liberal <a href="http://opensource.org/licenses/gpl-3.0.html">GPLv3</a> license, it's free for any purpose, including commercial use.
+        </p>
+
+        <hr style="width:75%"/>
+
+        <p>
+          If you're new to sec-wall you may wish to follow the
+          <a href="#">Getting started guide</a> which includes downloading the
+          software, installing it and preparing the first security configuration.
+        </p>
+
+        <p>
+          Having understood the basics, you are encouraged to dive into the
+          <a href="#">Reference documentation</a>, a set of goal-oriented <a href="#">Usage examples</a>
+          and <a href="#">Architectural notes</a>. No question will be left unanswered
+          and all doubts will be resolved.
+        </p>
+
+        <p>
+          If you need any help you can pick one of the <a href="#">commercial</a>
+          or <a href="#">community</a> options. Paid support means priority tickets,
+          consulting and training while the community will be able to help you out through
+          the <a href="#">mailing list</a> and an <a href="#">IRC channel</a>.
+        </p>
+
+        <p>
+          Be sure to read on how to <a href="#">Get involved</a> in case you
+          have any suggestions, code or documentation patches, would like to
+          better understand sec-wall's internals or simply feel like spending
+          some time with Python programming. sec-wall is a friendly project and all contributions are most welcome!
+        </p>
+
+        <p>
+          For socializing types, you can also visit <a href="#">the autor's blog</a> and
+          <a href="https://twitter.com/fourthrealm">follow him on Twitter</a>
+          where he posts updates on the project's status.
+        </p>
+
       </div>
     </div>
     <div id="footer">
-      <p><a href="index.html">Home</a> | <a href="examples.html">Examples</a> | <a href="page.html">A Page</a> | <a href="another_page.html">Another Page</a> | <a href="contact.html">Contact Us</a></p>
-      <p>Copyright &copy; simplestyle_3 | <a href="http://validator.w3.org/check?uri=referer">HTML5</a> | <a href="http://jigsaw.w3.org/css-validator/check/referer">CSS</a> | <a href="http://www.html5webtemplates.co.uk">design from HTML5webtemplates.co.uk</a></p>
+      <p>
+        <a href="#">Home</a> |
+        <a href="#">Download</a> |
+        <a href="#">Documentation</a> |
+        <a href="#">Support</a> |
+        <a href="#">Get involved</a> |
+        <a href="#">Blog</a> |
+        <a href="#">Twitter</a>
+      </p>
+      <a href="http://www.html5webtemplates.co.uk">Original design from HTML5webtemplates.co.uk</a>
     </div>
     <p>&nbsp;</p>
   </div>
