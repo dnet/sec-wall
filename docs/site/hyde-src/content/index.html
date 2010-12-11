@@ -1,135 +1,58 @@
-<!DOCTYPE html PUBLIC
-  "-//W3C//DTD XHTML 1.0 Strict//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+{% extends "base/_layout.html" %}
 
-<html>
+{% hyde
+    section_title: Home
+%}
 
-<head>
-  <title>sec-wall :: Home</title>
-  <meta name="description" content="website description" />
-  <meta name="keywords" content="website keywords, website keywords" />
-  <meta http-equiv="content-type" content="text/html; charset=windows-1252" />
-  <meta http-equiv="robots" content="noindex,nofollow" />
-  <link rel="stylesheet" type="text/css" href="/media/css/style.css" />
-</head>
+{% block section_title %}{{ page.section_title }}{% endblock %}
 
-<body>
-  <div id="main">
-    <div id="header">
-      <div id="logo">
-        <div id="logo_text">
-          <!-- class="logo_colour", allows you to change the colour of the text -->
-          <h1><a href="index.html"><strong>sec-wall</strong></a></h1>
-          <h2>A feature packed high-performance security proxy</h2>
-        </div>
-      </div>
-      <div id="menubar">
-        <ul id="menu">
-          <!-- put class="selected" in the li tag for the selected page - to highlight which page you're on -->
-          <li class="selected"><a href="index.html">Home</a></li>
-          <li><a href="#">Downloads</a></li>
-          <li><a href="#">Documentation</a></li>
-          <li><a href="#">Support</a></li>
-          <li><a href="#">Get involved</a></li>
-          <li><a href="#">Blog</a></li>
-          <li><a href="#">Twitter</a></li>
-        </ul>
-      </div>
-    </div>
-    <div id="site_content">
-      <div id="sidebar_container">
-        <div class="sidebar">
-          <div class="sidebar_top"></div>
-          <div class="sidebar_item">
-            <h3>Getting started</h3>
-            <p><img src="/media/gfx/logo-ubuntu.png" style="vertical-align:middle" alt="Ubuntu Linux logo" />&nbsp;<a href="#">Ubuntu</a></p>
-            <p><img src="/media/gfx/logo-centos.png" style="vertical-align:middle" alt="CentOS logo"/>&nbsp;<a href="#">CentOS</a></p>
-            <p><img src="/media/gfx/logo-windows.png" style="vertical-align:middle"  alt="Windows logo"/>&nbsp;<a href="#">Windows</a></p>
-            <p><img src="/media/gfx/logo-any.png" style="vertical-align:middle" alt="A generic bubble icon used as an icon for systems other than Ubuntu, CentOS and Windows, short of ideas of how to represent those other systems"/>&nbsp;<a href="#">Other systems</a></p>
-          </div>
-          <div class="sidebar_base"></div>
-        </div>
-        <div class="sidebar">
-          <div class="sidebar_top"></div>
-          <div class="sidebar_item">
-            <h3>Downloads</h3>
-            <p>
-              Latest version: <a href="#">1.0.0</a>
-            </p>
-          </div>
-          <div class="sidebar_base"></div>
-        </div>
-      </div>
-      <div id="content">
-        <h1>Welcome to sec-wall</h1>
-        <p>
-<strong>sec-wall</strong> is a feature packed high-performance security proxy supporting <a href="#">SSL/TLS</a>, <a href="#">WSSE</a>,
-<a href="#">HTTP Auth Basic</a>/<a href="#">Digest</a>, extensible authentication schemes based on <a href="#">custom HTTP
-headers</a> and <a href="#">XPath</a> expressions, powerful <a href="#">URL matching</a>/<a href="#">rewriting</a> and an
-optional <a href="#">headers enrichment</a>. It's a security wall you can conveniently fence
-the otherwise defenseless backend servers with.
-        </p>
+{% block content %}
 
-        <p>
-          Although best suited for securing middleware and backend application
-          servers, sec-wall can be used anywhere the ubiquitous HTTP protocol is being used.
-        </p>
+{% markdown %}
 
-        <p>
-          sec-wall is open source software, distributed under the terms of a
-          liberal <a href="http://opensource.org/licenses/gpl-3.0.html">GPLv3</a> license, it's free for any purpose, including commercial use.
-        </p>
+Welcome to sec-wall
+===================
 
-        <hr style="width:75%"/>
+**sec-wall** is a feature packed high-performance security proxy supporting
+[SSL/TLS](#), [WSSE](#), [HTTP Auth Basic](#)/[Digest](#), extensible authentication
+schemes based on [custom HTTP headers](#) and [XPath](#) expressions, powerful
+[URL matching](#)/[rewriting](#) and an optional [headers enrichment](#).
+It's a security wall you can conveniently fence the otherwise defenseless backend servers with.
 
-        <p>
-          If you're new to sec-wall you may wish to follow the
-          <a href="#">Getting started guide</a> which includes downloading the
-          software, installing it and preparing the first security configuration.
-        </p>
+Although best suited for securing middleware and backend application
+servers, sec-wall can be used anywhere the ubiquitous HTTP protocol is being used.
 
-        <p>
-          Having understood the basics, you are encouraged to dive into the
-          <a href="#">Reference documentation</a>, a set of goal-oriented <a href="#">Usage examples</a>
-          and <a href="#">Architecture notes</a>. No question will be left unanswered
-          and all doubts will be resolved.
-        </p>
+sec-wall is open source software, distributed under the terms of a
+liberal [GPLv3](http://opensource.org/licenses/gpl-3.0.html) license,
+it's free for any purpose, including commercial use.
 
-        <p>
-          If you need any help you can pick one of the <a href="#">commercial</a>
-          or <a href="#">community</a> options. Paid support means priority tickets,
-          on-site consulting and training services while the community will be able
-          to help you out through the <a href="#">mailing list</a> and an <a href="#">IRC channel</a>.
-        </p>
+* * *
 
-        <p>
-          Be sure to read on how to <a href="#">Get involved</a> in case you
-          have any suggestions, code or documentation patches, would like to
-          better understand sec-wall's internals or simply feel like spending
-          some time with Python programming. sec-wall is a friendly project and all contributions are most welcome!
-        </p>
+If you're new to sec-wall you may wish to follow the
+[Getting started guide](/documentation/getting-started/index.html) which includes downloading the
+software, installing it and preparing the first security configuration.
 
-        <p>
-          For socializing types, you can also visit <a href="#">the autor's blog</a> and
-          <a href="https://twitter.com/fourthrealm">follow him on Twitter</a>
-          where he posts updates on the project's status.
-        </p>
+Having understood the basics, you are encouraged to dive into the
+[Reference documentation](/documentation/ref-docs/index.html), a set of goal-oriented
+[Usage examples](/documentation/usage-examples/index.html) and
+[Architecture &amp; design notes](/documentation/arch/index.html).
+No question will be left unanswered and all doubts will be resolved.
 
-      </div>
-    </div>
-    <div id="footer">
-      <p>
-        <a href="#">Home</a> |
-        <a href="#">Download</a> |
-        <a href="#">Documentation</a> |
-        <a href="#">Support</a> |
-        <a href="#">Get involved</a> |
-        <a href="#">Blog</a> |
-        <a href="#">Twitter</a>
-      </p>
-      <a href="http://www.html5webtemplates.co.uk">Original design from HTML5webtemplates.co.uk</a>
-    </div>
-    <p>&nbsp;</p>
-  </div>
-</body>
-</html>
+If you need any help you can pick one of the [commercial](/support/commercial.html)
+or [community](/support/community.html) options. Paid support means priority tickets,
+on-site consulting and training services while the community will be able
+to help you out through the [mailing list](/support/community.html#mailing-list)
+and an [IRC channel](/support/community.html#irc).
+
+Be sure to read on how to [Get involved](/get-involved/index.html) in case you
+have any suggestions, code or documentation patches, would like to
+better understand sec-wall's internals or simply feel like spending
+some time with Python programming. sec-wall is a friendly project and all contributions are most welcome!
+
+For a socializing type, you can also visit [the autor's blog](http://gefira.pl/blog) and
+follow [@fourthrealm on Twitter](https://twitter.com/fourthrealm)
+where the updates on the project's status are posted.
+
+{% endmarkdown %}
+
+{% endblock %}

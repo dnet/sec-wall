@@ -1,0 +1,80 @@
+<!DOCTYPE html PUBLIC
+  "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html>
+
+<head>
+  <title>sec-wall :: {% block section_title %}{% endblock %}</title>
+  <meta name="description" content="sec-wall is a feature packed high-performance security proxy supporting SSL/TLS, WSSE, HTTP Auth Basic/Digest, extensible authentication schemes based on custom HTTP headers and XPath expressions, powerful URL matching/rewriting and an optional headers enrichment.It's a security wall you can conveniently fence the otherwise defenseless backend servers with" />
+  <meta name="keywords" content="sec-wall,secwall,security,proxy,web services,ssl,tls,basic auth,digest auth,python,libevent,gevent,headers enrichment" />
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="/media/css/style.css" />
+</head>
+
+<body>
+  <div id="main">
+    <div id="header">
+      <div id="logo">
+        <div id="logo_text">
+          <h1><a href="/index.html"><strong>sec-wall</strong></a></h1>
+          <h2>A feature packed high-performance security proxy</h2>
+        </div>
+      </div>
+      <div id="menubar">
+        <ul id="menu">
+          <li{% ifequal page.section_title "Home" %} class="selected" {% endifequal %}><a href="/index.html">Home</a></li>
+          <li{% ifequal page.section_title "Downloads" %} class="selected" {% endifequal %}><a href="/downloads/index.html">Downloads</a></li>
+          <li{% ifequal page.section_title "Documentation" %} class="selected" {% endifequal %}><a href="/documentation/index.html">Documentation</a></li>
+          <li{% ifequal page.section_title "Support" %} class="selected" {% endifequal %}><a href="/support/index.html">Support</a></li>
+          <li{% ifequal page.section_title "Get involved" %} class="selected" {% endifequal %}><a href="/get-involved/index.html">Get involved</a></li>
+          <li{% ifequal page.section_title "Blog" %} class="selected" {% endifequal %}><a href="/blog/index.html">Blog</a></li>
+          <li{% ifequal page.section_title "Twitter" %} class="selected" {% endifequal %}><a href="/twitter/index.html">Twitter</a></li>
+        </ul>
+      </div>
+    </div>
+    <div id="site_content">
+      <div id="sidebar_container">
+        <div class="sidebar">
+          <div class="sidebar_top"></div>
+          <div class="sidebar_item">
+            <h3>Getting started</h3>
+            <p><img src="/media/gfx/logo-ubuntu.png" style="vertical-align:middle" alt="Ubuntu Linux logo" />&nbsp;<a href="/documentation/getting-started/ubuntu.html">Ubuntu</a></p>
+            <p><img src="/media/gfx/logo-centos.png" style="vertical-align:middle" alt="CentOS logo"/>&nbsp;<a href="/documentation/getting-started/centos.html">CentOS</a></p>
+            <p><img src="/media/gfx/logo-windows.png" style="vertical-align:middle"  alt="Windows logo"/>&nbsp;<a href="/documentation/getting-started/windows.html">Windows</a></p>
+            <p><img src="/media/gfx/logo-any.png" style="vertical-align:middle" alt="A generic bubble icon used as an icon for systems other than Ubuntu, CentOS and Windows, short of ideas of how to represent those other systems"/>&nbsp;<a href="/documentation/getting-started/other-systems.html">Other systems</a></p>
+          </div>
+          <div class="sidebar_base"></div>
+        </div>
+        <div class="sidebar">
+          <div class="sidebar_top"></div>
+          <div class="sidebar_item">
+            <h3>Downloads</h3>
+            <p>
+              Latest version: <a href="#">1.0.0</a>
+            </p>
+          </div>
+          <div class="sidebar_base"></div>
+        </div>
+      </div>
+      <div id="content">
+      {% block content %}
+      {% endblock %}
+      </div>
+    </div>
+    <div id="footer">
+      <p>
+        <a href="/index.html">Home</a> |
+        <a href="/downloads/index.html">Downloads</a> |
+        <a href="/documentation/index.html">Documentation</a> |
+        <a href="/support/index.html">Support</a> |
+        <a href="/get-involved/index.html">Get involved</a> |
+        <a href="/blog/index.html">Blog</a> |
+        <a href="/twitter/index.html">Twitter</a>
+      </p>
+      <a href="http://www.html5webtemplates.co.uk">Original design from HTML5webtemplates.co.uk</a>
+    </div>
+    <p>&nbsp;</p>
+  </div>
+</body>
+</html>
