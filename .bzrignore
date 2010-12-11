@@ -3,3 +3,4 @@ build
 dist
 .coverage
 docs/site/hyde-src/deploy
+docs/site/hyde-src/site.log
