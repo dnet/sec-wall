@@ -211,8 +211,9 @@ class Fork(_Command):
     def run(self):
         """ Runs the command. Overridden from the super-class.
         """
+        object_name = 'https_proxy_class' if self.is_https else 'http_proxy_class'
 
-        proxy_class = HTTPSProxy if self.is_https else HTTPProxy
+        proxy_class = self.app_ctx.get_object(object_name)
         proxy_class(self.config_mod, self.app_ctx).serve_forever()
 
 class Stop(_Command):

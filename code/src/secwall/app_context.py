@@ -27,12 +27,39 @@ from springpython.config import Object, PythonConfig
 from springpython.context import scope
 
 # sec-wall
-from secwall import wsse
+from secwall import server, wsse
 from secwall.core import version
 
 class SecWallContext(PythonConfig):
     """ A Spring Python's application context for sec-wall.
     """
+
+    @Object
+    def http_proxy_class(self):
+        """ Instances of this class will be handling HTTP traffic.
+        """
+        return server.HTTPProxy
+
+    @Object
+    def https_proxy_class(self):
+        """ Instances of this class will be handling HTTPS traffic.
+        """
+        return server.HTTPSProxy
+
+    @Object
+    def wsgi_request_handler(self):
+        """ Instances of this class reimplement gevent.pywsgi.WSGIHandler.handle_one_response
+        method for the purpose of adding the support for client SSL/TLS certs.
+        """
+        return server._RequestHandler
+
+    @Object
+    def wsgi_request_app(self):
+        """ The main WSGI application whose __call__ method - called on
+        each request - will be responsible for the processing of an incoming
+        request.
+        """
+        return server._RequestApp
 
     @Object
     def wsse(self):
@@ -149,7 +176,7 @@ class SecWallContext(PythonConfig):
 
     @Object
     def syslog_level(self):
-        """ Syslog logging level, for HAProxy.
+        """ Syslog logging level.
         """
         return 'err'
 

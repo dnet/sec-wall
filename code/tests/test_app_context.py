@@ -24,7 +24,7 @@ from hashlib import sha256
 from os import path
 
 # nose
-from nose.tools import assert_true, eq_
+from nose.tools import assert_equal, assert_true, eq_
 
 # Spring Python
 from springpython.config import PythonConfig
@@ -32,11 +32,16 @@ from springpython.context import ApplicationContext
 
 # sec-wall
 from secwall.app_context import SecWallContext
+from secwall.server import HTTPProxy, HTTPSProxy, _RequestHandler, _RequestApp
 
 def test_app_context():
     assert_true(issubclass(SecWallContext, PythonConfig))
     ctx = ApplicationContext(SecWallContext())
 
+    assert_equal(ctx.get_object('http_proxy_class'), HTTPProxy)
+    assert_equal(ctx.get_object('https_proxy_class'), HTTPSProxy)
+    assert_equal(ctx.get_object('wsgi_request_handler'), _RequestHandler)
+    assert_equal(ctx.get_object('wsgi_request_app'), _RequestApp)
     eq_(ctx.get_object('server_type'), 'http')
     eq_(ctx.get_object('host'), '0.0.0.0')
     eq_(ctx.get_object('port'), 15100)
