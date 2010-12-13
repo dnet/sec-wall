@@ -32,6 +32,7 @@ from nose.tools import assert_raises, assert_true, eq_
 from testfixtures import Replacer
 
 # Spring Python
+from springpython.config import Object
 from springpython.context import ApplicationContext
 
 # sec-wall
@@ -552,10 +553,7 @@ class HTTPProxyTestCase(unittest.TestCase):
                 self.host = _host
                 self.port = _port
                 self.log = _log
-
-        class _RequestApp(object):
-            def __init__(self, config, app_ctx):
-                pass
+                self.urls = []
 
         _config = _Config()
 
@@ -565,12 +563,10 @@ class HTTPProxyTestCase(unittest.TestCase):
                 host, port = listener
                 eq_(host, _host)
                 eq_(port, _port)
-                assert_true(isinstance(application, _RequestApp))
+                assert_true(isinstance(application, server._RequestApp))
                 eq_(log, _log)
 
             r.replace('gevent.wsgi.WSGIServer.__init__', _init)
-            r.replace('secwall.server._RequestApp', _RequestApp)
-
             server.HTTPProxy(_config, _app_ctx)
 
 class HTTPSProxyTestCase(unittest.TestCase):
@@ -598,10 +594,7 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.keyfile = _keyfile
                 self.certfile = _certfile
                 self.ca_certs = _ca_certs
-
-        class _RequestApp(object):
-            def __init__(self, config, app_ctx):
-                pass
+                self.urls = []
 
         _config = _Config()
 
@@ -612,7 +605,7 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 host, port = listener
                 eq_(host, _host)
                 eq_(port, _port)
-                assert_true(isinstance(application, _RequestApp))
+                assert_true(isinstance(application, server._RequestApp))
                 eq_(log, _log)
                 eq_(handler_class, server._RequestHandler)
                 eq_(keyfile, _keyfile)
@@ -621,7 +614,6 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 eq_(cert_reqs, _cert_reqs)
 
             r.replace('gevent.pywsgi.WSGIServer.__init__', _init)
-            r.replace('secwall.server._RequestApp', _RequestApp)
 
             server.HTTPSProxy(_config, _app_ctx)
 
@@ -639,7 +631,6 @@ class HTTPSProxyTestCase(unittest.TestCase):
         _socket = uuid.uuid4().hex
         _address = uuid.uuid4().hex
 
-        _app_ctx = app_ctx
         _cert_reqs = ssl.CERT_OPTIONAL
 
         class _Config(object):
@@ -650,10 +641,7 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.keyfile = _keyfile
                 self.certfile = _certfile
                 self.ca_certs = _ca_certs
-
-        class _RequestApp(object):
-            def __init__(self, config, app_ctx):
-                pass
+                self.urls = []
 
         class _RequestHandler(object):
             def __init__(self, socket, address, proxy):
@@ -664,10 +652,16 @@ class HTTPSProxyTestCase(unittest.TestCase):
             def handle(self):
                 pass
 
+        class _Context(app_context.SecWallContext):
+            @Object
+            def wsgi_request_handler(self):
+                return _RequestHandler
+
+        _app_ctx = ApplicationContext(_Context())
+
         _config = _Config()
 
         with Replacer() as r:
-            r.replace('secwall.server._RequestApp', _RequestApp)
             r.replace('secwall.server._RequestHandler', _RequestHandler)
 
             proxy = server.HTTPSProxy(_config, _app_ctx)

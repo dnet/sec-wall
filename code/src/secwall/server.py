@@ -271,16 +271,21 @@ class HTTPProxy(wsgi.WSGIServer):
     """ A plain HTTP proxy.
     """
     def __init__(self, config, app_ctx):
+        wsgi_request_app = app_ctx.get_object('wsgi_request_app')
+
         super(HTTPProxy, self).__init__((config.host, config.port),
-                _RequestApp(config, app_ctx), log=config.log)
+                wsgi_request_app(config, app_ctx), log=config.log)
 
 class HTTPSProxy(pywsgi.WSGIServer):
     """ An SSL/TLS proxy.
     """
     def __init__(self, config, app_ctx):
+        wsgi_request_app = app_ctx.get_object('wsgi_request_app')
+        wsgi_request_handler = app_ctx.get_object('wsgi_request_handler')
+
         super(HTTPSProxy, self).__init__((config.host, config.port),
-                _RequestApp(config, app_ctx), log=config.log,
-                handler_class=_RequestHandler, keyfile=config.keyfile,
+                wsgi_request_app(config, app_ctx), log=config.log,
+                handler_class=wsgi_request_handler, keyfile=config.keyfile,
                 certfile=config.certfile, ca_certs=config.ca_certs,
                 cert_reqs=ssl.CERT_OPTIONAL)
 
