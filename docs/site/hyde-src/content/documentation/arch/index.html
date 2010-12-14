@@ -1,0 +1,205 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}{{ page.section_title }}{% endblock %}
+
+{% block content %}
+
+<h1>Architecture <span class="amp">&amp;</span> design notes</h1>
+
+{% markdown %}
+
+**sec-wall** is a software for securing access to other software.
+It grew out of the necessity of securing big, proprietary and clumsy application servers that were
+exposing HTTP services (mostly [SOAP][soap])
+to
+surrounding application servers deployed in a diverse mix of Linux,
+Windows, proprietary UNIX and mainframe systems, all of that running in a closed, internal
+[SOA][soa] environment.
+Original design requirements for sec-wall included:
+
+* performance allowing for up to several thousand short-lived connections and requests a second
+  under a virtualized system running on top of a basic [Blade server][blade],
+  any throughput beyond it would be considered a plus,
+* support for a wide range of authentication &amp; authorization options,
+* complete transparency regardless of whether the client and backend applications
+  are written in Java, .NET, Python, PHP, COBOL, C++ or any other technology,
+* user interface friendly for people familiar with general Linux administration,
+* support for plugging in various sources of authentication &amp; authorization data,
+  that is, sec-wall by itself shouldn't limit the users in a choice of a database of users, passwords
+  and other relevant information; on the other hand, there shouldn't be
+  any requirement that there be any external database at all, the configuration
+  should as well be expressible directly in the sec-wall's config file,
+* ability to run on Linux x86 and z/Linux,
+* should be written in Python
+
+* * *
+
+The requirement for serving many connections on simple servers ruled out solutions
+based on multithreading or multiprocessing and left the author with the only
+choice that didn't sound like locking oneself up in a concrete approach to handling
+concurrency, the choice was to use [libevent][libevent]. Because the application
+was to be written in Python, [gevent][gevent], a highly Pythonic
+wrapper was chosen as a layer for exposing libevent's features to sec-wall. Another
+compelling reason was the gevent's monkey patching utility which allows for many
+of the Python's standard library modules - such as [urllib2][urllib2] -
+to essentially become asynchronous and cooperative with gevent's core. Apart from its pythonicity,
+gevent's code is clean and easy to follow, which means an easier learning curve
+should there ever be any need for contributing patches upstream. A contributing
+factor for choosing both libevent and gevent was that even though there was no
+need for supporting *BSD systems at the time sec-wall was originally created,
+there shouldn't be any obstacles if people want to use sec-wall on those systems.
+
+sec-wall is a modern application written on top of libevent and gevent which out of the box
+means high performance and resource-friendly behaviour. There's no need for
+running a cluster of 12-way servers to achieve a sensible throughput, a single CPU will do,
+all of the processing sec-wall does happens in a single thread.
+
+The drawing below explains the major processing paths. Command line tools initialize,
+start and stop an HTTP/HTTPS proxy. A proxy accepts client connections and if the
+configuration says a client should be let in, the request is then proxied over
+further to backend servers. An appropriate *Access denied* HTTP response is returned
+to the calling application in case the configuration prohibits it from accessing
+the requested resource.
+
+<div style="text-align:center">
+  <img src="/media/gfx/overview.png" alt="A visualization of dependencies between sec-wall's interal components (not including, which is an external dependency)" alt="A visualization of dependencies between sec-wall's interal components (not including, which is an external dependency)"/>
+</div>
+
+The only user-facing command line tool is called *sec-wall* on Linux and
+*sec-linux.exe* under Windows. It's a simple command with only several options and
+that's the way it's intended to stay as the main burden of configuring sec-wall
+should fall on a config file. The idea is that getting lost in a myriad of command
+line options has never been fun and sec-wall shouldn't encourage such designs.
+Likewise, creating a separate command for each of the options is also a no-no.
+The command line options are simple to the point of being dumb, *--init*, *--start*
+and *--stop* accept a single and the same argument, so the purpose of those options
+should be self-explanatory for people in a hurry.
+Have a look at
+[secwall.main][secwall.main]
+in the source code for details on how command line arguments are being parsed. Note that the *--fork* option is treated differently,
+that's because it's not part of what regular users should see,
+it would be tempting to simply add it to sec-wall the command but it was felt
+that's not the way it should be, an internal detail should not be exposed in a
+user's tool.
+
+Once started, sec-wall is a long running process, a daemon. What the command line
+options *--start* and *--stop* actually do is invoking a [zdaemon][zdaemon]
+command in a subprocess. *--start* creates a zdaemon.conf file and tells the zdaemon
+process to start using it, zdaemon in turn runs the sec-wall's Python code, mediates
+access to stdout &amp; stderr and automatically restarts sec-wall in case it's needed.
+The *stop* option does the opposite, first tells zdaemon to stop the sec-wall's main
+processing loop and, once it's stopped, it then removes the automatically generated zdaemon.conf
+file so that the working directory is left at the state it was prior to running
+the *--start* option save for any log files generated when sec-wall was up.
+[secwall.cli][secwall.cli]
+is the place where the actual processing of command line options takes place;
+note that a good deal of code belongs to the *secwall.cli._Command* base class which among
+other things takes care of communicating with zdaemon through the zdaemon's UNIX
+socket interface - that lets the subclasses focus on their business functionality.
+
+As with any non-trivial software, sec-wall may be easily divided into major components,
+the building blocks that cooperate to reach a desired effect. Those blocks are glued
+together using [Spring Python's][spring-python] Inversion
+of Control concept. What it means is that the parts become loosely coupled
+and independent, that allows for easier testing and swapping the parts without
+having to worry about breaking things due to intermingled dependencies between
+various parts of the code. Apart from that, most of the interal sec-wall's configuration,
+such as default error messages, are stored in the IoC context. The context
+lives in [secwall.app_context][secwall.app_context],
+it's a regular Python file with one class, any methods adorned with an *@Object*
+decorator become container-managed objects which basically means they will be invoked
+when sec-wall's starting and their return value will be stored for a later re-use.
+To repeat, the methods will be invoked once only at the very beggining and
+their return values become singletons. Once stored in the cache, the objects
+may then be easily fetched from the context.
+
+Not all of the building blocks are under control of IoC, it seemed contrived
+and uncalled for to squeeze things related to command line into IoC. What got
+into IoC though was everything related to the run-time processing of
+incoming requests.
+
+The main sec-wall's parts are:
+
+- command line handling code, introduced above, used for initializing config
+  directories and starting/stopping proxies,
+- secwall.server.HTTPProxy; the main class responsible for handling unencrypted
+  plain HTTP traffic, a very thin wrapper around gevent.wsgi.WSGIServer, its
+  main job is to fetch the *wsgi_request_app* object from the IoC context
+  and pass the control to gevent,
+- secwall.server.HTTPSProxy; the main class for handling encrypted SSL/TLS
+  requests, also a thin wrapper around gevent's server but this time it's a subclass
+  of gevent.pywsgi.WSGIServer; fetches the *wsgi_request_app* and *wsgi_request_handler* objects
+  from the IoC context and passes the control to gevent. The HTTPS proxy allows
+  a client to authenticate itself using a client certificate, however if a client
+  doesn't have a certificate the connections are still accepted in the sense
+  of starting an SSL/TLS session to the proxy - naturally it still means that
+  if the security config says the client should have a certificate but it doesn't
+  have one then the connection will be closed as soon as the main WSGI app's \__call\__
+  method gets executed (explained below),
+- secwall.server._RequestApp, known as *wsgi_request_app* in the IoC context;
+  the [WSGI][wsgi] application
+  whose \__call\__ method is executed on each accepted request. Note the *accepted*
+  part, the fact that \__call\__ gets called means the client connection to a proxy
+  has already been established, in particular, if it's an SSL/TLS connection it means
+  we're already past the handshake and we're in a middle of an established SSL/TLS session.
+  The method's logic is as follows:
+    * If there's no configuration for *PATH_INFO*
+      in the request, a 404 Not Found HTTP error is return to the caller,
+    * Some quick SSL/TLS related checks are performed, in that order: a 403 Forbidden
+      is returned if config says the given URL should be accessed through HTTPS only but
+      regular HTTP has been used, a 401 Unauthorized is returned if client is required
+      to use an SSL/TLS certificate but it sent none,
+    * All supported validation methods are tried in the order given by the
+      *validation_precedence* object of the IoC context, only the first method to
+      match the configuration for the URL is being executed. If there's no matching
+      method (for instance, when the configuration is invalid), a 500 Server Error
+      is returned to the caller,
+    * If, for any reason, the validation method says the client should not be allowed
+      in, a 401 Unauthorized is returned to the calling application. Support for validating
+      SSL/TLS certificates is coded directly into _RequestApp
+      whereas WSSE validation makes use of the secwall.wsse.WSSE class,
+    * Having passed the validation, the request is proxied to the backend server
+      and the response from the server is returned to the caller. A gevent's
+      monkey-patched version of urllib2 is used for invoking far servers which means
+      the code's not blocking the processing of other incoming requests.
+
+- secwall.server._RequestHandler, known as *wsgi_request_handler*. A simple subclass
+  of gevent.pywsgi.WSGIHandler which allows for secwall.server._RequestApp to optionally
+  accept the SSL/TLS client certificates sent in by client applications. The class
+  is a good candidate for a patch to gevent so it's quite possible that it will
+  disappear in future versions of sec-wall,
+
+- secwall.wsse.WSSE, implements the [UsernameToken Profile 1.0][username-token-profile-1.0]
+  part of the family of Web Services Security recommendations. The code has been
+  written with re-usability in mind and can be easily used in other
+  projects. Do note however that sec-wall currently **does not** maintain a cache
+  of nounces used, though a subclass of the WSSE class might as well define one. Future
+  versions of sec-wall may be able to improve the situation by using a cache
+  based on [memcached][memcached] or on similar tools.
+
+<div style="text-align:center">
+  <img src="/media/gfx/internals.png" alt="A visualization of dependencies between sec-wall's interal components (not including zdaemon, which is an external dependency)" alt="A visualization of dependencies between sec-wall's interal components (not including zdaemon, which is an external dependency)"/>
+</div>
+
+[soap]: http://en.wikipedia.org/wiki/SOAP "Simple Object Access Protocol on Wikipedia"
+[soa]: http://en.wikipedia.org/wiki/Service-oriented_architecture "Service-oriented architecture on Wikipedia"
+[blade]: http://en.wikipedia.org/wiki/Blade_server "Blade server on Wikipedia"
+[libevent]: http://monkey.org/~provos/libevent/ "libevent's project home page"
+[gevent]: http://gevent.org/ "gevent's project home page"
+[urllib2]: http://docs.python.org/library/urllib2.html "Python standard library's urllib2 module"
+[secwall.main]: http://bazaar.launchpad.net/~sec-wall-dev/sec-wall/trunk/annotate/head%3A/code/src/secwall/main.py "secwall.main module's source code on Launchpad"
+[zdaemon]: http://pypi.python.org/pypi/zdaemon/ "zdaemon's project home page"
+[secwall.cli]: (http://bazaar.launchpad.net/~sec-wall-dev/sec-wall/trunk/annotate/head%3A/code/src/secwall/cli.py) "secwall.cli module's source code on Launchpad"
+[spring-python]: http://springpython.webfactional.com/ "Spring Python's home page"
+[secwall.app_context]: http://bazaar.launchpad.net/~sec-wall-dev/sec-wall/trunk/annotate/head%3A/code/src/secwall/app_context.py "secwall.app_context module's source code on Launchpad"
+[wsgi]: http://wsgi.org/wsgi/ "Web Server Gateway Interface wiki"
+[username-token-profile-1.0]: http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0.pdf "Web Services Security UsernameToken Profile 1.0 in PDF"
+[memcached]: http://en.wikipedia.org/wiki/Memcached "memcached on Wikipedia"
+
+{% endmarkdown %}
+
+{% endblock %}

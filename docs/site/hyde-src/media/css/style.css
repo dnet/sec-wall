@@ -19,7 +19,7 @@ img
 
 h1, h2, h3, h4, h5, h6
 { font: normal 175% 'century gothic', arial, sans-serif;
-  color: #43423F;
+  color: #43423f;
   margin: 0 0 15px 0;
   padding: 5px 0 5px 0;}
 
@@ -50,9 +50,10 @@ a, a:hover
   font-weight:500;
   }
 
-a:hover
+a:hover, a:focus
 { color: #000000;
   background-color:#ffff33;
+  text-decoration:none
 }
 
 ul
@@ -111,25 +112,27 @@ ol li
 
 #logo_text h1, #logo_text h1 a, #logo_text h1 a:hover
 { padding: 0px 0 0 0;
-  color: #A8AA94;
+  color: #ffffff;
   letter-spacing: 0.1em;
   text-decoration: none;
-  background-color:inherit;
+  background-color:transparent;
   }
 
 #logo_text h1 a .logo_colour
-{ color: #FFF;}
+{ color: #FFF;
+background-color:transparent;
+}
 
 #logo_text h2
 { font-size: 120%;
   padding: 4px 0 0 0;
-  color: #A8AA94;}
+  color: #ffffff;}
 
 #menubar
 { height: 46px;
   width: 100%;
   margin: 1px auto 0 auto;
-  background: transparent url(../gfx/tab.png);}
+  background: #333333 url(../gfx/tab.png);}
 
 ul#menu
 { float: left;
@@ -159,22 +162,25 @@ ul#menu li.tab_selected a
   }
 
 ul#menu li.selected a, ul#menu li.selected a:hover
-{ color: #ECEF01;}
-
-ul#menu li a:hover
 { color: #ECEF01;
-background-color:transparent
+text-decoration:underline
+}
+
+ul#menu li a:hover, ul#menu li a:focus
+{ color: #ECEF01;
+background-color:transparent;
+text-decoration:underline
 }
 
 #site_content
 {
   overflow: hidden;
   margin: 44px auto 0 auto;
-  padding: 10px 0 0 25px;
+  padding: 10px 0px 0 25px;
   background: #EEE;
   border-top: 0;
   border-bottom: 0;
-  color: #5D5D5D;}
+  color: #43423f;}
 
 #sidebar_container
 { float: right;
@@ -219,10 +225,12 @@ background-color:transparent
   text-decoration: none;}
 
 #content
-{ text-align: left;
-
+{ text-align: justify;
+  width:75%;
   padding: 15px 10px 20px 20px;
-  margin: 0;}
+  margin: 0;
+  float: left
+}
 
 #content ul
 { margin: 2px 0 12px 0px;}
@@ -250,7 +258,7 @@ background-color:transparent
 { color: #FFF;
   text-decoration: underline;}
 
-#footer a:hover
+#footer a:hover, #footer a:focus
 { color: #FFF;
   text-decoration: none;
   background-color:transparent}
@@ -339,4 +347,48 @@ hr {
   line-height: 0;
   overflow: visible;
   width:75%
+}
+
+.amp {
+  font-family: Baskerville, 'Goudy Old Style', Palatino, 'Book Antiqua', serif;
+  font-style: italic;
+  font-weight: normal;
+}
+
+blockquote {
+  background:#f9f9f9;
+  border-left:10px solid #ccc;
+  margin:1.5em 10px;
+  padding:.5em 10px;
+  quotes:"\201C""\201D""\2018""\2019";
+}
+blockquote:before {
+  color:#ccc;
+  content:open-quote;
+  font-size:4em;
+  line-height:.1em;
+  margin-right:.25em;
+  vertical-align:-.4em;
+}
+blockquote p {
+  display:inline;
+}
+
+.skip a, .skip a:hover, .skip a:visited
+{
+position:absolute;
+left:0px;
+top:-500px;
+width:1px;
+height:1px;
+overflow:hidden;
+color:#ffffff
+}
+
+.skip a:active, .skip a:focus
+{
+position:static;
+width:auto;
+height:auto;
+background-color:transparent
 }
