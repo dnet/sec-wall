@@ -24,7 +24,7 @@ import gevent.monkey
 gevent.monkey.patch_all()
 
 # stdlib
-import argparse, os
+import argparse, os, sys
 
 # Spring Python
 from springpython.context import ApplicationContext
@@ -66,17 +66,33 @@ def get_parser():
     group.add_argument('--init', help=init_help)
     group.add_argument('--start', help=start_help)
     group.add_argument('--stop', help=stop_help)
-    group.add_argument('--fork', help=fork_help, nargs=2, metavar=('config_dir', 'is_https'))
 
     return parser
 
-def run():
-    parser = get_parser()
-    args = parser.parse_args()
+def handle_fork(argv):
+    """ Parses sys.argv when the --fork command has been requested.
+    """
+    is_https = argv[-1]
+    fork_idx = argv.index('--fork')
+    config_dir = os.path.abspath(os.path.sep.join(argv[fork_idx+1:-1]))
 
-    # Using a mutually exclusive group in 'get_parser' gurantees that we'll have
-    # exactly one option to pick here.
-    command, config_info = [(k, v) for k, v in args._get_kwargs() if v][0]
+    return 'fork', [config_dir, is_https]
+
+def run():
+
+    # Special-case the --fork option so that it doesn't get exposed to users.
+    # The idea is that --fork is an internal detail which shouldn't be visible
+    # anywhere.
+    if '--fork' in sys.argv:
+        command, config_info = handle_fork(sys.argv)
+    else:
+        parser = get_parser()
+        args = parser.parse_args()
+
+        # Using a mutually exclusive group in 'get_parser' gurantees that we'll have
+        # exactly one option to pick here.
+        command, config_info = [(k, v) for k, v in args._get_kwargs() if v][0]
+
     if command == 'fork':
         config_dir, is_https = config_info
     else:

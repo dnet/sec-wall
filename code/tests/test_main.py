@@ -66,12 +66,12 @@ def test_parser():
     eq_(parser.prog, 'sec-wall')
     eq_(parser.description, main.description)
     eq_(parser.formatter_class, main.MyFormatter)
-    eq_(len(parser._actions), 5)
+    eq_(len(parser._actions), 4)
 
     # A set of actions expected to be defined by the parser. Each name will
     # be popped off the 'expected_actions' set in a loop below. It is an error
     # if anything is left in the 'expected_actions' set when the loop finishes.
-    base_expected_actions = set(['help', 'init', 'start', 'stop', 'fork'])
+    base_expected_actions = set(['help', 'init', 'start', 'stop'])
     expected_actions = copy.deepcopy(base_expected_actions)
 
     expected = {
@@ -79,7 +79,6 @@ def test_parser():
         'init': dict(option_strings=[u'--init'], help=main.init_help),
         'start': dict(option_strings=[u'--start'], help=main.start_help),
         'stop': dict(option_strings=[u'--stop'], help=main.stop_help),
-        'fork': dict(option_strings=[u'--fork'], nargs=2, help=main.fork_help, metavar=(u'config_dir', u'is_https'))
     }
 
     for action in parser._actions:
@@ -125,7 +124,7 @@ def test_main():
     when the module's being rung directly, from the command line or using
     python -m switch.
     """
-    base_args = {'fork':None, 'init':None, 'start':None, 'stop':None}
+    base_args = {'--fork':None, 'init':None, 'start':None, 'stop':None}
 
     for arg in base_args:
         for expected_is_https in ('1', '0'):
@@ -133,10 +132,7 @@ def test_main():
             args = copy.deepcopy(base_args)
             expected_config_dir = tempfile.mkdtemp()
 
-            if arg == 'fork':
-                args['fork'] = (expected_config_dir, expected_is_https)
-            else:
-                args[arg] = expected_config_dir
+            args[arg] = expected_config_dir
 
             with Replacer() as r:
 
@@ -154,6 +150,9 @@ def test_main():
 
                     def run(self):
                         pass
+
+                if arg == '--fork':
+                    r.replace('sys.argv', ['--fork', expected_config_dir, expected_is_https])
 
                 r.replace('secwall.main.get_parser', _DummyParser)
                 r.replace('secwall.cli.Init', _DummyCommand)
