@@ -98,7 +98,7 @@ class _Command(object):
 
         marker_path = os.path.normpath(os.path.join(self.config_dir, self._config_marker))
         if not os.path.exists(marker_path):
-            msg = "{0} file is missing,".format(self._config_marker)
+            msg = "The {0} file is missing,".format(self._config_marker)
             msg += " are you sure {0} is a sec-wall's".format(self.config_dir)
             msg += ' config directory?\n'
             self._error(msg)
