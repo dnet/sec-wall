@@ -229,7 +229,8 @@ text-decoration:underline
   width:75%;
   padding: 15px 10px 20px 20px;
   margin: 0;
-  float: left
+  float: left;
+  font-size:11pt
 }
 
 #content ul
