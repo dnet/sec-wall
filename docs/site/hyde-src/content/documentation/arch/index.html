@@ -56,23 +56,24 @@ there shouldn't be any obstacles if people want to use sec-wall on those systems
 sec-wall is a modern application written on top of libevent and gevent which out of the box
 means high performance and resource-friendly behaviour. There's no need for
 running a cluster of 12-way servers to achieve a sensible throughput, a single CPU will do,
-all of the processing sec-wall does happens in a single thread.
+sec-wall does all of its processing in a single thread, being based on libevent/gevent,
+it doesn't need to use multiple threads or processes.
 
-The drawing below explains the major processing paths. Command line tools initialize,
-start and stop an HTTP/HTTPS proxy. A proxy accepts client connections and if the
+The drawing below explains the major processing paths. Command line tool initializes,
+starts and stops an HTTP/HTTPS proxy. The proxy accepts client connections and if the
 configuration says a client should be let in, the request is then proxied over
 further to backend servers. An appropriate *Access denied* HTTP response is returned
 to the calling application in case the configuration prohibits it from accessing
 the requested resource.
 
 <div style="text-align:center">
-  <img src="/media/gfx/overview.png" alt="A visualization of dependencies between sec-wall's interal components (not including, which is an external dependency)" alt="A visualization of dependencies between sec-wall's interal components (not including, which is an external dependency)"/>
+  <img src="/media/gfx/overview.png" alt="A visualization of dependencies between sec-wall's interal components (not including, which is an external dependency)" title="A visualization of dependencies between sec-wall's interal components (not including, which is an external dependency)"/>
 </div>
 
-The only user-facing command line tool is called *sec-wall* on Linux and
-*sec-linux.exe* under Windows. It's a simple command with only several options and
-that's the way it's intended to stay as the main burden of configuring sec-wall
-should fall on a config file. The idea is that getting lost in a myriad of command
+The only user-facing command line tool is called *sec-wall*. It's a simple command
+with only several options and that's the way it's intended to stay as the main
+burden of configuring sec-wall should fall on a config file. The idea is that
+getting lost in a myriad of command
 line options has never been fun and sec-wall shouldn't encourage such designs.
 Likewise, creating a separate command for each of the options is also a no-no.
 The command line options are simple to the point of being dumb, *--init*, *--start*
@@ -182,8 +183,69 @@ The main sec-wall's parts are:
   based on [memcached][memcached] or on similar tools.
 
 <div style="text-align:center">
-  <img src="/media/gfx/internals.png" alt="A visualization of dependencies between sec-wall's interal components (not including zdaemon, which is an external dependency)" alt="A visualization of dependencies between sec-wall's interal components (not including zdaemon, which is an external dependency)"/>
+  <img src="/media/gfx/internals.png" alt="A visualization of dependencies between sec-wall's interal components (not including zdaemon, which is an external dependency)" title="A visualization of dependencies between sec-wall's interal components (not including zdaemon, which is an external dependency)"/>
 </div>
+
+<hr />
+
+sec-wall, the project, believes in good and an always up-to-date documentation. Things
+along the lines of *"we're short on documentation at the moment but in the meantime
+you can always browse the source code"* are outright rejected and simply have
+no place in this project. Of course, everyone's invited to have a look at the source
+code, it's open-source after all, but that in no way may be an excuse for not
+having a decent documentation.
+
+It's very important that the project's web page which holds the documentation
+be acccessible to anyone, including people with impairments. The project will
+strive to achieve the highest possible conformance with the
+latest version of the [W3C Web Content Accessibility Guidelines][wcag20] and with
+other similar industry standards and recommendations. Any suggestions for the better
+implementation in that regards are always very much welcome.
+
+Any requests from users to update or improve the documentation will be treated
+with great care; any omissions, ambiguities or typos will have a status of
+regular functional bugs. In short, documentation is just as much a part of the
+project as the business functionality and test cases are.
+
+The website has been built using [Hyde][hyde], a static website generator written
+in Python on top of [Django][django] and dozen of other libraries. Most of the website's
+content is written using the [markdown][markdown] markup, the rest is regular HTML
+used in places such as div layouts. The website is very simple and focused
+on the actual content instead of bells and whistles so it shouldn't be very hard
+to keep its current [XHTML 1.0 Strict][xhtml] compatibility while keeping in mind that
+at some point it should be ported to [HTML 5.0][html50].
+
+<hr />
+
+sec-wall is a security software and as any piece of software, but as a security related
+one in particular, it deserves to be thoroughly tested before making any stable releases
+thus it should be no surprise that in terms of source lines of code there are more
+test cases then there is the actual business functionality. The project also uses
+[coverage.py][coverage] to keep a 100% code coverage for ensuring that there's
+no unnecessary code, that is, it can be assumed that a line of code may be safely removed if there isn't any
+test case to cover it unless there are very good reasons for not testing the line
+in question. For instance, wsse.server._RequestHandler is a subclass of
+gevent.pywsgi.WSGIHandler that reimplements the *handle_one_response* method by adding
+a couple of its own lines. In this particular situation it would be an overkill
+to test all the not so trivial branches of the overridden method, tests only cover
+those lines that are directly related to what's been added by sec-wall, the rest has been
+excluded from influencing the line coverage machinery by adding a *# pragma: no cover* comment.
+It is the project's practice that any particular commit made to the [trunk branch][sec-wall-trunk]
+is guaranteed to be fully tested but the same doesn't apply to feature or private
+branches created, for instance, to resolve a particular bug.
+
+There are many 3rd party libraries used for testing and there isn't any particular
+inclination towards, for example, a "favourite" or "the best" one for mocking up the classes
+under tests, if something's does its job well, is easy to use and there isn't anything
+similar in use already, then it should be added as a new project's dependency.
+
+Contrary to the direction of some projects, there should be no thinking twice
+about designing the sec-wall's APIs with tests in mind. It stems from the author
+opinion that there's really no distinction between 'the code' and 'the tests',
+it's all code, the line should rather be drawn in terms of 'the business functionality'
+and 'the tests', all under the 'code' term. So if changing an API  - slightly and
+without making it weird all of a sudden - should help with implementing the tests
+then that's what should be done.
 
 [soap]: http://en.wikipedia.org/wiki/SOAP "Simple Object Access Protocol on Wikipedia"
 [soa]: http://en.wikipedia.org/wiki/Service-oriented_architecture "Service-oriented architecture on Wikipedia"
@@ -199,6 +261,14 @@ The main sec-wall's parts are:
 [wsgi]: http://wsgi.org/wsgi/ "Web Server Gateway Interface wiki"
 [username-token-profile-1.0]: http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0.pdf "Web Services Security UsernameToken Profile 1.0 in PDF"
 [memcached]: http://en.wikipedia.org/wiki/Memcached "memcached on Wikipedia"
+[wcag20]: http://www.w3.org/TR/WCAG20/ "Web Content Accessibility Guidelines 2.0"
+[hyde]: http://ringce.com/hyde "Hyde - A Python Static Website Generator - website"
+[django]: http://www.djangoproject.com/ "Django project's website"
+[markdown]: http://daringfireball.net/projects/markdown/ "markdown's project website"
+[xhtml]: http://en.wikipedia.org/wiki/XHTML#XHTML_1.0 "XHTML 1.0 on Wikipedia"
+[html50]: http://en.wikipedia.org/wiki/HTML5 "HTML 5.0 on Wikipedia"
+[coverage]: http://nedbatchelder.com/code/coverage/ "coverage.py's project website"
+[sec-wall-trunk]: https://launchpad.net/sec-wall/trunk "sec-wall's trunk branch on Launchpad"
 
 {% endmarkdown %}
 
