@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-import cStringIO, ssl, unittest, uuid
+import cStringIO, ssl, unittest, urllib2, uuid
 
 # gevent
 from gevent import wsgi
@@ -254,6 +254,65 @@ class RequestAppTestCase(unittest.TestCase):
 
                         finally:
                             wsgi_input.close()
+
+    def test_on_request_urlopen_exception(self):
+        """ The _on_request method should response the response regardless
+        even if it's not 200 OK.
+        """
+        with Replacer() as r:
+
+            _host = uuid.uuid4().hex
+            _path_info = uuid.uuid4().hex
+            _username = uuid.uuid4().hex
+            _password = uuid.uuid4().hex
+            _realm = uuid.uuid4().hex
+            _code = uuid.uuid4().hex
+            _status = uuid.uuid4().hex
+            _response = uuid.uuid4().hex
+            _headers = {'Content-Type': uuid.uuid4().hex}
+
+            def _x_start_response(code_status, headers):
+                eq_(code_status, _code + ' ' + _status)
+                eq_(sorted(headers), sorted(_headers.items()))
+
+            def _urlopen(*ignored_args, **ignored_kwargs):
+                class _DummyException(urllib2.HTTPError):
+                    def __init__(self, *ignored_args, **ignored_kwargs):
+                        self.msg = _status
+                        self.headers = _headers
+
+                    def read(*ignored_args, **ignored_kwargs):
+                        return _response
+
+                    def getcode(*ignored_args, **ignored_kwargs):
+                        return _code
+
+                    def close(*ignored_args, **ignored_kwargs):
+                        pass
+
+                raise _DummyException()
+
+            r.replace('urllib2.urlopen', _urlopen)
+
+            wsgi_input = cStringIO.StringIO()
+
+            try:
+                wsgi_input.write(uuid.uuid4().hex)
+
+                _url_config = {'basic-auth':True, 'host':_host}
+                _url_config['basic-auth-username'] = _username
+                _url_config['basic-auth-password'] = _password
+                _url_config['basic-auth-realm'] = _realm
+
+                auth = 'Basic ' + (_username + ':' + _password).encode('base64')
+
+                _env = {'wsgi.input':wsgi_input, 'PATH_INFO':_path_info,
+                        'HTTP_AUTHORIZATION':auth}
+
+                req_app = server._RequestApp(self.config, app_ctx)
+                response = req_app._on_request(_x_start_response, _env, _url_config, None)
+            finally:
+                wsgi_input.close()
 
     def test_get_www_auth(self):
         """ Tests the correctness of returning a value of the WWW-Authenticate
@@ -527,11 +586,97 @@ class RequestAppTestCase(unittest.TestCase):
             is_ok = req_app._on_wsse_pwd(_env, _url_config, _unused_client_cert, _data)
             eq_(is_ok, False)
 
+    def test_on_basic_auth_ok(self):
+        """ Everything's OK, client has to use Basic Auth and it does so
+        in a correct way, by sending the correct headers.
+        """
+        username = uuid.uuid4().hex
+        password = uuid.uuid4().hex
+
+        auth = 'Basic ' + (username + ':' + password).encode('base64')
+
+        _env = {'HTTP_AUTHORIZATION': auth}
+
+        _url_config = {'basic-auth': True, 'basic-auth-username':username,
+                       'basic-auth-password':password}
+
+        req_app = server._RequestApp(self.config, app_ctx)
+        is_ok = req_app._on_basic_auth(_env, _url_config)
+
+        eq_(bool(is_ok), True)
+
+    def test_on_basic_auth_invalid_username(self):
+        """ Client sends an invalid username.
+        """
+        username = uuid.uuid4().hex
+        password = uuid.uuid4().hex
+
+        auth = 'Basic ' + (username + ':' + password).encode('base64')
+
+        _env = {'HTTP_AUTHORIZATION': auth}
+
+        _url_config = {'basic-auth': True, 'basic-auth-username':uuid.uuid4().hex,
+                       'basic-auth-password':password}
+
+        req_app = server._RequestApp(self.config, app_ctx)
+        is_ok = req_app._on_basic_auth(_env, _url_config)
+
+        eq_(bool(is_ok), False)
+
+    def test_on_basic_auth_invalid_password(self):
+        """ Client sends an invalid password.
+        """
+        username = uuid.uuid4().hex
+        password = uuid.uuid4().hex
+
+        auth = 'Basic ' + (username + ':' + password).encode('base64')
+
+        _env = {'HTTP_AUTHORIZATION': auth}
+
+        _url_config = {'basic-auth': True, 'basic-auth-username':username,
+                       'basic-auth-password':uuid.uuid4().hex}
+
+        req_app = server._RequestApp(self.config, app_ctx)
+        is_ok = req_app._on_basic_auth(_env, _url_config)
+
+        eq_(bool(is_ok), False)
+
+    def test_on_basic_auth_no_http_authorization(self):
+        """ Client doesn't send an authorization header at all.
+        """
+        _env = {}
+        _url_config = {'basic-auth': True, 'basic-auth-username':uuid.uuid4().hex,
+                       'basic-auth-password':uuid.uuid4().hex}
+
+        req_app = server._RequestApp(self.config, app_ctx)
+        is_ok = req_app._on_basic_auth(_env, _url_config)
+
+        eq_(bool(is_ok), False)
+
+    def test_on_basic_auth_http_authourization_invalid_prefix(self):
+        """ Client sends an authorization header but it doesn't start with
+        the expected prefix ('Basic ').
+        """
+        username = uuid.uuid4().hex
+        password = uuid.uuid4().hex
+
+        auth = uuid.uuid4().hex + (username + ':' + password).encode('base64')
+
+        _env = {'HTTP_AUTHORIZATION': auth}
+
+        _url_config = {'basic-auth': True, 'basic-auth-username':username,
+                       'basic-auth-password':uuid.uuid4().hex}
+
+        req_app = server._RequestApp(self.config, app_ctx)
+        is_ok = req_app._on_basic_auth(_env, _url_config)
+
+        eq_(bool(is_ok), False)
+
     def test_not_implemented(self):
         """ Some of the authentication schemes haven't been implemented yet.
         """
         req_app = server._RequestApp(self.config, app_ctx)
-        for meth_name in('_on_basic_auth', '_on_digest_auth', '_on_custom_http', '_on_xpath'):
+        for meth_name in('_on_digest_auth', '_on_custom_http', '_on_xpath'):
             meth = getattr(req_app, meth_name)
             assert_raises(NotImplementedError, meth)
 

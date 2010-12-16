@@ -87,7 +87,11 @@ class _RequestApp(object):
             return self._500(start_response)
 
         req = urllib2.Request(url_config['host'] + env['PATH_INFO'], data)
-        resp = urllib2.urlopen(req)
+        try:
+            resp = urllib2.urlopen(req)
+        except urllib2.HTTPError, e:
+            resp = e
+
         response = resp.read()
         resp.close()
 
@@ -195,10 +199,27 @@ class _RequestApp(object):
         else:
             return ok
 
-    def _on_basic_auth(self):
+    def _on_basic_auth(self, env, url_config, *ignored):
         """ Handles HTTP Basic Authentication.
         """
-        raise NotImplementedError()
+        auth = env.get('HTTP_AUTHORIZATION')
+        if not auth:
+            return False
+
+        prefix = 'Basic '
+        if not auth.startswith(prefix):
+            return False
+
+        _, auth = auth.split(prefix)
+        auth = auth.strip().decode('base64')
+
+        username, password = auth.split(':', 1)
+
+        if username == url_config['basic-auth-username'] and \
+           password == url_config['basic-auth-password']:
+            return True
+
+        return False
 
     def _on_digest_auth(self):
         """ Handles HTTP Digest Authentication.
