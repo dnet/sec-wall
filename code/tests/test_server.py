@@ -846,11 +846,75 @@ class RequestAppTestCase(unittest.TestCase):
 
             eq_(True, request_app._on_digest_auth(env, url_config))
 
+    def test_on_custom_http_invalid_input(self):
+        """ Client sends incorrect custom authorization headers.
+        """
+        request_app = server._RequestApp(self.config, app_ctx)
+
+        name1, value1 = [uuid.uuid4().hex + '-' + uuid.uuid4().hex for x in range(2)]
+        name2, value2 = [uuid.uuid4().hex + '-' + uuid.uuid4().hex for x in range(2)]
+        url_config = {'custom-http': True,
+                      'custom-http-'+name1: value1,
+                      'custom-http-'+name2: value2}
+
+        # 1) None of the headers were sent
+        env = {}
+        eq_(False, request_app._on_custom_http(env, url_config))
+
+        # 2) All headers were sent yet their values were incorrect
+        env = {'HTTP_' + name1.upper().replace('-', '_'):uuid.uuid4().hex,
+               'HTTP_' + name2.upper().replace('-', '_'):uuid.uuid4().hex}
+        eq_(False, request_app._on_custom_http(env, url_config))
+
+        # 4) One header's correct (including its value), the other has incorrect
+        # name and value.
+        env = {'HTTP_' + name1.upper().replace('-', '_'):value1,
+               uuid.uuid4().hex:uuid.uuid4().hex}
+        eq_(False, request_app._on_custom_http(env, url_config))
+
+        # 4) One header's correct (including its value), the other has incorrect
+        # value despite its name being correct.
+        env = {'HTTP_' + name1.upper().replace('-', '_'):value1,
+               'HTTP_' + name2:uuid.uuid4().hex}
+        eq_(False, request_app._on_custom_http(env, url_config))
+
+    def test_on_custom_http_exception_on_no_custom_headers_in_config(self):
+        """ An Exception is being raised when the config's invalid,
+        says clients should be validated against custom headers yet it doesn't
+        define any custom headers. The exception must be raised regardless of
+        the client input data.
+        """
+        request_app = server._RequestApp(self.config, app_ctx)
+
+        url_config = {'custom-http': True}
+
+        # We don't need to define any input data, an Exception must be always raised.
+        env = {}
+
+        assert_raises(Exception, request_app._on_custom_http, env, url_config)
+
+    def test_on_custom_http_ok(self):
+        """ All's good, a client sends data matching the configuration.
+        """
+        request_app = server._RequestApp(self.config, app_ctx)
+
+        name1, value1 = [uuid.uuid4().hex + '-' + uuid.uuid4().hex for x in range(2)]
+        name2, value2 = [uuid.uuid4().hex + '-' + uuid.uuid4().hex for x in range(2)]
+
+        url_config = {'custom-http': True,
+                      'custom-http-'+name1: value1,
+                      'custom-http-'+name2: value2}
+
+        env = {'HTTP_' + name1.upper().replace('-', '_'):value1,
+               'HTTP_' + name2.upper().replace('-', '_'):value2,}
+
+        eq_(True, request_app._on_custom_http(env, url_config))
+
     def test_not_implemented(self):
         """ Some of the authentication schemes haven't been implemented yet.
         """
         req_app = server._RequestApp(self.config, app_ctx)
-        for meth_name in('_on_custom_http', '_on_xpath'):
+        for meth_name in('_on_xpath',):
             meth = getattr(req_app, meth_name)
             assert_raises(NotImplementedError, meth)
 
@@ -1000,7 +1064,7 @@ class HTTPRequestHandlerTestCase(unittest.TestCase):
 
             class _Socket(object):
                 def __init__(self):
-                    # Dynamicall create the 'getpeercert' method depending on
+                    # Dynamically create the 'getpeercert' method depending on
                     # whether in this iteration the client cert should be
                     # returned or not.
                     if _cert:

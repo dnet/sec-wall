@@ -295,10 +295,27 @@ class _RequestApp(object):
 
         return False
 
-    def _on_custom_http(self):
+    def _on_custom_http(self, env, url_config, *ignored):
         """ Handles the authentication based on custom HTTP headers.
         """
-        raise NotImplementedError()
+        prefix = 'custom-http-'
+        expected_headers = [header for header in url_config if header.startswith(prefix)]
+
+        if not expected_headers:
+
+            # It's clearly an error. We've been requested to use custom HTTP
+            # headers but none are in the config.
+            raise Exception('No custom HTTP headers were found in the config')
+
+        for expected_header in expected_headers:
+            # This set of operations (.lstrip, .upper, .replace) could be done once
+            # when the config's read, well, it's a room for improvement.
+            value = env.get('HTTP_' + expected_header.lstrip(prefix).upper().replace('-', '_'))
+
+            if not value or value != url_config[expected_header]:
+                return False
+        else:
+            return True
 
     def _on_xpath(self):
         """ Handles the authentication based on XPath expressions.

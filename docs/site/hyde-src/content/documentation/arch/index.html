@@ -162,8 +162,9 @@ The main sec-wall's parts are:
       is returned to the caller,
     * If, for any reason, the validation method says the client should not be allowed
       in, a 401 Unauthorized is returned to the calling application. Note that
-      validation methods for Basic Auth, Digest Auth and SSL/TLS certificates are
-      coded directly into _RequestApp whereas WSSE validation makes use of the secwall.wsse.WSSE class,
+      validation methods for Basic Auth, Digest Auth, custom HTTP headers
+      and SSL/TLS certificates are coded directly into _RequestApp whereas WSSE
+      validation makes use of the secwall.wsse.WSSE class,
     * Having passed the validation, the request is proxied to the backend server
       and the response from the server is returned to the caller. A gevent's
       monkey-patched version of urllib2 is used for invoking far servers which means
