@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-import re, ssl, sys, time, traceback, urllib2
+import hashlib, re, ssl, sys, time, traceback, urllib2, uuid
 
 # lxml
 from lxml import etree
@@ -107,7 +107,7 @@ class _RequestApp(object):
         www_auth = {
             'ssl-cert': self.config.client_cert_401_www_auth,
             'basic-auth': 'Basic realm="{realm}"',
-            'digest-auth': 'TODO',
+            'digest-auth': 'Digest realm="{realm}", nonce="{nonce}", opaque="{opaque}"',
             'wsse-pwd': 'WSSE realm="{realm}", profile="UsernameToken"',
             'custom-http': 'custom-http',
             'xpath': 'xpath'
@@ -116,6 +116,12 @@ class _RequestApp(object):
 
         if config_type in('basic-auth', 'wsse-pwd'):
             header_value = header_value.format(realm=url_config[config_type + '-' + 'realm'])
+        elif config_type == 'digest-auth':
+            realm = url_config['digest-auth-realm']
+            nonce = uuid.uuid4().hex
+            opaque = uuid.uuid4().hex
+
+            header_value = header_value.format(realm=realm, nonce=nonce, opaque=opaque)
 
         return header_value
 
@@ -221,10 +227,73 @@ class _RequestApp(object):
 
         return False
 
-    def _on_digest_auth(self):
+    def _parse_digest_auth(self, auth):
+        """ Parses the client's Authorization header and transforms it into
+        a dictionary.
+        """
+        out = {}
+        auth = auth.replace('Digest ', '', 1).split(',')
+        for item in auth:
+            key, value = item.split('=', 1)
+            key = key.strip()
+            value = value[1:-1] # Strip quotation marks
+            out[key] = value
+        return out
+
+    def _compute_digest_auth_response(self, expected_username, expected_realm,
+                    expected_password, expected_uri, request_method, nonce):
+        """ Returns the Digest Auth response as understood by RFC 2069.
+        """
+
+        # HA1
+        ha1 = hashlib.md5()
+        ha1.update('{0}:{1}:{2}'.format(expected_username, expected_realm, expected_password))
+
+        # HA2
+        ha2 = hashlib.md5()
+        ha2.update('{0}:{1}'.format(request_method, expected_uri))
+
+        # response
+        respone = hashlib.md5()
+        respone.update('{0}:{1}:{2}'.format(ha1.hexdigest(), nonce, ha2.hexdigest()))
+
+        return respone.hexdigest()
+
+    def _on_digest_auth(self, env, url_config, *ignored):
         """ Handles HTTP Digest Authentication.
         """
-        raise NotImplementedError()
+        auth = env.get('HTTP_AUTHORIZATION')
+        if not auth:
+            return False
+
+        auth = self._parse_digest_auth(auth)
+
+        expected_username = url_config['digest-auth-username']
+        expected_password = url_config['digest-auth-password']
+        expected_realm = url_config['digest-auth-realm']
+
+        if auth['username'] != expected_username:
+            return False
+
+        if auth['realm'] != expected_realm:
+            return False
+
+        if env.get('QUERY_STRING'):
+            expected_uri = '{0}?{1}'.format(env['PATH_INFO'], env['QUERY_STRING'])
+        else:
+            expected_uri = env['PATH_INFO']
+
+        if auth['uri'] != expected_uri:
+            return False
+
+        expected_response = self._compute_digest_auth_response(expected_username,
+                                expected_realm, expected_password, expected_uri,
+                                env['REQUEST_METHOD'], auth['nonce'])
+
+        if auth['response'] == expected_response:
+            return True
+
+        return False
 
     def _on_custom_http(self):
         """ Handles the authentication based on custom HTTP headers.

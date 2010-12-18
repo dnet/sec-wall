@@ -75,7 +75,7 @@ with only several options and that's the way it's intended to stay as the main
 burden of configuring sec-wall should fall on a config file. The idea is that
 getting lost in a myriad of command
 line options has never been fun and sec-wall shouldn't encourage such designs.
-Likewise, creating a separate command for each of the options is also a no-no.
+Likewise, creating a separate command for each of the actions to perform would've been also a no-no.
 The command line options are simple to the point of being dumb, *--init*, *--start*
 and *--stop* accept a single and the same argument, so the purpose of those options
 should be self-explanatory for people in a hurry.
@@ -149,7 +149,8 @@ The main sec-wall's parts are:
   we're already past the handshake and we're in a middle of an established SSL/TLS session.
   The method's logic is as follows:
     * If there's no configuration for *PATH_INFO*
-      in the request, a 404 Not Found HTTP error is return to the caller,
+      in the request (for instance, a client wishes to access /foo/bar/baz but the
+      config says nothing about it), a 404 Not Found HTTP error is return to the caller,
     * Some quick SSL/TLS related checks are performed, in that order: a 403 Forbidden
       is returned if config says the given URL should be accessed through HTTPS only but
       regular HTTP has been used, a 401 Unauthorized is returned if client is required
@@ -160,15 +161,15 @@ The main sec-wall's parts are:
       method (for instance, when the configuration is invalid), a 500 Server Error
       is returned to the caller,
     * If, for any reason, the validation method says the client should not be allowed
-      in, a 401 Unauthorized is returned to the calling application. Support for validating
-      SSL/TLS certificates is coded directly into _RequestApp
-      whereas WSSE validation makes use of the secwall.wsse.WSSE class,
+      in, a 401 Unauthorized is returned to the calling application. Note that
+      validation methods for Basic Auth, Digest Auth and SSL/TLS certificates are
+      coded directly into _RequestApp whereas WSSE validation makes use of the secwall.wsse.WSSE class,
     * Having passed the validation, the request is proxied to the backend server
       and the response from the server is returned to the caller. A gevent's
       monkey-patched version of urllib2 is used for invoking far servers which means
       the code's not blocking the processing of other incoming requests.
 
-- secwall.server._RequestHandler, known as *wsgi_request_handler*. A simple subclass
+- secwall.server._RequestHandler, known as *wsgi_request_handler* in IoC. A simple subclass
   of gevent.pywsgi.WSGIHandler which allows for secwall.server._RequestApp to optionally
   accept the SSL/TLS client certificates sent in by client applications. The class
   is a good candidate for a patch to gevent so it's quite possible that it will
@@ -193,7 +194,9 @@ along the lines of *"we're short on documentation at the moment but in the meant
 you can always browse the source code"* are outright rejected and simply have
 no place in this project. Of course, everyone's invited to have a look at the source
 code, it's open-source after all, but that in no way may be an excuse for not
-having a decent documentation.
+having a decent documentation. Same goes for docstrings; every class, function
+and method  - except for magical methods such as \__init\__ or \__repr\__  -
+must have a clear explanation of its purpose.
 
 It's very important that the project's web page which holds the documentation
 be acccessible to anyone, including people with impairments. The project will
@@ -208,7 +211,7 @@ regular functional bugs. In short, documentation is just as much a part of the
 project as the business functionality and test cases are.
 
 The website has been built using [Hyde][hyde], a static website generator written
-in Python on top of [Django][django] and dozen of other libraries. Most of the website's
+in Python on top of [Django][django] and a dozen of other libraries. Most of the website's
 content is written using the [markdown][markdown] markup, the rest is regular HTML
 used in places such as div layouts. The website is very simple and focused
 on the actual content instead of bells and whistles so it shouldn't be very hard

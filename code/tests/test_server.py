@@ -73,6 +73,14 @@ class RequestAppTestCase(unittest.TestCase):
     def setUp(self):
         self.config = _DummyConfig([['/*', {}]])
 
+        # Note that the funky whitespace below has been added on purpose
+        # as it shouldn't make any difference for the parser.
+        self.digest_auth_template = ('Digest           username          ="{0}", realm="{1}", ' \
+                 'nonce="{2}", ' \
+                 '   uri="{3}", ' \
+                 'response   ="{4}", ' \
+                 '   opaque         ="{5}"')
+
     def test_call_match(self):
         """ Tests how the __call__ method handles a matching URL.
         """
@@ -234,7 +242,7 @@ class RequestAppTestCase(unittest.TestCase):
 
                             _url_config = {'ssl': False, config_type:True, 'host':_host}
 
-                            if config_type in('basic-auth', 'wsse-pwd'):
+                            if config_type in('basic-auth', 'digest-auth', 'wsse-pwd'):
                                 _url_config[config_type + '-realm'] = _realm
 
                             _env = {'wsgi.input':wsgi_input, 'PATH_INFO':_path_info}
@@ -672,11 +680,177 @@ class RequestAppTestCase(unittest.TestCase):
 
         eq_(bool(is_ok), False)
 
+    def test_digest_auth_compute_response(self):
+        """ Tests that the algorithm for computing a response works correctly,
+        as defined in RFC 2069.
+        """
+        username = 'abc'
+        realm = 'My Realm'
+        password = 'def'
+        uri = '/qwerty/uiop?as=df&gh=jk'
+        method = 'GET'
+        nonce = '8391442a5f0c48d69a5aff8847caede5'
+        expected_response = '7bb69ec080c75df5b166f379d47c6528'
+
+        response = server._RequestApp(self.config, app_ctx)._compute_digest_auth_response(
+            username, realm, password, uri, method, nonce)
+
+        eq_(expected_response, response)
+
+
+    def test_digest_auth_parse_header(self):
+        """ Tests that the algorithm for computing a response works correctly,
+        as defined in RFC 2069.
+        """
+        username = 'abc'
+        realm = 'My Realm'
+        nonce = '8391442a5f0c48d69a5aff8847caede5'
+        uri = '/qwerty/uiop?as=df&gh=jk'
+        response = '7bb69ec080c75df5b166f379d47c6528'
+        opaque = '69041b080f324d65829acc140e9dc5cb'
+
+        auth = self.digest_auth_template.format(username, realm, nonce, uri, response, opaque)
+
+        parsed = server._RequestApp(self.config, app_ctx)._parse_digest_auth(auth)
+
+        eq_(parsed['username'], username)
+        eq_(parsed['realm'], realm)
+        eq_(parsed['nonce'], nonce)
+        eq_(parsed['uri'], uri)
+        eq_(parsed['response'], response)
+        eq_(parsed['opaque'], opaque)
+
+    def test_on_digest_auth_invalid_input(self):
+        """ Digest auth handler should return False on certain conditions,
+        when the header's fields don't match the expected values.
+        """
+        request_app = server._RequestApp(self.config, app_ctx)
+
+        # No HTTP_AUTHORIZATION header sent at all; returns False unconditionally,
+        # regardless of the URL config.
+
+        env = {}
+        url_config = {}
+        eq_(False, request_app._on_digest_auth(env, url_config))
+
+        # The username sent in is not equal to what's in the URL config.
+
+        env = {'PATH_INFO':uuid.uuid4().hex}
+        auth = self.digest_auth_template.format(uuid.uuid4().hex, '', '', '', '', '')
+        env['HTTP_AUTHORIZATION'] = auth
+
+        url_config = {'digest-auth-username':uuid.uuid4()}
+        url_config['digest-auth-password'] = uuid.uuid4()
+        url_config['digest-auth-realm'] = uuid.uuid4()
+
+        eq_(False, request_app._on_digest_auth(env, url_config))
+
+        # The realm sent in is not equal to what's in the URL config.
+
+        env = {'PATH_INFO':uuid.uuid4().hex}
+        username = uuid.uuid4().hex
+        auth = self.digest_auth_template.format(username, uuid.uuid4().hex, '', '', '', '')
+        env['HTTP_AUTHORIZATION'] = auth
+
+        url_config = {'digest-auth-username':username}
+        url_config['digest-auth-password'] = uuid.uuid4()
+        url_config['digest-auth-realm'] = uuid.uuid4()
+
+        eq_(False, request_app._on_digest_auth(env, url_config))
+
+        # The URI sent in in HTTP_AUTHORIZATION header is not equal to what's
+        # been sent in the PATH_INFO + QUERY_STRING.
+
+        env = {'PATH_INFO':uuid.uuid4().hex}
+        username = uuid.uuid4().hex
+        realm = uuid.uuid4().hex
+        path_info = '/a/b/c/'
+        query_string =  'q=w&e=r'
+
+        auth = self.digest_auth_template.format(username, realm, '',
+                    '{0}?{1}'.format(path_info, query_string), '', '')
+
+        env['HTTP_AUTHORIZATION'] = auth
+        env['PATH_INFO'] = path_info
+        env['QUERY_STRING'] = query_string + '{0}:{1}'.format(uuid.uuid4().hex,
+                                                              uuid.uuid4().hex)
+
+        url_config = {'digest-auth-username':username}
+        url_config['digest-auth-password'] = uuid.uuid4()
+        url_config['digest-auth-realm'] = realm
+
+        eq_(False, request_app._on_digest_auth(env, url_config))
+
+        # Client sends an invalid password in.
+
+        username = 'abc'
+        realm = 'My Realm'
+        password = uuid.uuid4().hex
+        method = 'GET'
+        nonce = '8391442a5f0c48d69a5aff8847caede5'
+        response = '7bb69ec080c75df5b166f379d47c6528'
+        opaque = '69041b080f324d65829acc140e9dc5cb'
+
+        path_info = '/qwerty/uiop'
+        query_string =  'as=df&gh=jk'
+
+        uri = '{0}?{1}'.format(path_info, query_string)
+
+        env = {'PATH_INFO':'/qwerty/uiop', 'QUERY_STRING':query_string}
+        auth = self.digest_auth_template.format(username, realm, nonce, uri, response, opaque)
+        env['HTTP_AUTHORIZATION'] = auth
+        env['REQUEST_METHOD'] = 'GET'
+
+        url_config = {'digest-auth-username':username}
+        url_config['digest-auth-password'] = password
+        url_config['digest-auth-realm'] = realm
+
+        eq_(False, request_app._on_digest_auth(env, url_config))
+
+    def test_on_digest_auth_ok(self):
+        """ Client sends correct data matching the configuration, the validation
+        method should return True in that case.
+        """
+        request_app = server._RequestApp(self.config, app_ctx)
+
+        username = 'abc'
+        password = 'def'
+        realm = 'My Realm'
+        method = 'GET'
+
+        input_data = (
+            # nonce, response, opaque, path_info, query_string
+
+            ('094e8e8411eb494fa7ecb740fd6bf229', '34fbb34f2910934d88d6b9d361de68b6',
+             'ae0725805fae43af85443b279dd8f0d3', '/qwerty/uiop', ''),
+
+            ('8391442a5f0c48d69a5aff8847caede5', '7bb69ec080c75df5b166f379d47c6528',
+             '69041b080f324d65829acc140e9dc5cb', '/qwerty/uiop', 'as=df&gh=jk'),
+        )
+
+        for(nonce, response, opaque, path_info, query_string) in input_data:
+
+            if query_string:
+                uri = '{0}?{1}'.format(path_info, query_string)
+            else:
+                uri = path_info
+
+            env = {'PATH_INFO':'/qwerty/uiop', 'QUERY_STRING':query_string}
+            auth = self.digest_auth_template.format(username, realm, nonce, uri, response, opaque)
+            env['HTTP_AUTHORIZATION'] = auth
+            env['REQUEST_METHOD'] = 'GET'
+
+            url_config = {'digest-auth-username':username}
+            url_config['digest-auth-password'] = password
+            url_config['digest-auth-realm'] = realm
+
+            eq_(True, request_app._on_digest_auth(env, url_config))
+
     def test_not_implemented(self):
         """ Some of the authentication schemes haven't been implemented yet.
         """
         req_app = server._RequestApp(self.config, app_ctx)
-        for meth_name in('_on_digest_auth', '_on_custom_http', '_on_xpath'):
+        for meth_name in('_on_custom_http', '_on_xpath'):
             meth = getattr(req_app, meth_name)
             assert_raises(NotImplementedError, meth)
 
