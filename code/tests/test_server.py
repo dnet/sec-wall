@@ -22,6 +22,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 # stdlib
 import cStringIO, ssl, unittest, urllib2, uuid
 
+# lxml
+from lxml import etree
+
 # gevent
 from gevent import wsgi
 
@@ -80,6 +83,18 @@ class RequestAppTestCase(unittest.TestCase):
                  '   uri="{3}", ' \
                  'response   ="{4}", ' \
                  '   opaque         ="{5}"')
+
+        self.sample_xml = b"""<?xml version="1.0" encoding="utf-8"?>
+            <a xmlns:myns1="http://example.com/myns1" xmlns:myns2="http://example.com/myns2">
+                <b>
+                    <c>ccc
+                        <d>ddd</d>
+                        <foobar myattr="myvalue">baz</foobar>
+                        <myns1:qux>123</myns1:qux>
+                        <myns2:zxc>456</myns2:zxc>
+                    </c>
+                </b>
+            </a>"""
 
     def test_call_match(self):
         """ Tests how the __call__ method handles a matching URL.
@@ -157,6 +172,8 @@ class RequestAppTestCase(unittest.TestCase):
 
     def test_on_request_handlers(self):
         """ Tests picking up a correct handler for the given auth config.
+        Makes sure that each of the validation handlers has a chance for validating
+        the request.
         """
         valid_validation_precedence = app_ctx.get_object('validation_precedence')
 
@@ -898,8 +915,8 @@ class RequestAppTestCase(unittest.TestCase):
         """
         request_app = server._RequestApp(self.config, app_ctx)
 
-        name1, value1 = [uuid.uuid4().hex + '-' + uuid.uuid4().hex for x in range(2)]
-        name2, value2 = [uuid.uuid4().hex + '-' + uuid.uuid4().hex for x in range(2)]
+        name1, value1 = ['okok-'+uuid.uuid4().hex + '-' + uuid.uuid4().hex for x in range(2)]
+        name2, value2 = ['okok-'+uuid.uuid4().hex + '-' + uuid.uuid4().hex for x in range(2)]
 
         url_config = {'custom-http': True,
                       'custom-http-'+name1: value1,
@@ -910,13 +927,76 @@ class RequestAppTestCase(unittest.TestCase):
 
         eq_(True, request_app._on_custom_http(env, url_config))
 
-    def test_not_implemented(self):
-        """ Some of the authentication schemes haven't been implemented yet.
+    def test_on_xpath_invalid_input(self):
+        """ The client sends an invalid input.
         """
-        req_app = server._RequestApp(self.config, app_ctx)
-        for meth_name in('_on_xpath',):
-            meth = getattr(req_app, meth_name)
-            assert_raises(NotImplementedError, meth)
+        request_app = server._RequestApp(self.config, app_ctx)
+
+        # 1) No XML input data at all, False should be returned regardless
+        # of any other input data.
+        env, url_config, client_cert, data = [None] * 4
+        eq_(False, request_app._on_xpath(env, url_config, client_cert, data))
+
+        # 2) One of the expected expressions doesn't match even though the other
+        # ones are fine.
+        env, client_cert = None, None
+
+        xpath1 = etree.XPath("/a/b/c/d/text() = 'ddd' and //foobar/text() = 'baz'")
+        xpath2 = etree.XPath("//foobar/@myattr='myvalue'")
+
+        # Using uuid4 here means the expression will never match.
+        xpath3 = etree.XPath("//myns1:qux/text()='{0}'".format(uuid.uuid4().hex),
+                            namespaces={'myns1':'http://example.com/myns1'})
+
+        url_config = {
+            'xpath': True,
+            'xpath-1': xpath1,
+            'xpath-2': xpath2,
+            'xpath-3': xpath3
+        }
+
+        eq_(False, request_app._on_xpath(env, url_config, client_cert, self.sample_xml))
+
+    def test_on_xpath_exception_on_no_expression_defined(self):
+        """ An exception should be raised when no XPath expressions have been
+        defined in the config even though it says validation based on XPath
+        should be performed.
+        """
+        request_app = server._RequestApp(self.config, app_ctx)
+
+        env, client_cert = None, None
+        url_config = {'xpath': True}
+
+        assert_raises(Exception, request_app._on_xpath, env, url_config,
+                      client_cert, self.sample_xml)
+
+    def test_on_xpath_ok(self):
+        """ The client sends a valid request, containing elements that match
+        the configured XPath expressions.
+        """
+        request_app = server._RequestApp(self.config, app_ctx)
+
+        # 1) No XML input data at all, False should be returned regardless
+        # of any other input data.
+        env, url_config, client_cert, data = [None] * 4
+        eq_(False, request_app._on_xpath(env, url_config, client_cert, data))
+
+        # 2) One of the expected expressions doesn't match even though the other
+        # ones are fine.
+        env, client_cert = None, None
+
+        xpath1 = etree.XPath("/a/b/c/d/text() = 'ddd' and //foobar/text() = 'baz'")
+        xpath2 = etree.XPath("//foobar/@myattr='myvalue'")
+        xpath3 = etree.XPath("//myns1:qux/text()='123'", namespaces={'myns1':'http://example.com/myns1'})
+
+        url_config = {
+            'xpath': True,
+            'xpath-1': xpath1,
+            'xpath-2': xpath2,
+            'xpath-3': xpath3
+        }
+
+        eq_(True, request_app._on_xpath(env, url_config, client_cert, self.sample_xml))
 
 class HTTPProxyTestCase(unittest.TestCase):
     """ Tests related to the the secwall.server.HTTPProxy class, the plain

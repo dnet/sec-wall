@@ -308,19 +308,37 @@ class _RequestApp(object):
             raise Exception('No custom HTTP headers were found in the config')
 
         for expected_header in expected_headers:
-            # This set of operations (.lstrip, .upper, .replace) could be done once
+            # This set of operations (.split, .upper, .replace) could be done once
             # when the config's read, well, it's a room for improvement.
-            value = env.get('HTTP_' + expected_header.lstrip(prefix).upper().replace('-', '_'))
+            value = env.get('HTTP_' + expected_header.split(prefix)[1].upper().replace('-', '_'))
 
             if not value or value != url_config[expected_header]:
                 return False
         else:
             return True
 
-    def _on_xpath(self):
+    def _on_xpath(self, unused_env, url_config, unused_client_cert, data):
         """ Handles the authentication based on XPath expressions.
         """
-        raise NotImplementedError()
+        if not data:
+            return False
+
+        request = etree.fromstring(data)
+
+        prefix = 'xpath-'
+        expressions = [url_config[header] for header in url_config if header.startswith(prefix)]
+
+        if not expressions:
+
+            # It's clearly an error. We've been requested to use XPath yet no
+            # expressions have been defined in the config.
+            raise Exception('No XPath expressions were found in the config')
+
+        for expr in expressions:
+            if not expr(request):
+                return False
+        else:
+            return True
 
 class _RequestHandler(pywsgi.WSGIHandler):
     """ A subclass which conveniently exposes a client SSL/TLS certificate
