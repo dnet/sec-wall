@@ -213,13 +213,12 @@ class CommandTestCase(_BaseTestCase):
         command = cli._Command(self.test_dir, self.app_ctx, False)
         config_mod = command._get_config_mod()
         elems = [elem for elem in dir(config_mod) if not elem.startswith('__')]
-        eq_(len(elems), 18)
+        eq_(len(elems), 15)
 
         names = ('server_type', 'host', 'port', 'log', 'crypto_dir', 'keyfile',
                  'certfile', 'ca_certs', 'not_authorized', 'forbidden',
                  'no_url_match', 'validation_precedence', 'client_cert_401_www_auth',
-                 'syslog_host', 'syslog_port', 'syslog_facility',
-                 'syslog_level', 'server_tag')
+                 'syslog_facility', 'server_tag')
         for name in names:
             assert_true(name in elems)
 

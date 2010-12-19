@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
+from logging.handlers import SysLogHandler
 import multiprocessing, os.path as path
 
 # Spring Python
@@ -157,28 +158,10 @@ class SecWallContext(PythonConfig):
         return 'Transport mode="tls-client-certificate"'
 
     @Object
-    def syslog_host(self):
-        """ Syslog host.
-        """
-        return '127.0.0.1'
-
-    @Object
-    def syslog_port(self):
-        """ Syslog port.
-        """
-        return 514
-
-    @Object
     def syslog_facility(self):
         """ Syslog facility.
         """
-        return 'local0'
-
-    @Object
-    def syslog_level(self):
-        """ Syslog logging level.
-        """
-        return 'err'
+        return SysLogHandler.LOG_USER
 
     @Object
     def server_tag(self):

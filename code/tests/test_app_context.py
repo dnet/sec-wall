@@ -21,6 +21,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 # stdlib
 from hashlib import sha256
+from logging.handlers import SysLogHandler
 from os import path
 
 # nose
@@ -56,10 +57,7 @@ def test_app_context():
     eq_(ctx.get_object('internal_server_error'), ['500 Internal Server Error', 'text/plain', str('Internal Server Error')])
     eq_(ctx.get_object('validation_precedence'), ['ssl-cert', 'basic-auth', 'digest-auth', 'wsse-pwd', 'custom-http', 'xpath'])
     eq_(ctx.get_object('client_cert_401_www_auth'), 'Transport mode="tls-client-certificate"')
-    eq_(ctx.get_object('syslog_host'), '127.0.0.1')
-    eq_(ctx.get_object('syslog_port'), 514)
-    eq_(ctx.get_object('syslog_facility'), 'local0')
-    eq_(ctx.get_object('syslog_level'), 'err')
+    eq_(ctx.get_object('syslog_facility'), SysLogHandler.LOG_USER)
     eq_(ctx.get_object('server_tag'), 'sec-wall/1.0.0')
     eq_(sha256(ctx.get_object('config_py_template')).hexdigest(), '24753c94643b7f070bfe6848fc513114d69edd023d7fc0c47dff5b79c850263a')
     eq_(sha256(ctx.get_object('zdaemon_conf_proxy_template')).hexdigest(), '1c09f0011ffdc90d3ec533e11f7abf91f48a94542d6acdc886b2c4d6b7b6ff53')

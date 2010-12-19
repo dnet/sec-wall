@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-import cStringIO, ssl, unittest, urllib2, uuid
+import cStringIO, logging, ssl, unittest, urllib2, uuid
 
 # lxml
 from lxml import etree
@@ -39,7 +39,7 @@ from springpython.config import Object
 from springpython.context import ApplicationContext
 
 # sec-wall
-from secwall import app_context, core, server
+from secwall import app_context, constants, core, server
 
 client_cert = {'notAfter': 'May  8 23:59:59 2019 GMT',
  'subject': ((('serialNumber', '12345678'),),
@@ -202,22 +202,22 @@ class RequestAppTestCase(unittest.TestCase):
 
                     with Replacer() as r:
                         def _on_ssl_cert(self, env, url_config, client_cert, data):
-                            return should_succeed
+                            return core.AuthResult(should_succeed)
 
                         def _on_basic_auth(*ignored_args, **ignored_kwargs):
-                            return should_succeed
+                            return core.AuthResult(should_succeed)
 
                         def _on_digest_auth(*ignored_args, **ignored_kwargs):
-                            return should_succeed
+                            return core.AuthResult(should_succeed)
 
                         def _on_wsse_pwd(*ignored_args, **ignored_kwargs):
-                            return should_succeed
+                            return core.AuthResult(should_succeed)
 
                         def _on_custom_http(*ignored_args, **ignored_kwargs):
-                            return should_succeed
+                            return core.AuthResult(should_succeed)
 
                         def _on_xpath(*ignored_args, **ignored_kwargs):
-                            return should_succeed
+                            return core.AuthResult(should_succeed)
 
                         def _401(self, start_response, www_auth):
                             pass
@@ -559,38 +559,37 @@ class RequestAppTestCase(unittest.TestCase):
         _data = None
 
         req_app = server._RequestApp(self.config, app_ctx)
-        is_ok = req_app._on_wsse_pwd(_env, _url_config, _unused_client_cert, _data)
+        result = req_app._on_wsse_pwd(_env, _url_config, _unused_client_cert, _data)
 
-        eq_(is_ok, False)
+        eq_(False, result.status)
 
     def test_on_wsse_pwd_returns_validate_output(self):
-        """ The '_on_wsse_pwd' method should return exactly what the
-        'self.wsse.validate' method returns when no exception has been caught.
+        """ The '_on_wsse_pwd' method should return True if the 'self.wsse.validate'
+        method returns with no exception
         """
         _env = {}
         _url_config = {}
         _unused_client_cert = None
         _data = uuid.uuid4().hex
 
-        validate_response = uuid.uuid4().hex
-
         with Replacer() as r:
             def _fromstring(*ignored_args, **ignored_kwargs):
                 pass
 
             def _validate(*ignored_args, **ignored_kwargs):
-                return validate_response
+                return uuid.uuid4().hex
 
             r.replace('lxml.etree.fromstring', _fromstring)
             r.replace('secwall.wsse.WSSE.validate', _validate)
 
             req_app = server._RequestApp(self.config, app_ctx)
             is_ok = req_app._on_wsse_pwd(_env, _url_config, _unused_client_cert, _data)
-            eq_(is_ok, validate_response)
+            eq_(True, is_ok)
 
     def test_on_wsse_pwd_returns_false_on_security_exception(self):
-        """ The '_on_wsse_pwd' method should return False when a SecurityException
-        has been caught.
+        """ The '_on_wsse_pwd' method should return a boolean false AuthResult
+        when a SecurityException has been caught. The AuthResult's description
+        must not be empty.
         """
         _env = {}
         _url_config = {}
@@ -608,8 +607,10 @@ class RequestAppTestCase(unittest.TestCase):
             r.replace('secwall.wsse.WSSE.validate', _validate)
 
             req_app = server._RequestApp(self.config, app_ctx)
-            is_ok = req_app._on_wsse_pwd(_env, _url_config, _unused_client_cert, _data)
-            eq_(is_ok, False)
+            auth_result = req_app._on_wsse_pwd(_env, _url_config, _unused_client_cert, _data)
+            eq_(False, auth_result.status)
+            eq_(constants.AUTH_WSSE_VALIDATION_ERROR, auth_result.code)
+            assert_true(auth_result.description != '')
 
     def test_on_basic_auth_ok(self):
         """ Everything's OK, client has to use Basic Auth and it does so
@@ -748,7 +749,9 @@ class RequestAppTestCase(unittest.TestCase):
 
         env = {}
         url_config = {}
-        eq_(False, request_app._on_digest_auth(env, url_config))
+        auth_result = request_app._on_digest_auth(env, url_config)
+        eq_(False, auth_result.status)
+        eq_(constants.AUTH_DIGEST_NO_AUTH, auth_result.code)
 
         # The username sent in is not equal to what's in the URL config.
 
@@ -760,7 +763,9 @@ class RequestAppTestCase(unittest.TestCase):
         url_config['digest-auth-password'] = uuid.uuid4()
         url_config['digest-auth-realm'] = uuid.uuid4()
 
-        eq_(False, request_app._on_digest_auth(env, url_config))
+        auth_result = request_app._on_digest_auth(env, url_config)
+        eq_(False, auth_result.status)
+        eq_(constants.AUTH_DIGEST_USERNAME_MISMATCH, auth_result.code)
 
         # The realm sent in is not equal to what's in the URL config.
 
@@ -773,7 +778,9 @@ class RequestAppTestCase(unittest.TestCase):
         url_config['digest-auth-password'] = uuid.uuid4()
         url_config['digest-auth-realm'] = uuid.uuid4()
 
-        eq_(False, request_app._on_digest_auth(env, url_config))
+        auth_result = request_app._on_digest_auth(env, url_config)
+        eq_(False, auth_result.status)
+        eq_(constants.AUTH_DIGEST_REALM_MISMATCH, auth_result.code)
 
         # The URI sent in in HTTP_AUTHORIZATION header is not equal to what's
         # been sent in the PATH_INFO + QUERY_STRING.
@@ -796,7 +803,9 @@ class RequestAppTestCase(unittest.TestCase):
         url_config['digest-auth-password'] = uuid.uuid4()
         url_config['digest-auth-realm'] = realm
 
-        eq_(False, request_app._on_digest_auth(env, url_config))
+        auth_result = request_app._on_digest_auth(env, url_config)
+        eq_(False, auth_result.status)
+        eq_(constants.AUTH_DIGEST_URI_MISMATCH, auth_result.code)
 
         # Client sends an invalid password in.
 
@@ -822,7 +831,9 @@ class RequestAppTestCase(unittest.TestCase):
         url_config['digest-auth-password'] = password
         url_config['digest-auth-realm'] = realm
 
-        eq_(False, request_app._on_digest_auth(env, url_config))
+        auth_result = request_app._on_digest_auth(env, url_config)
+        eq_(False, auth_result.status)
+        eq_(constants.AUTH_DIGEST_RESPONSE_MISMATCH, auth_result.code)
 
     def test_on_digest_auth_ok(self):
         """ Client sends correct data matching the configuration, the validation
@@ -876,24 +887,35 @@ class RequestAppTestCase(unittest.TestCase):
 
         # 1) None of the headers were sent
         env = {}
-        eq_(False, request_app._on_custom_http(env, url_config))
+        auth_result = request_app._on_custom_http(env, url_config)
+        eq_(False, auth_result.status)
+        eq_(constants.AUTH_DIGEST_NO_HEADER, auth_result.code)
 
         # 2) All headers were sent yet their values were incorrect
         env = {'HTTP_' + name1.upper().replace('-', '_'):uuid.uuid4().hex,
                'HTTP_' + name2.upper().replace('-', '_'):uuid.uuid4().hex}
-        eq_(False, request_app._on_custom_http(env, url_config))
+
+        auth_result = request_app._on_custom_http(env, url_config)
+        eq_(False, auth_result.status)
+        eq_(constants.AUTH_DIGEST_HEADER_MISMATCH, auth_result.code)
 
         # 4) One header's correct (including its value), the other has incorrect
         # name and value.
         env = {'HTTP_' + name1.upper().replace('-', '_'):value1,
                uuid.uuid4().hex:uuid.uuid4().hex}
-        eq_(False, request_app._on_custom_http(env, url_config))
+
+        auth_result = request_app._on_custom_http(env, url_config)
+        eq_(False, auth_result.status)
+        eq_(constants.AUTH_DIGEST_NO_HEADER, auth_result.code)
 
         # 4) One header's correct (including its value), the other has incorrect
         # value despite its name being correct.
         env = {'HTTP_' + name1.upper().replace('-', '_'):value1,
-               'HTTP_' + name2:uuid.uuid4().hex}
-        eq_(False, request_app._on_custom_http(env, url_config))
+               'HTTP_' + name2.upper().replace('-', '_'):uuid.uuid4().hex}
+
+        auth_result = request_app._on_custom_http(env, url_config)
+        eq_(False, auth_result.status)
+        eq_(constants.AUTH_DIGEST_HEADER_MISMATCH, auth_result.code)
 
     def test_on_custom_http_exception_on_no_custom_headers_in_config(self):
         """ An Exception is being raised when the config's invalid,
@@ -908,7 +930,7 @@ class RequestAppTestCase(unittest.TestCase):
         # We don't need to define any input data, an Exception must be always raised.
         env = {}
 
-        assert_raises(Exception, request_app._on_custom_http, env, url_config)
+        assert_raises(core.SecWallException, request_app._on_custom_http, env, url_config)
 
     def test_on_custom_http_ok(self):
         """ All's good, a client sends data matching the configuration.
@@ -935,7 +957,10 @@ class RequestAppTestCase(unittest.TestCase):
         # 1) No XML input data at all, False should be returned regardless
         # of any other input data.
         env, url_config, client_cert, data = [None] * 4
-        eq_(False, request_app._on_xpath(env, url_config, client_cert, data))
+
+        auth_result = request_app._on_xpath(env, url_config, client_cert, data)
+        eq_(False, auth_result.status)
+        eq_(constants.AUTH_XPATH_NO_DATA, auth_result.code)
 
         # 2) One of the expected expressions doesn't match even though the other
         # ones are fine.
@@ -955,7 +980,9 @@ class RequestAppTestCase(unittest.TestCase):
             'xpath-3': xpath3
         }
 
-        eq_(False, request_app._on_xpath(env, url_config, client_cert, self.sample_xml))
+        auth_result = request_app._on_xpath(env, url_config, client_cert, self.sample_xml)
+        eq_(False, auth_result.status)
+        eq_(constants.AUTH_XPATH_EXPR_MISMATCH, auth_result.code)
 
     def test_on_xpath_exception_on_no_expression_defined(self):
         """ An exception should be raised when no XPath expressions have been
@@ -967,7 +994,7 @@ class RequestAppTestCase(unittest.TestCase):
         env, client_cert = None, None
         url_config = {'xpath': True}
 
-        assert_raises(Exception, request_app._on_xpath, env, url_config,
+        assert_raises(core.SecWallException, request_app._on_xpath, env, url_config,
                       client_cert, self.sample_xml)
 
     def test_on_xpath_ok(self):
@@ -975,14 +1002,6 @@ class RequestAppTestCase(unittest.TestCase):
         the configured XPath expressions.
         """
         request_app = server._RequestApp(self.config, app_ctx)
-
-        # 1) No XML input data at all, False should be returned regardless
-        # of any other input data.
-        env, url_config, client_cert, data = [None] * 4
-        eq_(False, request_app._on_xpath(env, url_config, client_cert, data))
-
-        # 2) One of the expected expressions doesn't match even though the other
-        # ones are fine.
         env, client_cert = None, None
 
         xpath1 = etree.XPath("/a/b/c/d/text() = 'ddd' and //foobar/text() = 'baz'")
@@ -1209,3 +1228,26 @@ class HTTPRequestHandlerTestCase(unittest.TestCase):
             # handler.application.__call__ above will have been succeeded.
             assert_true(handler.wfile.data.startswith(handler.request_version + ' ' + '200 OK'),
                         (handler.request_version, handler.wfile.data))
+
+def test_loggers():
+    """ Makes sure all the relevant classes define a logger object.
+    """
+    class _Config():
+        def __init__(self):
+            self.urls = []
+            self.host = None
+            self.port = None
+            self.log = None
+            self.keyfile = None
+            self.certfile = None
+            self.ca_certs = None
+
+    config = _Config()
+
+    request_app = server._RequestApp(config, app_ctx)
+    http_proxy = server.HTTPProxy(config, app_ctx)
+    https_proxy = server.HTTPSProxy(config, app_ctx)
+
+    for o in request_app, http_proxy, https_proxy:
+        assert_true((getattr(o, 'logger', None) is not None), o)
+        assert_true(isinstance(getattr(o, 'logger'), logging.Logger), o)

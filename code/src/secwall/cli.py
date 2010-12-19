@@ -20,7 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-import glob, imp, os, subprocess, sys, uuid
+from logging.handlers import SysLogHandler
+import glob, imp, logging, os, subprocess, sys, syslog, uuid
 
 # sec-wall
 from secwall.server import HTTPProxy, HTTPSProxy
@@ -54,7 +55,6 @@ class _Command(object):
     def _zdaemon_command(self, zdaemon_command, conf_file):
         """ A somewhat higher-level wrapper for executing zdaemon's commands.
         """
-
         conf_file = os.path.abspath(os.path.join(self.config_dir, conf_file))
         pid = self._execute_zdaemon_command(['zdaemon', '-C', conf_file, zdaemon_command])
 
@@ -109,8 +109,7 @@ class _Command(object):
         names = ('server_type', 'host', 'port', 'log', 'crypto_dir', 'keyfile',
                  'certfile', 'ca_certs', 'not_authorized', 'forbidden',
                  'no_url_match', 'validation_precedence', 'client_cert_401_www_auth',
-                 'syslog_host', 'syslog_port', 'syslog_facility',
-                 'syslog_level', 'server_tag')
+                 'syslog_facility', 'server_tag')
 
         for name in names:
             attr = getattr(config_mod, name, None)
@@ -209,8 +208,15 @@ class Fork(_Command):
     """
 
     def run(self):
-        """ Runs the command. Overridden from the super-class.
+        """ Configures logging and runs the command. Overridden from the super-class.
         """
+        syslog.openlog(b'sec-wall')
+        syslog_facility = self.app_ctx.get_object('syslog_facility')
+        handler = SysLogHandler()
+
+        logger = logging.getLogger('')
+        logger.addHandler(handler)
+
         object_name = 'https_proxy_class' if self.is_https else 'http_proxy_class'
 
         proxy_class = self.app_ctx.get_object(object_name)
