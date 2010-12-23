@@ -20,19 +20,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-import hashlib, logging, re, ssl, sys, time, traceback, urllib2, uuid
+import hashlib, itertools, logging, re, ssl, sys, time, traceback, urllib2, uuid
+from datetime import datetime
+from urllib import quote_plus
 
 # lxml
 from lxml import etree
 
 # gevent
-from gevent import pywsgi, wsgi
+from gevent import pywsgi, sleep, wsgi
 from gevent.hub import GreenletExit
 
 # sec-wall
 from secwall import wsse
 from secwall.constants import *
-from secwall.core import AuthResult, SecurityException, SecWallException
+from secwall.core import AuthResult, InvocationContext, SecurityException, SecWallException
 
 class _RequestApp(object):
     """ A WSGI application executed on each request.
@@ -44,6 +46,15 @@ class _RequestApp(object):
         self.app_ctx = app_ctx
         self.wsse = self.app_ctx.get_object('wsse')
 
+        self.instance_name = config.instance_name
+        self.instance_unique = config.INSTANCE_UNIQUE
+        self.quote_path_info = config.quote_path_info
+        self.quote_query_string = config.quote_query_string
+
+        self.msg_counter = itertools.count(1)
+        self.now = datetime.now
+        self.log_level = self.logger.getEffectiveLevel()
+
         for url_pattern, url_config in self.config.urls:
             self.urls_compiled.append((re.compile(url_pattern), url_config))
 
@@ -52,56 +63,80 @@ class _RequestApp(object):
         to the main request handler. In case no config for the given URL is
         found, a 404 Not Found will be returned to the calling side.
         """
+        ctx = InvocationContext(self.instance_name, self.instance_unique, self.msg_counter.next(),
+                                self.now())
+
+        path_info = env['PATH_INFO']
+        if self.quote_path_info:
+            path_info = quote_plus(path_info)
+
+        query_string = env.get('QUERY_STRING')
+        if query_string:
+            query_string = '?' + query_string
+            if self.quote_query_string:
+                query_string = quote_plus(query_string)
+
+        ctx.path_info = path_info
+        ctx.query_string = query_string
+        ctx.remote_address = env.get('REMOTE_ADDR')
+        ctx.request_metod = env.get('REQUEST_METHOD')
+
         for c, url_config in self.urls_compiled:
-            match = c.match(env['PATH_INFO'])
+            match = c.match(path_info)
             if match:
-                return self._on_request(start_response, env, url_config, client_cert)
+                return self._on_request(ctx, start_response, env, url_config, client_cert)
         else:
             # No config for that URL, we can't let the client in.
-            return self._404(start_response)
+            return self._404(ctx, start_response)
 
-    def _on_request(self, start_response, env, url_config, client_cert):
+    def _on_request(self, ctx, start_response, env, url_config, client_cert):
         """ Checks security, invokes the backend server, returns the response.
         """
-
         # Some quick SSL-related checks first.
         if url_config.get('ssl'):
 
             # Has the URL been accessed through SSL/TLS?
             if env.get('wsgi.url_scheme') != 'https':
-                return self._403(start_response)
+                return self._403(ctx, start_response)
 
             # Is the client cert required?
             if url_config.get('ssl-cert') and not client_cert:
-                return self._401(start_response, self._get_www_auth(url_config, 'ssl-cert'))
+                return self._401(ctx, start_response, self._get_www_auth(url_config, 'ssl-cert'))
 
         data = env['wsgi.input'].read()
 
+        ctx.env = env
+        ctx.data = data
+
         for config_type in self.config.validation_precedence:
             if config_type in url_config:
+
                 handler = getattr(self, '_on_' + config_type.replace('-', '_'))
-                result = handler(env, url_config, client_cert, data)
-                if not result:
-                    self.logger.error('{0} {1} {2} {3} {4}'.format(
-                        result.code, env, config_type, client_cert, data))
-                    www_auth = self._get_www_auth(url_config, config_type)
-                    return self._401(start_response, www_auth)
+                auth_result = handler(env, url_config, client_cert, data)
+
+                ctx.auth_result = auth_result
+                ctx.config_type = config_type
+
+                if not auth_result:
+                    return self._401(ctx, start_response, self._get_www_auth(url_config, config_type))
                 break
         else:
-            return self._500(start_response)
+            return self._500(ctx, start_response)
 
         req = urllib2.Request(url_config['host'] + env['PATH_INFO'], data)
         try:
+            ctx.ext_start = self.now()
             resp = urllib2.urlopen(req)
         except urllib2.HTTPError, e:
             resp = e
 
-        response = resp.read()
-        resp.close()
+        try:
+            response = resp.read()
+            resp.close()
+        finally:
+            ctx.ext_end = self.now()
 
-        code_status = '{0} {1}'.format(resp.getcode(), resp.msg)
-
-        return self._response(start_response, code_status,
+        return self._response(ctx, start_response, str(resp.getcode()), resp.msg,
                               [('Content-Type', resp.headers['Content-Type'])],
                               response)
 
@@ -129,37 +164,49 @@ class _RequestApp(object):
 
         return header_value
 
-    def _response(self, start_response, code_status, headers, response):
+    def _response(self, ctx, start_response, code, status, headers, response):
         """ Actually returns the response to the client.
         """
-        start_response(code_status, headers)
+        ctx.proc_end = self.now()
+
+        # We need details in case there was an error or we're running
+        # at least on DEBUG level.
+        needs_details = (ctx.auth_result == False) or (self.log_level <= logging.DEBUG)
+        log_message = ctx.format_log_message(code, needs_details)
+
+        if ctx.auth_result:
+            self.logger.info(log_message)
+        else:
+            self.logger.error(log_message)
+
+        start_response('{0} {1}'.format(code, status), headers)
         return [response]
 
-    def _401(self, start_response, www_auth):
+    def _401(self, ctx, start_response, www_auth):
         """ 401 Not Authorized
         """
-        code, content_type, description = self.config.not_authorized
+        code, status, content_type, description = self.config.not_authorized
         headers = [('Content-Type', content_type), ('WWW-Authenticate', www_auth)]
 
-        return self._response(start_response, code, headers, description)
+        return self._response(ctx, start_response, code, status, headers, description)
 
-    def _403(self, start_response):
+    def _403(self, ctx, start_response):
         """ 403 Forbidden
         """
-        code, content_type, description = self.config.forbidden
-        return self._response(start_response, code, [('Content-Type', content_type)], description)
+        code, status, content_type, description = self.config.forbidden
+        return self._response(ctx, start_response, code, status, [('Content-Type', content_type)], description)
 
-    def _404(self, start_response):
+    def _404(self, ctx, start_response):
         """ 404 Not Found
         """
-        code, content_type, description = self.config.no_url_match
-        return self._response(start_response, code, [('Content-Type', content_type)], description)
+        code, status, content_type, description = self.config.no_url_match
+        return self._response(ctx, start_response, code, status, [('Content-Type', content_type)], description)
 
-    def _500(self, start_response):
+    def _500(self, ctx, start_response):
         """ 500 Internal Server Error
         """
-        code, content_type, description = self.config.internal_server_error
-        return self._response(start_response, code, [('Content-Type', content_type)], description)
+        code, status, content_type, description = self.config.internal_server_error
+        return self._response(ctx, start_response, code, status, [('Content-Type', content_type)], description)
 
     def _on_ssl_cert(self, env, url_config, client_cert, data):
         """ Validates the client SSL/TLS certificates, its very existence and
@@ -196,7 +243,7 @@ class _RequestApp(object):
                     if cert_value != config_value:
                         return AuthResult(False, AUTH_CERT_VALUE_MISMATCH)
                 else:
-                    return True
+                    return AuthResult(True, '0')
 
     def _on_wsse_pwd(self, env, url_config, unused_client_cert, data):
         """ Uses WS-Security UsernameToken/Password to validate the request.
@@ -210,7 +257,7 @@ class _RequestApp(object):
         except SecurityException, e:
             return AuthResult(False, AUTH_WSSE_VALIDATION_ERROR, e.description)
         else:
-            return True
+            return AuthResult(True, '0')
 
     def _on_basic_auth(self, env, url_config, *ignored):
         """ Handles HTTP Basic Authentication.
@@ -230,7 +277,7 @@ class _RequestApp(object):
 
         if username == url_config['basic-auth-username'] and \
            password == url_config['basic-auth-password']:
-            return True
+            return AuthResult(True, '0')
         else:
             return AuthResult(False, AUTH_BASIC_USERNAME_OR_PASSWORD_MISMATCH)
 
@@ -298,7 +345,7 @@ class _RequestApp(object):
                                 env['REQUEST_METHOD'], auth['nonce'])
 
         if auth['response'] == expected_response:
-            return True
+            return AuthResult(True, '0')
         else:
             return AuthResult(False, AUTH_DIGEST_RESPONSE_MISMATCH)
 
@@ -325,7 +372,7 @@ class _RequestApp(object):
             if value != url_config[expected_header]:
                 return AuthResult(False, AUTH_DIGEST_HEADER_MISMATCH)
         else:
-            return True
+            return AuthResult(True, '0')
 
     def _on_xpath(self, unused_env, url_config, unused_client_cert, data):
         """ Handles the authentication based on XPath expressions.
@@ -348,7 +395,7 @@ class _RequestApp(object):
             if not expr(request):
                 return AuthResult(False, AUTH_XPATH_EXPR_MISMATCH)
         else:
-            return True
+            return AuthResult(True, '0')
 
 class _RequestHandler(pywsgi.WSGIHandler):
     """ A subclass which conveniently exposes a client SSL/TLS certificate

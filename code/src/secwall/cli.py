@@ -24,6 +24,7 @@ from logging.handlers import SysLogHandler
 import glob, imp, logging, os, subprocess, sys, syslog, uuid
 
 # sec-wall
+from secwall.core import LoggingFormatter
 from secwall.server import HTTPProxy, HTTPSProxy
 
 class _Command(object):
@@ -109,7 +110,8 @@ class _Command(object):
         names = ('server_type', 'host', 'port', 'log', 'crypto_dir', 'keyfile',
                  'certfile', 'ca_certs', 'not_authorized', 'forbidden',
                  'no_url_match', 'validation_precedence', 'client_cert_401_www_auth',
-                 'syslog_facility', 'server_tag')
+                 'syslog_facility', 'server_tag', 'instance_name', 'quote_path_info',
+                 'quote_query_string')
 
         for name in names:
             attr = getattr(config_mod, name, None)
@@ -210,12 +212,17 @@ class Fork(_Command):
     def run(self):
         """ Configures logging and runs the command. Overridden from the super-class.
         """
-        syslog.openlog(b'sec-wall')
         syslog_facility = self.app_ctx.get_object('syslog_facility')
-        handler = SysLogHandler()
+        log_level = self.app_ctx.get_object('log_level')
+
+        log_level = logging.getLevelName(log_level)
+
+        handler = SysLogHandler(b'/dev/log')
+        handler.setFormatter(LoggingFormatter())
 
         logger = logging.getLogger('')
         logger.addHandler(handler)
+        logger.setLevel(log_level)
 
         object_name = 'https_proxy_class' if self.is_https else 'http_proxy_class'
 

@@ -120,28 +120,28 @@ class SecWallContext(PythonConfig):
         """ HTTP code, the content type and a user friendly description
         for 401 error.
         """
-        return ['401 Not Authorized', 'text/plain', str('You are not authorized to access this resource')]
+        return ['401', 'Not Authorized', 'text/plain', str('You are not authorized to access this resource')]
 
     @Object
     def forbidden(self):
         """ HTTP code, the content type and a user friendly description
         for 403 error.
         """
-        return ['403 Forbidden', 'text/plain', str('You are not allowed to access this resource')]
+        return ['403', 'Forbidden', 'text/plain', str('You are not allowed to access this resource')]
 
     @Object
     def no_url_match(self):
         """ HTTP code, the content type and a user friendly description
         for 401 error.
         """
-        return ['404 Not Found', 'text/plain', str('Not Found')]
+        return ['404', 'Not Found', 'text/plain', str('Not Found')]
 
     @Object
     def internal_server_error(self):
         """ HTTP code, the content type and a user friendly description
         for 500 error.
         """
-        return ['500 Internal Server Error', 'text/plain', str('Internal Server Error')]
+        return ['500', 'Internal Server Error', 'text/plain', str('Internal Server Error')]
 
     @Object
     def validation_precedence(self):
@@ -164,10 +164,37 @@ class SecWallContext(PythonConfig):
         return SysLogHandler.LOG_USER
 
     @Object
+    def log_level(self):
+        """ Syslog facility.
+        """
+        return 'DEBUG'
+
+    @Object
     def server_tag(self):
-        """ How will sec-wall introduce itself to client and backend applications.
+        """ How will sec-wall introduce itself to client and backend applications
+        in HTTP headers.
         """
         return 'sec-wall/{0}'.format(version)
+
+    @Object
+    def instance_name(self):
+        """ A human-friendly name of this particular sec-wall instance.
+        """
+        return 'default.01'
+
+    @Object
+    def quote_path_info(self):
+        """ Whether to quote PATH_INFO during logging. Set to True when URLs
+        may be outside ASCII range.
+        """
+        return False
+
+    @Object
+    def quote_query_string(self):
+        """ Whether to quote QUERY_STRING during logging. Set to True when URLs
+        may be outside ASCII range.
+        """
+        return False
 
     @Object
     def config_py_template(self):
@@ -179,6 +206,10 @@ import os.path as path, uuid
 # The value will be regenerated on each server's startup.
 # Don't share it with anyone.
 INSTANCE_SECRET = uuid.uuid4().hex
+
+# The value will be regenerated on each server's startup. May be shared with
+# the outside world.
+INSTANCE_UNIQUE = uuid.uuid4().hex
 
 # Useful constants
 cur_dir = path.dirname(__file__)

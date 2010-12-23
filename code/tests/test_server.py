@@ -21,6 +21,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 # stdlib
 import cStringIO, logging, ssl, unittest, urllib2, uuid
+from datetime import datetime
 
 # lxml
 from lxml import etree
@@ -62,12 +63,24 @@ class _DummyConfig(object):
         self.forbidden = app_ctx.get_object('forbidden')
         self.no_url_match = app_ctx.get_object('no_url_match')
         self.internal_server_error = app_ctx.get_object('internal_server_error')
+        self.instance_name = app_ctx.get_object('instance_name')
+        self.INSTANCE_UNIQUE = uuid.uuid4().hex
+        self.quote_path_info = app_ctx.get_object('quote_path_info')
+        self.quote_query_string = app_ctx.get_object('quote_query_string')
 
 class _DummyCertInfo(object):
     pass
 
 def _start_response(*ignored_args, **ignored_kwargs):
     pass
+
+def _dummy_invocation_context():
+    ctx = core.InvocationContext()
+    ctx.proc_start = datetime.now()
+    ctx.auth_result = core.AuthResult()
+    ctx.env = {}
+
+    return ctx
 
 class RequestAppTestCase(unittest.TestCase):
     """ Tests related to the the secwall.server._RequestApp class, the WSGI
@@ -107,7 +120,8 @@ class RequestAppTestCase(unittest.TestCase):
                 _env = {'PATH_INFO': uuid.uuid4().hex}
                 _url_config = self.config.urls
 
-                def _on_request(self, start_response, env, url_config, client_cert):
+                def _on_request(self, ctx, start_response, env, url_config, client_cert):
+                    assert_true(isinstance(ctx, core.InvocationContext))
                     eq_(start_response, _start_response)
                     eq_(sorted(env.items()), sorted(_env.items()))
 
@@ -131,7 +145,8 @@ class RequestAppTestCase(unittest.TestCase):
             _env = {'PATH_INFO': uuid.uuid4().hex}
             _url_config = []
 
-            def _404(self, start_response):
+            def _404(self, ctx, start_response):
+                assert_true(isinstance(ctx, core.InvocationContext))
                 eq_(start_response, _start_response)
 
             r.replace('secwall.server._RequestApp._404', _404)
@@ -143,7 +158,8 @@ class RequestAppTestCase(unittest.TestCase):
         """ A URL should be accessed through HTTPS if the config says so.
         """
         with Replacer() as r:
-            def _403(self, start_response):
+            def _403(self, ctx, start_response):
+                assert_true(isinstance(ctx, core.InvocationContext))
                 eq_(start_response, _start_response)
 
             r.replace('secwall.server._RequestApp._403', _403)
@@ -152,13 +168,15 @@ class RequestAppTestCase(unittest.TestCase):
             _env = {'wsgi.url_scheme': uuid.uuid4().hex}
 
             req_app = server._RequestApp(self.config, app_ctx)
-            req_app._on_request(_start_response, _env, _url_config, None)
+            req_app._on_request(_dummy_invocation_context(),
+                                _start_response, _env, _url_config, None)
 
     def test_on_request_client_cert_required(self):
         """ A client certificate is required if config says so.
         """
         with Replacer() as r:
-            def _401(self, start_response, www_auth):
+            def _401(self, ctx, start_response, www_auth):
+                assert_true(isinstance(ctx, core.InvocationContext))
                 eq_(start_response, _start_response)
                 eq_(www_auth, app_ctx.get_object('client_cert_401_www_auth'))
 
@@ -168,7 +186,8 @@ class RequestAppTestCase(unittest.TestCase):
             _env = {'wsgi.url_scheme': 'https'}
 
             req_app = server._RequestApp(self.config, app_ctx)
-            req_app._on_request(_start_response, _env, _url_config, None)
+            req_app._on_request(_dummy_invocation_context(),
+                                _start_response, _env, _url_config, None)
 
     def test_on_request_handlers(self):
         """ Tests picking up a correct handler for the given auth config.
@@ -219,7 +238,7 @@ class RequestAppTestCase(unittest.TestCase):
                         def _on_xpath(*ignored_args, **ignored_kwargs):
                             return core.AuthResult(should_succeed)
 
-                        def _401(self, start_response, www_auth):
+                        def _401(self, ctx, start_response, www_auth):
                             pass
 
                         class _Request(object):
@@ -265,7 +284,8 @@ class RequestAppTestCase(unittest.TestCase):
                             _env = {'wsgi.input':wsgi_input, 'PATH_INFO':_path_info}
 
                             req_app = server._RequestApp(self.config, app_ctx)
-                            response = req_app._on_request(_x_start_response, _env, _url_config, None)
+                            response = req_app._on_request(_dummy_invocation_context(),
+                                                           _x_start_response, _env, _url_config, None)
 
                             response_context = (should_succeed, response, _response)
 
@@ -276,7 +296,6 @@ class RequestAppTestCase(unittest.TestCase):
                                     eq_(response, [_response], response_context)
                                 else:
                                     eq_(response, None, response_context)
-
                         finally:
                             wsgi_input.close()
 
@@ -335,7 +354,8 @@ class RequestAppTestCase(unittest.TestCase):
                         'HTTP_AUTHORIZATION':auth}
 
                 req_app = server._RequestApp(self.config, app_ctx)
-                response = req_app._on_request(_x_start_response, _env, _url_config, None)
+                response = req_app._on_request(_dummy_invocation_context(),
+                                               _x_start_response, _env, _url_config, None)
             finally:
                 wsgi_input.close()
 
@@ -365,15 +385,16 @@ class RequestAppTestCase(unittest.TestCase):
     def test_get_www_auth(self):
         """ Tests the '_response' method.
         """
-        _code_status, _headers, _response = (uuid.uuid4().hex for x in range(3))
+        _code, _status, _headers, _response = (uuid.uuid4().hex for x in range(4))
 
         def _start_response(code_status, headers):
-            eq_(code_status, _code_status)
+            eq_(code_status, _code + ' ' + _status)
             eq_(headers, _headers)
 
         req_app = server._RequestApp(self.config, app_ctx)
 
-        response = req_app._response(_start_response, _code_status, _headers, _response)
+        response = req_app._response(_dummy_invocation_context(),
+                                     _start_response, _code, _status, _headers, _response)
         eq_(response, [_response])
 
     def test_401(self):
@@ -381,74 +402,86 @@ class RequestAppTestCase(unittest.TestCase):
         """
         www_auth = uuid.uuid4().hex
 
-        _code_status, _content_type, _description = app_ctx.get_object('not_authorized')
+        _ctx  =_dummy_invocation_context()
+        _code, _status, _content_type, _description = app_ctx.get_object('not_authorized')
 
         with Replacer() as r:
 
-            def _response(self, start_response, code_status, headers, response):
+            def _response(self, ctx, start_response, code, status, headers, response):
+                eq_(ctx, _ctx)
                 eq_(start_response, _start_response)
-                eq_(code_status, _code_status)
+                eq_(code, _code)
+                eq_(status, _status)
                 eq_(sorted(headers), [('Content-Type', _content_type), ('WWW-Authenticate', www_auth)])
                 eq_(response, _description)
 
             r.replace('secwall.server._RequestApp._response', _response)
 
             req_app = server._RequestApp(self.config, app_ctx)
-            req_app._401(_start_response, www_auth)
+            req_app._401(_ctx, _start_response, www_auth)
 
     def test_403(self):
         """ Tests the '_403' method.
         """
-        _code_status, _content_type, _description = app_ctx.get_object('forbidden')
+        _code, _status, _content_type, _description = app_ctx.get_object('forbidden')
+        _ctx = _dummy_invocation_context()
 
         with Replacer() as r:
 
-            def _response(self, start_response, code_status, headers, response):
+            def _response(self, ctx, start_response, code, status, headers, response):
+                eq_(ctx, _ctx)
                 eq_(start_response, _start_response)
-                eq_(code_status, _code_status)
+                eq_(code, _code)
+                eq_(status, _status)
                 eq_(sorted(headers), [('Content-Type', _content_type)])
                 eq_(response, _description)
 
             r.replace('secwall.server._RequestApp._response', _response)
 
             req_app = server._RequestApp(self.config, app_ctx)
-            req_app._403(_start_response)
+            req_app._403(_ctx, _start_response)
 
     def test_404(self):
         """ Tests the '_404' method.
         """
-        _code_status, _content_type, _description = app_ctx.get_object('no_url_match')
+        _code, _status, _content_type, _description = app_ctx.get_object('no_url_match')
+        _ctx = _dummy_invocation_context()
 
         with Replacer() as r:
 
-            def _response(self, start_response, code_status, headers, response):
+            def _response(self, ctx, start_response, code, status, headers, response):
+                eq_(ctx, _ctx)
                 eq_(start_response, _start_response)
-                eq_(code_status, _code_status)
+                eq_(code, _code)
+                eq_(status, _status)
                 eq_(sorted(headers), [('Content-Type', _content_type)])
                 eq_(response, _description)
 
             r.replace('secwall.server._RequestApp._response', _response)
 
             req_app = server._RequestApp(self.config, app_ctx)
-            req_app._404(_start_response)
+            req_app._404(_ctx, _start_response)
 
     def test_500(self):
         """ Tests the '_500' method.
         """
-        _code_status, _content_type, _description = app_ctx.get_object('internal_server_error')
+        _code, _status, _content_type, _description = app_ctx.get_object('internal_server_error')
+        _ctx = _dummy_invocation_context()
 
         with Replacer() as r:
 
-            def _response(self, start_response, code_status, headers, response):
+            def _response(self, ctx, start_response, code, status, headers, response):
+                eq_(ctx, _ctx)
                 eq_(start_response, _start_response)
-                eq_(code_status, _code_status)
+                eq_(code, _code)
+                eq_(status, _status)
                 eq_(sorted(headers), [('Content-Type', _content_type)])
                 eq_(response, _description)
 
             r.replace('secwall.server._RequestApp._response', _response)
 
             req_app = server._RequestApp(self.config, app_ctx)
-            req_app._500(_start_response)
+            req_app._500(_ctx, _start_response)
 
     def test_ssl_cert_no_cert(self):
         """ Config says a client cert is required but none is given on input.
@@ -583,8 +616,10 @@ class RequestAppTestCase(unittest.TestCase):
             r.replace('secwall.wsse.WSSE.validate', _validate)
 
             req_app = server._RequestApp(self.config, app_ctx)
-            is_ok = req_app._on_wsse_pwd(_env, _url_config, _unused_client_cert, _data)
-            eq_(True, is_ok)
+
+            auth_result = req_app._on_wsse_pwd(_env, _url_config, _unused_client_cert, _data)
+            eq_(True, auth_result.status)
+            eq_('0', auth_result.code)
 
     def test_on_wsse_pwd_returns_false_on_security_exception(self):
         """ The '_on_wsse_pwd' method should return a boolean false AuthResult
@@ -872,7 +907,9 @@ class RequestAppTestCase(unittest.TestCase):
             url_config['digest-auth-password'] = password
             url_config['digest-auth-realm'] = realm
 
-            eq_(True, request_app._on_digest_auth(env, url_config))
+            auth_result = request_app._on_digest_auth(env, url_config)
+            eq_(True, auth_result.status)
+            eq_('0', auth_result.code)
 
     def test_on_custom_http_invalid_input(self):
         """ Client sends incorrect custom authorization headers.
@@ -947,7 +984,9 @@ class RequestAppTestCase(unittest.TestCase):
         env = {'HTTP_' + name1.upper().replace('-', '_'):value1,
                'HTTP_' + name2.upper().replace('-', '_'):value2,}
 
-        eq_(True, request_app._on_custom_http(env, url_config))
+        auth_result = request_app._on_custom_http(env, url_config)
+        eq_(True, auth_result.status)
+        eq_('0', auth_result.code)
 
     def test_on_xpath_invalid_input(self):
         """ The client sends an invalid input.
@@ -1015,7 +1054,9 @@ class RequestAppTestCase(unittest.TestCase):
             'xpath-3': xpath3
         }
 
-        eq_(True, request_app._on_xpath(env, url_config, client_cert, self.sample_xml))
+        auth_result = request_app._on_xpath(env, url_config, client_cert, self.sample_xml)
+        eq_(True, auth_result.status)
+        eq_('0', auth_result.code)
 
 class HTTPProxyTestCase(unittest.TestCase):
     """ Tests related to the the secwall.server.HTTPProxy class, the plain
@@ -1036,6 +1077,10 @@ class HTTPProxyTestCase(unittest.TestCase):
                 self.port = _port
                 self.log = _log
                 self.urls = []
+                self.instance_name = app_ctx.get_object('instance_name')
+                self.INSTANCE_UNIQUE = uuid.uuid4().hex
+                self.quote_path_info = app_ctx.get_object('quote_path_info')
+                self.quote_query_string = app_ctx.get_object('quote_query_string')
 
         _config = _Config()
 
@@ -1064,6 +1109,10 @@ class HTTPSProxyTestCase(unittest.TestCase):
         _keyfile = uuid.uuid4().hex
         _certfile = uuid.uuid4().hex
         _ca_certs = uuid.uuid4().hex
+        _instance_name = uuid.uuid4().hex
+        _INSTANCE_UNIQUE = uuid.uuid4().hex
+        _quote_path_info = uuid.uuid4().hex
+        _quote_query_string = uuid.uuid4().hex
 
         _app_ctx = app_ctx
         _cert_reqs = ssl.CERT_OPTIONAL
@@ -1077,6 +1126,10 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.certfile = _certfile
                 self.ca_certs = _ca_certs
                 self.urls = []
+                self.instance_name = _instance_name
+                self.INSTANCE_UNIQUE = _INSTANCE_UNIQUE
+                self.quote_path_info = _quote_path_info
+                self.quote_query_string = _quote_query_string
 
         _config = _Config()
 
@@ -1124,6 +1177,10 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.certfile = _certfile
                 self.ca_certs = _ca_certs
                 self.urls = []
+                self.instance_name = app_ctx.get_object('instance_name')
+                self.INSTANCE_UNIQUE = uuid.uuid4().hex
+                self.quote_path_info = app_ctx.get_object('quote_path_info')
+                self.quote_query_string = app_ctx.get_object('quote_query_string')
 
         class _RequestHandler(object):
             def __init__(self, socket, address, proxy):
@@ -1241,6 +1298,10 @@ def test_loggers():
             self.keyfile = None
             self.certfile = None
             self.ca_certs = None
+            self.instance_name = None
+            self.INSTANCE_UNIQUE = None
+            self.quote_path_info = None
+            self.quote_query_string = None
 
     config = _Config()
 
