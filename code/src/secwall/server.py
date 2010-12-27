@@ -65,6 +65,7 @@ class _RequestApp(object):
         """
         ctx = InvocationContext(self.instance_name, self.instance_unique, self.msg_counter.next(),
                                 self.now())
+        ctx.auth_result = AuthResult()
 
         path_info = env['PATH_INFO']
         if self.quote_path_info:
@@ -171,7 +172,13 @@ class _RequestApp(object):
 
         # We need details in case there was an error or we're running
         # at least on DEBUG level.
-        needs_details = (ctx.auth_result == False) or (self.log_level <= logging.DEBUG)
+        if ctx.auth_result.status is False:
+            needs_details = True
+        elif self.log_level <= logging.DEBUG:
+            needs_details = True
+        else:
+            needs_details = False
+
         log_message = ctx.format_log_message(code, needs_details)
 
         if ctx.auth_result:

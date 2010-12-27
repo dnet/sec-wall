@@ -20,8 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-import cStringIO, logging, ssl, unittest, urllib2, uuid
+import copy, cStringIO, logging, ssl, unittest, urllib, urllib2, uuid
 from datetime import datetime
+from logging.handlers import BufferingHandler
 
 # lxml
 from lxml import etree
@@ -54,19 +55,19 @@ client_cert = {'notAfter': 'May  8 23:59:59 2019 GMT',
 app_ctx = ApplicationContext(app_context.SecWallContext())
 
 class _DummyConfig(object):
-    def __init__(self, urls):
+    def __init__(self, urls, _app_ctx=app_ctx):
         self.urls = urls
-        self.no_url_match = app_ctx.get_object('no_url_match')
-        self.client_cert_401_www_auth = app_ctx.get_object('client_cert_401_www_auth')
-        self.validation_precedence = app_ctx.get_object('validation_precedence')
-        self.not_authorized = app_ctx.get_object('not_authorized')
-        self.forbidden = app_ctx.get_object('forbidden')
-        self.no_url_match = app_ctx.get_object('no_url_match')
-        self.internal_server_error = app_ctx.get_object('internal_server_error')
-        self.instance_name = app_ctx.get_object('instance_name')
+        self.no_url_match = _app_ctx.get_object('no_url_match')
+        self.client_cert_401_www_auth = _app_ctx.get_object('client_cert_401_www_auth')
+        self.validation_precedence = _app_ctx.get_object('validation_precedence')
+        self.not_authorized = _app_ctx.get_object('not_authorized')
+        self.forbidden = _app_ctx.get_object('forbidden')
+        self.no_url_match = _app_ctx.get_object('no_url_match')
+        self.internal_server_error = _app_ctx.get_object('internal_server_error')
+        self.instance_name = _app_ctx.get_object('instance_name')
         self.INSTANCE_UNIQUE = uuid.uuid4().hex
-        self.quote_path_info = app_ctx.get_object('quote_path_info')
-        self.quote_query_string = app_ctx.get_object('quote_query_string')
+        self.quote_path_info = _app_ctx.get_object('quote_path_info')
+        self.quote_query_string = _app_ctx.get_object('quote_query_string')
 
 class _DummyCertInfo(object):
     pass
@@ -81,6 +82,16 @@ def _dummy_invocation_context():
     ctx.env = {}
 
     return ctx
+
+class TestHandler(BufferingHandler):
+    def __init__(self):
+        BufferingHandler.__init__(self, 0)
+
+    def shouldFlush(self):
+        return False
+
+    def emit(self, record):
+        self.buffer.append(record.__dict__)
 
 class RequestAppTestCase(unittest.TestCase):
     """ Tests related to the the secwall.server._RequestApp class, the WSGI
@@ -1057,6 +1068,97 @@ class RequestAppTestCase(unittest.TestCase):
         auth_result = request_app._on_xpath(env, url_config, client_cert, self.sample_xml)
         eq_(True, auth_result.status)
         eq_('0', auth_result.code)
+
+    def test_log_quotting(self):
+        """ When told to be so in the config, the logging messages should
+        be URL-quoted.
+        """
+        for _quote_path_info in(True, False):
+            for _quote_query_string in(True, False):
+
+                _config = copy.deepcopy(self.config)
+                _config.quote_path_info = _quote_path_info
+                _config.quote_query_string = _quote_query_string
+
+                _app_ctx = ApplicationContext(app_context.SecWallContext())
+                request_app = server._RequestApp(_config, _app_ctx)
+
+                handler = TestHandler()
+                request_app.logger.addHandler(handler)
+
+                _wsgi_input = cStringIO.StringIO()
+                _wsgi_input.write('')
+
+                path_info = uuid.uuid4().hex + '!@#$%^&*()'
+                query_string = uuid.uuid4().hex + '!@#$%^&*()'
+
+                _env = {'PATH_INFO':path_info, 'QUERY_STRING':query_string,
+                        'wsgi.input':_wsgi_input}
+
+                request_app(_env, _start_response)
+
+                log_message = handler.buffer[0]['message']
+                log_message = log_message.split(';')
+
+                _path = log_message[4]
+
+                if _quote_path_info and _quote_query_string:
+                    expected = 'None ' + urllib.quote_plus(path_info + '?' + query_string)
+                elif(not _quote_path_info) and _quote_query_string:
+                    expected = 'None ' + path_info + urllib.quote_plus('?' + query_string)
+                elif _quote_path_info and (not _quote_query_string):
+                    expected = 'None ' + urllib.quote_plus(path_info) + '?' + query_string
+                elif(not _quote_path_info) and (not _quote_query_string):
+                    expected = 'None ' + path_info + '?' + query_string
+
+                eq_(_path, expected)
+
+    def test_response_needs_details(self):
+        """ The amount of log details depends on what 'self._response' says
+        should be logged.
+        """
+        for auth_result in(True, False):
+            for log_level in(logging.ERROR, logging.DEBUG):
+                _app_ctx = ApplicationContext(app_context.SecWallContext())
+
+                _wsgi_input = cStringIO.StringIO()
+                _wsgi_input.write('')
+
+                path_info = uuid.uuid4().hex
+                query_string = uuid.uuid4().hex
+
+                _env = {'PATH_INFO':path_info, 'QUERY_STRING':query_string,
+                        'wsgi.input':_wsgi_input}
+
+                _ctx = core.InvocationContext()
+                _ctx.proc_start = datetime.now()
+                _ctx.auth_result = core.AuthResult(auth_result)
+                _ctx.env = _env
+
+                handler = TestHandler()
+
+                request_app = server._RequestApp(self.config, _app_ctx)
+                request_app.logger.addHandler(handler)
+                request_app.log_level = log_level
+                request_app._response(_ctx, _start_response, uuid.uuid4().hex,
+                                      uuid.uuid4().hex, uuid.uuid4().hex,
+                                      uuid.uuid4().hex)
+
+                log_message = handler.buffer[0]['msg'].split(';')
+                len_log_message = len(log_message)
+
+                # No details expected.
+                if log_level == logging.ERROR and auth_result is not False:
+                    expected_len = 10
+                elif auth_result is True and log_level != logging.DEBUG:
+                    expected_len = 10
+                else:
+                    expected_len = 16
+
+                eq_(len_log_message, expected_len, (logging.getLevelName(log_level),
+                                          logging.getLevelName(request_app.log_level),
+                                          auth_result, len_log_message, expected_len,
+                                          log_message))
 
 class HTTPProxyTestCase(unittest.TestCase):
     """ Tests related to the the secwall.server.HTTPProxy class, the plain
