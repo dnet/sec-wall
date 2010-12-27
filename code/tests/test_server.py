@@ -68,6 +68,7 @@ class _DummyConfig(object):
         self.INSTANCE_UNIQUE = uuid.uuid4().hex
         self.quote_path_info = _app_ctx.get_object('quote_path_info')
         self.quote_query_string = _app_ctx.get_object('quote_query_string')
+        self.server_tag = uuid.uuid4().hex
 
 class _DummyCertInfo(object):
     pass
@@ -228,7 +229,11 @@ class RequestAppTestCase(unittest.TestCase):
                             eq_(code_status, '500 Internal Server Error')
                         else:
                             eq_(code_status, _code + ' ' + _status)
-                            eq_(sorted(headers), sorted(_headers.items()))
+
+                            expected_headers = list(_headers.items())
+                            expected_headers.extend((('Server', self.config.server_tag),))
+
+                            eq_(sorted(headers), sorted(expected_headers))
 
                     with Replacer() as r:
                         def _on_ssl_cert(self, env, url_config, client_cert, data):
@@ -328,7 +333,11 @@ class RequestAppTestCase(unittest.TestCase):
 
             def _x_start_response(code_status, headers):
                 eq_(code_status, _code + ' ' + _status)
-                eq_(sorted(headers), sorted(_headers.items()))
+
+                expected_headers = list(_headers.items())
+                expected_headers.extend((('Server', self.config.server_tag),))
+
+                eq_(sorted(headers), sorted(expected_headers))
 
             def _urlopen(*ignored_args, **ignored_kwargs):
                 class _DummyException(urllib2.HTTPError):
@@ -396,7 +405,8 @@ class RequestAppTestCase(unittest.TestCase):
     def test_get_www_auth(self):
         """ Tests the '_response' method.
         """
-        _code, _status, _headers, _response = (uuid.uuid4().hex for x in range(4))
+        _code, _status, _response = (uuid.uuid4().hex for x in range(3))
+        _headers = [(uuid.uuid4().hex, uuid.uuid4().hex)]
 
         def _start_response(code_status, headers):
             eq_(code_status, _code + ' ' + _status)
@@ -1141,8 +1151,7 @@ class RequestAppTestCase(unittest.TestCase):
                 request_app.logger.addHandler(handler)
                 request_app.log_level = log_level
                 request_app._response(_ctx, _start_response, uuid.uuid4().hex,
-                                      uuid.uuid4().hex, uuid.uuid4().hex,
-                                      uuid.uuid4().hex)
+                                      uuid.uuid4().hex, [], uuid.uuid4().hex)
 
                 log_message = handler.buffer[0]['msg'].split(';')
                 len_log_message = len(log_message)
@@ -1183,6 +1192,7 @@ class HTTPProxyTestCase(unittest.TestCase):
                 self.INSTANCE_UNIQUE = uuid.uuid4().hex
                 self.quote_path_info = app_ctx.get_object('quote_path_info')
                 self.quote_query_string = app_ctx.get_object('quote_query_string')
+                self.server_tag = uuid.uuid4().hex
 
         _config = _Config()
 
@@ -1232,6 +1242,7 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.INSTANCE_UNIQUE = _INSTANCE_UNIQUE
                 self.quote_path_info = _quote_path_info
                 self.quote_query_string = _quote_query_string
+                self.server_tag = uuid.uuid4().hex
 
         _config = _Config()
 
@@ -1283,6 +1294,7 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.INSTANCE_UNIQUE = uuid.uuid4().hex
                 self.quote_path_info = app_ctx.get_object('quote_path_info')
                 self.quote_query_string = app_ctx.get_object('quote_query_string')
+                self.server_tag = uuid.uuid4().hex
 
         class _RequestHandler(object):
             def __init__(self, socket, address, proxy):
@@ -1404,6 +1416,7 @@ def test_loggers():
             self.INSTANCE_UNIQUE = None
             self.quote_path_info = None
             self.quote_query_string = None
+            self.server_tag = uuid.uuid4().hex
 
     config = _Config()
 

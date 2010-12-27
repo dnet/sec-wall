@@ -46,6 +46,7 @@ class _RequestApp(object):
         self.app_ctx = app_ctx
         self.wsse = self.app_ctx.get_object('wsse')
 
+        self.server_tag = config.server_tag
         self.instance_name = config.instance_name
         self.instance_unique = config.INSTANCE_UNIQUE
         self.quote_path_info = config.quote_path_info
@@ -186,6 +187,7 @@ class _RequestApp(object):
         else:
             self.logger.error(log_message)
 
+        headers.append(('Server', self.server_tag))
         start_response('{0} {1}'.format(code, status), headers)
         return [response]
 
