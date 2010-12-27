@@ -164,6 +164,13 @@ class SecWallContext(PythonConfig):
         return SysLogHandler.LOG_USER
 
     @Object
+    def syslog_address(self):
+        """ Syslog address, should be either b'/dev/log' or the UDP address
+        such as ['127.0.0.1', 514].
+        """
+        return b'/dev/log'
+
+    @Object
     def log_level(self):
         """ Syslog facility.
         """

@@ -110,8 +110,8 @@ class _Command(object):
         names = ('server_type', 'host', 'port', 'log', 'crypto_dir', 'keyfile',
                  'certfile', 'ca_certs', 'not_authorized', 'forbidden',
                  'no_url_match', 'validation_precedence', 'client_cert_401_www_auth',
-                 'syslog_facility', 'server_tag', 'instance_name', 'quote_path_info',
-                 'quote_query_string')
+                 'syslog_facility', 'syslog_address', 'log_level', 'server_tag',
+                 'instance_name', 'quote_path_info', 'quote_query_string')
 
         for name in names:
             attr = getattr(config_mod, name, None)
@@ -212,12 +212,13 @@ class Fork(_Command):
     def run(self):
         """ Configures logging and runs the command. Overridden from the super-class.
         """
-        syslog_facility = self.app_ctx.get_object('syslog_facility')
-        log_level = self.app_ctx.get_object('log_level')
+        syslog_facility = self.config_mod.syslog_facility
+        log_level = self.config_mod.log_level
+        syslog_address = self.config_mod.syslog_address
 
         log_level = logging.getLevelName(log_level)
 
-        handler = SysLogHandler(b'/dev/log')
+        handler = SysLogHandler(syslog_address, syslog_facility)
         handler.setFormatter(LoggingFormatter())
 
         logger = logging.getLogger('')
