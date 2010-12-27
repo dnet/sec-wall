@@ -1097,7 +1097,7 @@ class RequestAppTestCase(unittest.TestCase):
 
                 request_app(_env, _start_response)
 
-                log_message = handler.buffer[0]['message']
+                log_message = handler.buffer[0]['msg']
                 log_message = log_message.split(';')
 
                 _path = log_message[4]

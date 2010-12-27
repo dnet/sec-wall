@@ -213,13 +213,14 @@ class CommandTestCase(_BaseTestCase):
         command = cli._Command(self.test_dir, self.app_ctx, False)
         config_mod = command._get_config_mod()
         elems = [elem for elem in dir(config_mod) if not elem.startswith('__')]
-        eq_(len(elems), 18)
+        eq_(len(elems), 21)
 
         names = ('server_type', 'host', 'port', 'log', 'crypto_dir', 'keyfile',
                  'certfile', 'ca_certs', 'not_authorized', 'forbidden',
                  'no_url_match', 'validation_precedence', 'client_cert_401_www_auth',
-                 'syslog_facility', 'server_tag', 'instance_name', 'quote_path_info',
-                 'quote_query_string')
+                 'syslog_facility', 'syslog_address', 'log_level', 'log_file_config',
+                 'server_tag', 'instance_name', 'quote_path_info', 'quote_query_string')
+
         for name in names:
             assert_true(name in elems)
 
@@ -410,6 +411,31 @@ class ForkTestCase(_BaseTestCase):
         self.test_dir = tempfile.mkdtemp(prefix='tmp-sec-wall-')
         cli.Init(self.test_dir, self.app_ctx, False).run()
 
+        log_config = """
+
+[loggers]
+keys=root
+
+[handlers]
+keys=consoleHandler
+
+[formatters]
+keys=simpleFormatter
+
+[logger_root]
+level=DEBUG
+handlers=consoleHandler
+
+[handler_consoleHandler]
+class=StreamHandler
+level=DEBUG
+formatter=simpleFormatter
+args=(sys.stdout,)
+"""
+
+        self.log_file_config = os.path.join(self.test_dir, uuid.uuid4().hex)
+        open(self.log_file_config, 'w').write(log_config)
+
     def test_run(self):
         """ Tests whether running the command works fine.
         """
@@ -421,6 +447,25 @@ class ForkTestCase(_BaseTestCase):
             fork = cli.Fork(self.test_dir, self.app_ctx, True)
             fork.run()
 
+    def test_logging(self):
+        """ Depending on what the configuration says, logging should be using
+        either syslog or a custom configuration file into which anything may go.
+        """
+        with Replacer() as r:
+            def _file_config(*args, **kwargs):
+                eq_(args[0], self.log_file_config)
+
+            r.replace('logging.config.fileConfig', _file_config)
+
+            fork = cli.Fork(self.test_dir, self.app_ctx, False)
+            fork.config_mod.log_file_config = self.log_file_config
+
+            with patch.object(server.HTTPProxy, 'serve_forever') as mock_method:
+                fork.run()
+
+            # Clean up after the test, otherwise unrelated tests will see the
+            # changes made to the config module.
+            fork.config_mod.log_file_config = None
 
 class StopTestCase(_BaseTestCase):
     """ Tests for the secwall.cli.Stop class.

@@ -177,6 +177,12 @@ class SecWallContext(PythonConfig):
         return 'DEBUG'
 
     @Object
+    def log_file_config(self):
+        """ Path to an external configuration of the logging machinery.
+        """
+        return None
+
+    @Object
     def server_tag(self):
         """ How will sec-wall introduce itself to client and backend applications
         in HTTP headers.
