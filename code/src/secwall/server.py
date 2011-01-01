@@ -49,6 +49,7 @@ class _RequestApp(object):
         self.server_tag = config.server_tag
         self.instance_name = config.instance_name
         self.instance_unique = config.INSTANCE_UNIQUE
+        self.instance_secret = config.INSTANCE_SECRET
         self.quote_path_info = config.quote_path_info
         self.quote_query_string = config.quote_query_string
         self.from_backend_ignore  = config.from_backend_ignore

@@ -152,6 +152,9 @@ class Init(_Command):
             self._error(msg, False)
 
         config_py_template = self.app_ctx.get_object('config_py_template')
+        config_py_template = config_py_template.format(INSTANCE_SECRET=uuid.uuid4().hex,
+                                                       INSTANCE_UNIQUE=uuid.uuid4().hex)
+
 
         open(os.path.join(self.config_dir, 'config.py'), 'w').write(config_py_template)
         os.mkdir(os.path.join(self.config_dir, 'logs'))

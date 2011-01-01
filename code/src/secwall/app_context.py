@@ -223,13 +223,11 @@ class SecWallContext(PythonConfig):
 # stdlib
 import os.path as path, uuid
 
-# The value will be regenerated on each server's startup.
 # Don't share it with anyone.
-INSTANCE_SECRET = uuid.uuid4().hex
+INSTANCE_SECRET = '{INSTANCE_SECRET}'
 
-# The value will be regenerated on each server's startup. May be shared with
-# the outside world.
-INSTANCE_UNIQUE = uuid.uuid4().hex
+# May be shared with the outside world.
+INSTANCE_UNIQUE = '{INSTANCE_UNIQUE}'
 
 # Useful constants
 cur_dir = path.dirname(__file__)
@@ -242,12 +240,12 @@ ca_certs = path.join(cur_dir, './crypto/ca-cert.pem')
 # ##############################################################################
 
 def default():
-    return {
+    return {{
         'ssl': True,
         'ssl-cert': True,
         'ssl-cert-commonName':INSTANCE_SECRET,
         'host': 'http://' + INSTANCE_SECRET
-    }
+    }}
 
 urls = [
     ('/*', default()),

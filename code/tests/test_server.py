@@ -66,6 +66,7 @@ class _DummyConfig(object):
         self.internal_server_error = _app_ctx.get_object('internal_server_error')
         self.instance_name = _app_ctx.get_object('instance_name')
         self.INSTANCE_UNIQUE = uuid.uuid4().hex
+        self.INSTANCE_SECRET = uuid.uuid4().hex
         self.quote_path_info = _app_ctx.get_object('quote_path_info')
         self.quote_query_string = _app_ctx.get_object('quote_query_string')
         self.server_tag = uuid.uuid4().hex
@@ -1410,6 +1411,7 @@ class HTTPProxyTestCase(unittest.TestCase):
                 self.urls = []
                 self.instance_name = app_ctx.get_object('instance_name')
                 self.INSTANCE_UNIQUE = uuid.uuid4().hex
+                self.INSTANCE_SECRET = uuid.uuid4().hex
                 self.quote_path_info = app_ctx.get_object('quote_path_info')
                 self.quote_query_string = app_ctx.get_object('quote_query_string')
                 self.server_tag = uuid.uuid4().hex
@@ -1444,6 +1446,7 @@ class HTTPSProxyTestCase(unittest.TestCase):
         _ca_certs = uuid.uuid4().hex
         _instance_name = uuid.uuid4().hex
         _INSTANCE_UNIQUE = uuid.uuid4().hex
+        _INSTANCE_SECRET = uuid.uuid4().hex
         _quote_path_info = uuid.uuid4().hex
         _quote_query_string = uuid.uuid4().hex
 
@@ -1461,6 +1464,7 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.urls = []
                 self.instance_name = _instance_name
                 self.INSTANCE_UNIQUE = _INSTANCE_UNIQUE
+                self.INSTANCE_SECRET = _INSTANCE_SECRET
                 self.quote_path_info = _quote_path_info
                 self.quote_query_string = _quote_query_string
                 self.server_tag = uuid.uuid4().hex
@@ -1514,6 +1518,7 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.urls = []
                 self.instance_name = app_ctx.get_object('instance_name')
                 self.INSTANCE_UNIQUE = uuid.uuid4().hex
+                self.INSTANCE_SECRET = uuid.uuid4().hex
                 self.quote_path_info = app_ctx.get_object('quote_path_info')
                 self.quote_query_string = app_ctx.get_object('quote_query_string')
                 self.server_tag = uuid.uuid4().hex
@@ -1637,6 +1642,7 @@ def test_loggers():
             self.ca_certs = None
             self.instance_name = None
             self.INSTANCE_UNIQUE = None
+            self.INSTANCE_SECRET = None
             self.quote_path_info = None
             self.quote_query_string = None
             self.server_tag = uuid.uuid4().hex

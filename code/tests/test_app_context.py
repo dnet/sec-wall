@@ -68,5 +68,5 @@ def test_app_context():
     eq_(ctx.get_object('quote_path_info'), False)
     eq_(ctx.get_object('quote_query_string'), False)
     eq_(sorted(ctx.get_object('from_backend_ignore')), ['Server'])
-    eq_(sha256(ctx.get_object('config_py_template')).hexdigest(), 'eda5b7421e3d80f6d955c52ed5c4545b90f00698bb637359b930e0c2a0606737')
+    eq_(sha256(ctx.get_object('config_py_template')).hexdigest(), '4cd91ddfa47f3bdf2801c9892a31be031976ca278958fd7ee9702d4d76e2915c')
     eq_(sha256(ctx.get_object('zdaemon_conf_proxy_template')).hexdigest(), '1c09f0011ffdc90d3ec533e11f7abf91f48a94542d6acdc886b2c4d6b7b6ff53')
