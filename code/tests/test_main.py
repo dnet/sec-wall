@@ -124,7 +124,7 @@ def test_main():
     when the module's being rung directly, from the command line or using
     python -m switch.
     """
-    base_args = {'--fork':None, 'init':None, 'start':None, 'stop':None}
+    base_args = {b'--fork':None, b'init':None, b'start':None, b'stop':None}
 
     for arg in base_args:
         for expected_is_https in ('1', '0'):

@@ -111,7 +111,8 @@ class _Command(object):
                  'certfile', 'ca_certs', 'not_authorized', 'forbidden',
                  'no_url_match', 'validation_precedence', 'client_cert_401_www_auth',
                  'syslog_facility', 'syslog_address', 'log_level', 'log_file_config',
-                 'server_tag', 'instance_name', 'quote_path_info', 'quote_query_string')
+                 'server_tag', 'instance_name', 'quote_path_info', 'quote_query_string',
+                 'from_backend_ignore')
 
         for name in names:
             attr = getattr(config_mod, name, None)

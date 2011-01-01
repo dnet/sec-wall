@@ -89,7 +89,7 @@ class InvocationContext(object):
     """
     def __init__(self, instance_name=None, instance_unique=None, message_number=None,
                  proc_start=None, proc_end=None, ext_start=timedelta(), ext_end=timedelta(),
-                 env=None, url_config=None, client_cert=None, data=None,
+                 env=None, url_config={}, client_cert=None, data='',
                  remote_address=None, auth_result=None, config_type='', path_info=None,
                  query_string=None, client_address=None, request_metod=None):
         self.instance_name = instance_name

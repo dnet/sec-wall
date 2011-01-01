@@ -39,6 +39,8 @@ def test_app_context():
     assert_true(issubclass(SecWallContext, PythonConfig))
     ctx = ApplicationContext(SecWallContext())
 
+    eq_(len(ctx.object_defs), 30)
+
     assert_equal(ctx.get_object('http_proxy_class'), HTTPProxy)
     assert_equal(ctx.get_object('https_proxy_class'), HTTPSProxy)
     assert_equal(ctx.get_object('wsgi_request_handler'), _RequestHandler)
@@ -59,6 +61,12 @@ def test_app_context():
     eq_(ctx.get_object('client_cert_401_www_auth'), 'Transport mode="tls-client-certificate"')
     eq_(ctx.get_object('syslog_facility'), SysLogHandler.LOG_USER)
     eq_(ctx.get_object('syslog_address'), b'/dev/log')
+    eq_(ctx.get_object('log_level'), 'DEBUG')
+    eq_(ctx.get_object('log_file_config'), None)
     eq_(ctx.get_object('server_tag'), 'sec-wall/1.0.0')
+    eq_(ctx.get_object('instance_name'), 'default')
+    eq_(ctx.get_object('quote_path_info'), False)
+    eq_(ctx.get_object('quote_query_string'), False)
+    eq_(sorted(ctx.get_object('from_backend_ignore')), ['Server'])
     eq_(sha256(ctx.get_object('config_py_template')).hexdigest(), 'eda5b7421e3d80f6d955c52ed5c4545b90f00698bb637359b930e0c2a0606737')
     eq_(sha256(ctx.get_object('zdaemon_conf_proxy_template')).hexdigest(), '1c09f0011ffdc90d3ec533e11f7abf91f48a94542d6acdc886b2c4d6b7b6ff53')

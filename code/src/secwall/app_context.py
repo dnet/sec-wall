@@ -193,7 +193,7 @@ class SecWallContext(PythonConfig):
     def instance_name(self):
         """ A human-friendly name of this particular sec-wall instance.
         """
-        return 'default.01'
+        return 'default'
 
     @Object
     def quote_path_info(self):
@@ -208,6 +208,13 @@ class SecWallContext(PythonConfig):
         may be outside ASCII range.
         """
         return False
+
+    @Object
+    def from_backend_ignore(self):
+        """ Headers belonging to this list will not be returned to the client
+        application even if a backend sends them in.
+        """
+        return ['Server']
 
     @Object
     def config_py_template(self):

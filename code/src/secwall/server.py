@@ -51,6 +51,7 @@ class _RequestApp(object):
         self.instance_unique = config.INSTANCE_UNIQUE
         self.quote_path_info = config.quote_path_info
         self.quote_query_string = config.quote_query_string
+        self.from_backend_ignore  = config.from_backend_ignore
 
         self.msg_counter = itertools.count(1)
         self.now = datetime.now
@@ -58,6 +59,15 @@ class _RequestApp(object):
 
         for url_pattern, url_config in self.config.urls:
             self.urls_compiled.append((re.compile(url_pattern), url_config))
+
+            url_config.setdefault('from-client-ignore', [])
+            url_config.setdefault('to-backend-add', {})
+            url_config.setdefault('from-backend-ignore', config.from_backend_ignore)
+            url_config.setdefault('to-client-add', {})
+
+            # Just in case the user didn't do it, upper-case all the headers
+            # to make all the comparisons case-insensitive.
+            url_config['from-client-ignore'][:] = [elem.upper() for elem in url_config['from-client-ignore']]
 
     def __call__(self, env, start_response, client_cert=None):
         """ Finds the configuration for the given URL and passes the control on
@@ -67,6 +77,7 @@ class _RequestApp(object):
         ctx = InvocationContext(self.instance_name, self.instance_unique, self.msg_counter.next(),
                                 self.now())
         ctx.auth_result = AuthResult()
+        ctx.env = env
 
         path_info = env['PATH_INFO']
         if self.quote_path_info:
@@ -86,6 +97,7 @@ class _RequestApp(object):
         for c, url_config in self.urls_compiled:
             match = c.match(path_info)
             if match:
+                ctx.url_config = url_config
                 return self._on_request(ctx, start_response, env, url_config, client_cert)
         else:
             # No config for that URL, we can't let the client in.
@@ -106,8 +118,6 @@ class _RequestApp(object):
                 return self._401(ctx, start_response, self._get_www_auth(url_config, 'ssl-cert'))
 
         data = env['wsgi.input'].read()
-
-        ctx.env = env
         ctx.data = data
 
         for config_type in self.config.validation_precedence:
@@ -126,12 +136,27 @@ class _RequestApp(object):
             return self._500(ctx, start_response)
 
         req = urllib2.Request(url_config['host'] + env['PATH_INFO'], data)
+
+        from_client_ignore = url_config['from-client-ignore']
+        to_backend_add = url_config['to-backend-add']
+
+        # Pass the headers to the backend server unless they're to be ignored.
+        for name in (name for name in env if name.startswith('HTTP_')):
+            value = env[name]
+            name = name.split('HTTP_')[1].replace('_', '-')
+            if not name in from_client_ignore:
+                req.add_header(name, value)
+
+        # Custom headers to be sent to the backend server.
+        for name, value in to_backend_add.items():
+            req.add_header(name, value)
+
         try:
+            opener = urllib2.build_opener()
             ctx.ext_start = self.now()
-            resp = urllib2.urlopen(req)
+            resp = opener.open(req)
         except urllib2.HTTPError, e:
             resp = e
-
         try:
             response = resp.read()
             resp.close()
@@ -139,8 +164,42 @@ class _RequestApp(object):
             ctx.ext_end = self.now()
 
         return self._response(ctx, start_response, str(resp.getcode()), resp.msg,
-                              [('Content-Type', resp.headers['Content-Type'])],
-                              response)
+                              resp.headers, response)
+
+    def _response(self, ctx, start_response, code, status, headers, response):
+        """ Actually returns the response to the client.
+        """
+        ctx.proc_end = self.now()
+
+        # We need details in case there was an error or we're running
+        # at least on DEBUG level.
+        if ctx.auth_result.status is False:
+            needs_details = True
+        elif self.log_level <= logging.DEBUG:
+            needs_details = True
+        else:
+            needs_details = False
+
+        if ctx.url_config:
+            for name in ctx.url_config['from-backend-ignore']:
+                del headers[name]
+
+            for name, value in ctx.url_config['to-client-add'].items():
+                headers[name] = value
+        else:
+            # Special-case the 'Server' header.
+            if 'Server' in self.from_backend_ignore:
+                headers['Server'] = self.server_tag
+
+        log_message = ctx.format_log_message(code, needs_details)
+
+        if ctx.auth_result:
+            self.logger.info(log_message)
+        else:
+            self.logger.error(log_message)
+
+        start_response('{0} {1}'.format(code, status), headers)
+        return [response]
 
     def _get_www_auth(self, url_config, config_type):
         """ Returns a value of the WWW-Authenticate header to use upon a 401 error.
@@ -166,36 +225,11 @@ class _RequestApp(object):
 
         return header_value
 
-    def _response(self, ctx, start_response, code, status, headers, response):
-        """ Actually returns the response to the client.
-        """
-        ctx.proc_end = self.now()
-
-        # We need details in case there was an error or we're running
-        # at least on DEBUG level.
-        if ctx.auth_result.status is False:
-            needs_details = True
-        elif self.log_level <= logging.DEBUG:
-            needs_details = True
-        else:
-            needs_details = False
-
-        log_message = ctx.format_log_message(code, needs_details)
-
-        if ctx.auth_result:
-            self.logger.info(log_message)
-        else:
-            self.logger.error(log_message)
-
-        headers.append(('Server', self.server_tag))
-        start_response('{0} {1}'.format(code, status), headers)
-        return [response]
-
     def _401(self, ctx, start_response, www_auth):
         """ 401 Not Authorized
         """
         code, status, content_type, description = self.config.not_authorized
-        headers = [('Content-Type', content_type), ('WWW-Authenticate', www_auth)]
+        headers = {'Content-Type':content_type, 'WWW-Authenticate':www_auth}
 
         return self._response(ctx, start_response, code, status, headers, description)
 
@@ -203,19 +237,19 @@ class _RequestApp(object):
         """ 403 Forbidden
         """
         code, status, content_type, description = self.config.forbidden
-        return self._response(ctx, start_response, code, status, [('Content-Type', content_type)], description)
+        return self._response(ctx, start_response, code, status, {'Content-Type':content_type}, description)
 
     def _404(self, ctx, start_response):
         """ 404 Not Found
         """
         code, status, content_type, description = self.config.no_url_match
-        return self._response(ctx, start_response, code, status, [('Content-Type', content_type)], description)
+        return self._response(ctx, start_response, code, status, {'Content-Type':content_type}, description)
 
     def _500(self, ctx, start_response):
         """ 500 Internal Server Error
         """
         code, status, content_type, description = self.config.internal_server_error
-        return self._response(ctx, start_response, code, status, [('Content-Type', content_type)], description)
+        return self._response(ctx, start_response, code, status, {'Content-Type':content_type}, description)
 
     def _on_ssl_cert(self, env, url_config, client_cert, data):
         """ Validates the client SSL/TLS certificates, its very existence and

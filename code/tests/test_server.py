@@ -69,6 +69,7 @@ class _DummyConfig(object):
         self.quote_path_info = _app_ctx.get_object('quote_path_info')
         self.quote_query_string = _app_ctx.get_object('quote_query_string')
         self.server_tag = uuid.uuid4().hex
+        self.from_backend_ignore = []
 
 class _DummyCertInfo(object):
     pass
@@ -216,7 +217,7 @@ class RequestAppTestCase(unittest.TestCase):
 
                 for should_succeed in False, True:
 
-                    _host = uuid.uuid4().hex
+                    _host = 'http://z'
                     _path_info = uuid.uuid4().hex
                     _realm = uuid.uuid4().hex
                     _code = uuid.uuid4().hex
@@ -231,9 +232,7 @@ class RequestAppTestCase(unittest.TestCase):
                             eq_(code_status, _code + ' ' + _status)
 
                             expected_headers = list(_headers.items())
-                            expected_headers.extend((('Server', self.config.server_tag),))
-
-                            eq_(sorted(headers), sorted(expected_headers))
+                            eq_(sorted(headers.items()), sorted(expected_headers))
 
                     with Replacer() as r:
                         def _on_ssl_cert(self, env, url_config, client_cert, data):
@@ -257,15 +256,18 @@ class RequestAppTestCase(unittest.TestCase):
                         def _401(self, ctx, start_response, www_auth):
                             pass
 
-                        class _Request(object):
-                            def __init__(*ignored_args, **ignored_kwargs):
-                                pass
-
-                        def _urlopen(*ignored_args, **ignored_kwargs):
+                        def _http_open(*ignored_args, **ignored_kwargs):
                             class _DummyResponse(object):
                                 def __init__(self, *ignored_args, **ignored_kwargs):
                                     self.msg = _status
                                     self.headers = _headers
+                                    self.code = _code
+
+                                def info(*ignored_args, **ignored_kwargs):
+                                    return _headers
+
+                                def readline(*ignored_args, **ignored_kwargs):
+                                    return 'aaa'
 
                                 def read(*ignored_args, **ignored_kwargs):
                                     return _response
@@ -285,14 +287,14 @@ class RequestAppTestCase(unittest.TestCase):
                         r.replace('secwall.server._RequestApp._on_custom_http', _on_custom_http)
                         r.replace('secwall.server._RequestApp._on_xpath', _on_xpath)
                         r.replace('secwall.server._RequestApp._401', _401)
-                        r.replace('urllib2.Request', _Request)
-                        r.replace('urllib2.urlopen', _urlopen)
+                        r.replace('urllib2.HTTPHandler.http_open', _http_open)
 
                         try:
                             wsgi_input = cStringIO.StringIO()
                             wsgi_input.write(uuid.uuid4().hex)
 
-                            _url_config = {'ssl': False, config_type:True, 'host':_host}
+                            _url_config = {'ssl': False, config_type:True, 'host':_host,
+                                           'from-client-ignore':{}, 'to-backend-add':{}}
 
                             if config_type in('basic-auth', 'digest-auth', 'wsse-pwd'):
                                 _url_config[config_type + '-realm'] = _realm
@@ -316,13 +318,12 @@ class RequestAppTestCase(unittest.TestCase):
                             wsgi_input.close()
 
     def test_on_request_urlopen_exception(self):
-        """ The _on_request method should response the response regardless
-        even if it's not 200 OK.
+        """ The _on_request method should return the response  even if it's not 200 OK.
         """
         with Replacer() as r:
 
-            _host = uuid.uuid4().hex
-            _path_info = uuid.uuid4().hex
+            _host = 'http://' + uuid.uuid4().hex
+            _path_info = '/' + uuid.uuid4().hex
             _username = uuid.uuid4().hex
             _password = uuid.uuid4().hex
             _realm = uuid.uuid4().hex
@@ -333,13 +334,10 @@ class RequestAppTestCase(unittest.TestCase):
 
             def _x_start_response(code_status, headers):
                 eq_(code_status, _code + ' ' + _status)
+                expected_headers = _headers.items()
+                eq_(sorted(headers.items()), sorted(expected_headers))
 
-                expected_headers = list(_headers.items())
-                expected_headers.extend((('Server', self.config.server_tag),))
-
-                eq_(sorted(headers), sorted(expected_headers))
-
-            def _urlopen(*ignored_args, **ignored_kwargs):
+            def _http_open(*ignored_args, **ignored_kwargs):
                 class _DummyException(urllib2.HTTPError):
                     def __init__(self, *ignored_args, **ignored_kwargs):
                         self.msg = _status
@@ -356,14 +354,15 @@ class RequestAppTestCase(unittest.TestCase):
 
                 raise _DummyException()
 
-            r.replace('urllib2.urlopen', _urlopen)
+            r.replace('urllib2.HTTPHandler.http_open', _http_open)
 
             wsgi_input = cStringIO.StringIO()
 
             try:
                 wsgi_input.write(uuid.uuid4().hex)
 
-                _url_config = {'basic-auth':True, 'host':_host}
+                _url_config = {'basic-auth':True, 'host':_host,
+                               'from-client-ignore':{}, 'to-backend-add':{}}
                 _url_config['basic-auth-username'] = _username
                 _url_config['basic-auth-password'] = _password
                 _url_config['basic-auth-realm'] = _realm
@@ -433,7 +432,7 @@ class RequestAppTestCase(unittest.TestCase):
                 eq_(start_response, _start_response)
                 eq_(code, _code)
                 eq_(status, _status)
-                eq_(sorted(headers), [('Content-Type', _content_type), ('WWW-Authenticate', www_auth)])
+                eq_(sorted(headers.items()), [('Content-Type', _content_type), ('WWW-Authenticate', www_auth)])
                 eq_(response, _description)
 
             r.replace('secwall.server._RequestApp._response', _response)
@@ -454,7 +453,7 @@ class RequestAppTestCase(unittest.TestCase):
                 eq_(start_response, _start_response)
                 eq_(code, _code)
                 eq_(status, _status)
-                eq_(sorted(headers), [('Content-Type', _content_type)])
+                eq_(sorted(headers.items()), [('Content-Type', _content_type)])
                 eq_(response, _description)
 
             r.replace('secwall.server._RequestApp._response', _response)
@@ -475,7 +474,7 @@ class RequestAppTestCase(unittest.TestCase):
                 eq_(start_response, _start_response)
                 eq_(code, _code)
                 eq_(status, _status)
-                eq_(sorted(headers), [('Content-Type', _content_type)])
+                eq_(sorted(headers.items()), [('Content-Type', _content_type)])
                 eq_(response, _description)
 
             r.replace('secwall.server._RequestApp._response', _response)
@@ -496,7 +495,7 @@ class RequestAppTestCase(unittest.TestCase):
                 eq_(start_response, _start_response)
                 eq_(code, _code)
                 eq_(status, _status)
-                eq_(sorted(headers), [('Content-Type', _content_type)])
+                eq_(sorted(headers.items()), [('Content-Type', _content_type)])
                 eq_(response, _description)
 
             r.replace('secwall.server._RequestApp._response', _response)
@@ -1169,6 +1168,227 @@ class RequestAppTestCase(unittest.TestCase):
                                           auth_result, len_log_message, expected_len,
                                           log_message))
 
+    def test_from_client_ignore(self):
+        """ Tests whether headers from the 'from-client-ignore' list aren't being
+        passed to backend servers.
+        """
+        request_app = server._RequestApp(self.config, app_ctx)
+        _client_cert = None
+        _url_config = {'custom-http':True, 'host':'http://' + uuid.uuid4().hex}
+        _url_config['to-backend-add'] = {}
+
+        # Of two headers created, one will be added to the 'from-client-ignore'
+        # list hence it's expected not to be passed to the backend server.
+        k1, v1 = uuid.uuid4().hex, uuid.uuid4().hex
+        k2, v2 = uuid.uuid4().hex.capitalize(), uuid.uuid4().hex
+        _env = {'HTTP_' + k1: v1, 'HTTP_' + k2: v2}
+        _url_config['from-client-ignore'] = [k1]
+
+        _wsgi_input = cStringIO.StringIO()
+        _wsgi_input.write('')
+        _env['wsgi.input'] = _wsgi_input
+        _env['PATH_INFO'] = '/' + uuid.uuid4().hex
+
+        _ctx = core.InvocationContext()
+        _ctx.proc_start = datetime.now()
+        _ctx.auth_result = core.AuthResult(True)
+        _ctx.env = _env
+
+        def start_response(*ignored_args, **ignored_kwargs):
+            pass
+
+        def _on_custom_http(*ignored_args, **ignored_kwargs):
+            return core.AuthResult(True)
+
+        def _http_open(handler, request):
+
+            # 'k1' and 'v1' must not be passed to backend server because 'k1'
+            # is on the 'from-client-ignore' list.
+            eq_(sorted(request.headers.items()), [(k2, v2)])
+
+            class _DummyResponse(object):
+                def __init__(self, *ignored_args, **ignored_kwargs):
+                    self.msg = ''
+                    self.headers = ''
+                    self.code = ''
+
+                def info(*ignored_args, **ignored_kwargs):
+                    return {}
+
+                def readline(*ignored_args, **ignored_kwargs):
+                    return 'aaa'
+
+                def read(*ignored_args, **ignored_kwargs):
+                    return ''
+
+                def getcode(*ignored_args, **ignored_kwargs):
+                    return '200'
+
+                def close(*ignored_args, **ignored_kwargs):
+                    pass
+
+            return _DummyResponse()
+
+        with Replacer() as r:
+            r.replace('secwall.server._RequestApp._on_custom_http', _on_custom_http)
+            r.replace('urllib2.HTTPHandler.http_open', _http_open)
+            request_app._on_request(_ctx, start_response, _env, _url_config, _client_cert)
+
+    def test_to_backend_add(self):
+        """ Tests whether headers from the 'to-backend-add' dictionary are being
+        passed to backend servers.
+        """
+        request_app = server._RequestApp(self.config, app_ctx)
+        _client_cert = None
+        _url_config = {'custom-http':True, 'host':'http://' + uuid.uuid4().hex}
+        k1, v1 = uuid.uuid4().hex.capitalize(), uuid.uuid4().hex
+        _url_config['to-backend-add'] = {k1:v1}
+
+        _env = {}
+        _url_config['from-client-ignore'] = []
+
+        _wsgi_input = cStringIO.StringIO()
+        _wsgi_input.write('')
+        _env['wsgi.input'] = _wsgi_input
+        _env['PATH_INFO'] = '/' + uuid.uuid4().hex
+
+        _ctx = core.InvocationContext()
+        _ctx.proc_start = datetime.now()
+        _ctx.auth_result = core.AuthResult(True)
+        _ctx.env = _env
+
+        def start_response(*ignored_args, **ignored_kwargs):
+            pass
+
+        def _on_custom_http(*ignored_args, **ignored_kwargs):
+            return core.AuthResult(True)
+
+        def _http_open(handler, request):
+            eq_(sorted(request.headers.items()), [(k1, v1)])
+
+            class _DummyResponse(object):
+                def __init__(self, *ignored_args, **ignored_kwargs):
+                    self.msg = ''
+                    self.headers = ''
+                    self.code = ''
+
+                def info(*ignored_args, **ignored_kwargs):
+                    return {}
+
+                def readline(*ignored_args, **ignored_kwargs):
+                    return 'aaa'
+
+                def read(*ignored_args, **ignored_kwargs):
+                    return ''
+
+                def getcode(*ignored_args, **ignored_kwargs):
+                    return '200'
+
+                def close(*ignored_args, **ignored_kwargs):
+                    pass
+
+            return _DummyResponse()
+
+        with Replacer() as r:
+            r.replace('secwall.server._RequestApp._on_custom_http', _on_custom_http)
+            r.replace('urllib2.HTTPHandler.http_open', _http_open)
+            request_app._on_request(_ctx, start_response, _env, _url_config, _client_cert)
+
+    def test_from_backend_ignore(self):
+        """ Tests whether headers from the 'from-backend-ignore' list aren't being
+        passed to clients.
+        """
+        request_app = server._RequestApp(self.config, app_ctx)
+        _client_cert = None
+        _url_config = {}
+        k1, v1 = uuid.uuid4().hex.capitalize(), uuid.uuid4().hex
+        k2, v2 = uuid.uuid4().hex.capitalize(), uuid.uuid4().hex
+
+        _env = {}
+        _url_config['to-client-add'] = {}
+        _url_config['from-backend-ignore'] = [k1]
+
+        _wsgi_input = cStringIO.StringIO()
+        _wsgi_input.write('')
+        _env['wsgi.input'] = _wsgi_input
+        _env['PATH_INFO'] = '/' + uuid.uuid4().hex
+
+        _ctx = core.InvocationContext()
+        _ctx.proc_start = datetime.now()
+        _ctx.auth_result = core.AuthResult(True)
+        _ctx.env = _env
+        _ctx.url_config = _url_config
+
+        def start_response(code_status, headers):
+            eq_(sorted(headers.items()), [(k2, v2)])
+
+        headers = {k1:v1, k2:v2}
+        response = uuid.uuid4().hex
+
+        request_app._response(_ctx, start_response, '200', 'OK', headers, response)
+
+    def test_to_client_add(self):
+        """ Tests whether headers from the 'to-client-add' dictionary are being
+        passed to clients.
+        """
+        request_app = server._RequestApp(self.config, app_ctx)
+        _client_cert = None
+        _url_config = {}
+        k1, v1 = 'a' + uuid.uuid4().hex.capitalize(), uuid.uuid4().hex
+        k2, v2 = 'b' + uuid.uuid4().hex.capitalize(), uuid.uuid4().hex
+
+        _env = {}
+        _url_config['to-client-add'] = {k2:v2}
+        _url_config['from-backend-ignore'] = []
+
+        _wsgi_input = cStringIO.StringIO()
+        _wsgi_input.write('')
+        _env['wsgi.input'] = _wsgi_input
+        _env['PATH_INFO'] = '/' + uuid.uuid4().hex
+
+        _ctx = core.InvocationContext()
+        _ctx.proc_start = datetime.now()
+        _ctx.auth_result = core.AuthResult(True)
+        _ctx.env = _env
+        _ctx.url_config = _url_config
+
+        def start_response(code_status, headers):
+            eq_(sorted(headers.items()), [(k1, v1), (k2, v2)])
+
+        headers = {k1:v1}
+        response = uuid.uuid4().hex
+
+        request_app._response(_ctx, start_response, '200', 'OK', headers, response)
+
+    def test_adding_server_header(self):
+        """ By default, if not configured otherwise, the 'Server' header has a special
+        status and is being added to the list of headers sent to a client app.
+        """
+        _config = copy.deepcopy(self.config)
+        _config.from_backend_ignore = ['Server']
+
+        request_app = server._RequestApp(_config, app_ctx)
+        _client_cert = None
+
+        _env = {}
+
+        _wsgi_input = cStringIO.StringIO()
+        _wsgi_input.write('')
+        _env['wsgi.input'] = _wsgi_input
+        _env['PATH_INFO'] = '/' + uuid.uuid4().hex
+
+        _ctx = core.InvocationContext()
+        _ctx.proc_start = datetime.now()
+        _ctx.auth_result = core.AuthResult(True)
+        _ctx.env = _env
+        _ctx.url_config = None
+
+        def start_response(code_status, headers):
+            eq_(sorted(headers.items()), [('Server', request_app.server_tag)])
+
+        response = uuid.uuid4().hex
+        request_app._response(_ctx, start_response, '200', 'OK', {}, response)
+
 class HTTPProxyTestCase(unittest.TestCase):
     """ Tests related to the the secwall.server.HTTPProxy class, the plain
     HTTP proxy.
@@ -1193,6 +1413,7 @@ class HTTPProxyTestCase(unittest.TestCase):
                 self.quote_path_info = app_ctx.get_object('quote_path_info')
                 self.quote_query_string = app_ctx.get_object('quote_query_string')
                 self.server_tag = uuid.uuid4().hex
+                self.from_backend_ignore = []
 
         _config = _Config()
 
@@ -1243,6 +1464,7 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.quote_path_info = _quote_path_info
                 self.quote_query_string = _quote_query_string
                 self.server_tag = uuid.uuid4().hex
+                self.from_backend_ignore = []
 
         _config = _Config()
 
@@ -1295,6 +1517,7 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.quote_path_info = app_ctx.get_object('quote_path_info')
                 self.quote_query_string = app_ctx.get_object('quote_query_string')
                 self.server_tag = uuid.uuid4().hex
+                self.from_backend_ignore = []
 
         class _RequestHandler(object):
             def __init__(self, socket, address, proxy):
@@ -1417,6 +1640,7 @@ def test_loggers():
             self.quote_path_info = None
             self.quote_query_string = None
             self.server_tag = uuid.uuid4().hex
+            self.from_backend_ignore = []
 
     config = _Config()
 
