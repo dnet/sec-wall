@@ -53,6 +53,8 @@ class _RequestApp(object):
         self.quote_path_info = config.quote_path_info
         self.quote_query_string = config.quote_query_string
         self.from_backend_ignore  = config.from_backend_ignore
+        self.add_invocation_id = config.add_invocation_id
+        self.sign_invocation_id = config.sign_invocation_id
 
         self.msg_counter = itertools.count(1)
         self.now = datetime.now
@@ -79,6 +81,11 @@ class _RequestApp(object):
                                 self.now())
         ctx.auth_result = AuthResult()
         ctx.env = env
+
+        if self.sign_invocation_id:
+            h = hashlib.sha256()
+            h.update('{0}:{1}'.format(ctx.invocation_id, self.instance_secret))
+            ctx.invocation_id_signed = h.hexdigest()
 
         path_info = env['PATH_INFO']
         if self.quote_path_info:
@@ -152,6 +159,13 @@ class _RequestApp(object):
         for name, value in to_backend_add.items():
             req.add_header(name, value)
 
+        # Sign and return the invocation ID.
+        if self.add_invocation_id:
+            req.add_header('X-sec-wall-invocation-id', ctx.invocation_id)
+
+        if self.sign_invocation_id:
+            req.add_header('X-sec-wall-invocation-id-signed', ctx.invocation_id_signed)
+
         try:
             opener = urllib2.build_opener()
             ctx.ext_start = self.now()
@@ -183,7 +197,7 @@ class _RequestApp(object):
 
         if ctx.url_config:
             for name in ctx.url_config['from-backend-ignore']:
-                del headers[name]
+                headers.pop(name, None)
 
             for name, value in ctx.url_config['to-client-add'].items():
                 headers[name] = value
@@ -192,6 +206,13 @@ class _RequestApp(object):
             if 'Server' in self.from_backend_ignore:
                 headers['Server'] = self.server_tag
 
+        # Sign and return the invocation ID.
+        if self.add_invocation_id:
+            headers['X-sec-wall-invocation-id'] = ctx.invocation_id
+
+        if self.sign_invocation_id:
+            headers['X-sec-wall-invocation-id-signed'] = ctx.invocation_id_signed
+
         log_message = ctx.format_log_message(code, needs_details)
 
         if ctx.auth_result:
@@ -199,7 +220,7 @@ class _RequestApp(object):
         else:
             self.logger.error(log_message)
 
-        start_response('{0} {1}'.format(code, status), headers)
+        start_response('{0} {1}'.format(code, status), headers.items())
         return [response]
 
     def _get_www_auth(self, url_config, config_type):

@@ -111,8 +111,8 @@ class InvocationContext(object):
         self.client_address = client_address
         self.request_metod = request_metod
         self.stop_watch_format = '{0.seconds}.{0.microseconds:06d}'
-
         self.invocation_id = '{0}/{1}/{2}'.format(instance_name, instance_unique, message_number)
+        self.invocation_id_signed = ''
 
     def format_log_message(self, code, needs_details):
         """ Returns a nicely formatted log message. Amount of information

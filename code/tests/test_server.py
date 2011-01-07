@@ -31,7 +31,7 @@ from lxml import etree
 from gevent import wsgi
 
 # nose
-from nose.tools import assert_raises, assert_true, eq_
+from nose.tools import assert_false, assert_raises, assert_true, eq_
 
 # testfixtures
 from testfixtures import Replacer
@@ -71,6 +71,8 @@ class _DummyConfig(object):
         self.quote_query_string = _app_ctx.get_object('quote_query_string')
         self.server_tag = uuid.uuid4().hex
         self.from_backend_ignore = []
+        self.add_invocation_id = True
+        self.sign_invocation_id = True
 
 class _DummyCertInfo(object):
     pass
@@ -233,7 +235,7 @@ class RequestAppTestCase(unittest.TestCase):
                             eq_(code_status, _code + ' ' + _status)
 
                             expected_headers = list(_headers.items())
-                            eq_(sorted(headers.items()), sorted(expected_headers))
+                            eq_(sorted(headers), sorted(expected_headers))
 
                     with Replacer() as r:
                         def _on_ssl_cert(self, env, url_config, client_cert, data):
@@ -336,7 +338,7 @@ class RequestAppTestCase(unittest.TestCase):
             def _x_start_response(code_status, headers):
                 eq_(code_status, _code + ' ' + _status)
                 expected_headers = _headers.items()
-                eq_(sorted(headers.items()), sorted(expected_headers))
+                eq_(sorted(headers), sorted(expected_headers))
 
             def _http_open(*ignored_args, **ignored_kwargs):
                 class _DummyException(urllib2.HTTPError):
@@ -406,11 +408,15 @@ class RequestAppTestCase(unittest.TestCase):
         """ Tests the '_response' method.
         """
         _code, _status, _response = (uuid.uuid4().hex for x in range(3))
-        _headers = [(uuid.uuid4().hex, uuid.uuid4().hex)]
+
+        _headers = {uuid.uuid4().hex: uuid.uuid4().hex}
+        _headers['X-sec-wall-invocation-id-signed'] = ''
+        _headers['X-sec-wall-invocation-id'] = 'None/None/None'
 
         def _start_response(code_status, headers):
             eq_(code_status, _code + ' ' + _status)
-            eq_(headers, _headers)
+
+            eq_(sorted(headers), sorted(_headers.items()))
 
         req_app = server._RequestApp(self.config, app_ctx)
 
@@ -1151,7 +1157,7 @@ class RequestAppTestCase(unittest.TestCase):
                 request_app.logger.addHandler(handler)
                 request_app.log_level = log_level
                 request_app._response(_ctx, _start_response, uuid.uuid4().hex,
-                                      uuid.uuid4().hex, [], uuid.uuid4().hex)
+                                      uuid.uuid4().hex, {}, uuid.uuid4().hex)
 
                 log_message = handler.buffer[0]['msg'].split(';')
                 len_log_message = len(log_message)
@@ -1205,7 +1211,11 @@ class RequestAppTestCase(unittest.TestCase):
 
             # 'k1' and 'v1' must not be passed to backend server because 'k1'
             # is on the 'from-client-ignore' list.
-            eq_(sorted(request.headers.items()), [(k2, v2)])
+            eq_(sorted(request.headers.items()), [
+                (k2, v2),
+                ('X-sec-wall-invocation-id', 'None/None/None'),
+                ('X-sec-wall-invocation-id-signed', '')
+            ])
 
             class _DummyResponse(object):
                 def __init__(self, *ignored_args, **ignored_kwargs):
@@ -1265,7 +1275,11 @@ class RequestAppTestCase(unittest.TestCase):
             return core.AuthResult(True)
 
         def _http_open(handler, request):
-            eq_(sorted(request.headers.items()), [(k1, v1)])
+            eq_(sorted(request.headers.items()), [
+                (k1, v1),
+                ('X-sec-wall-invocation-id', 'None/None/None'),
+                ('X-sec-wall-invocation-id-signed', '')
+            ])
 
             class _DummyResponse(object):
                 def __init__(self, *ignored_args, **ignored_kwargs):
@@ -1302,8 +1316,8 @@ class RequestAppTestCase(unittest.TestCase):
         request_app = server._RequestApp(self.config, app_ctx)
         _client_cert = None
         _url_config = {}
-        k1, v1 = uuid.uuid4().hex.capitalize(), uuid.uuid4().hex
-        k2, v2 = uuid.uuid4().hex.capitalize(), uuid.uuid4().hex
+        k1, v1 = 'a' + uuid.uuid4().hex.capitalize(), uuid.uuid4().hex
+        k2, v2 = 'b' + uuid.uuid4().hex.capitalize(), uuid.uuid4().hex
 
         _env = {}
         _url_config['to-client-add'] = {}
@@ -1321,7 +1335,11 @@ class RequestAppTestCase(unittest.TestCase):
         _ctx.url_config = _url_config
 
         def start_response(code_status, headers):
-            eq_(sorted(headers.items()), [(k2, v2)])
+            eq_(sorted(headers), [
+                ('X-sec-wall-invocation-id', 'None/None/None'),
+                ('X-sec-wall-invocation-id-signed', ''),
+                (k2, v2)
+            ])
 
         headers = {k1:v1, k2:v2}
         response = uuid.uuid4().hex
@@ -1354,7 +1372,11 @@ class RequestAppTestCase(unittest.TestCase):
         _ctx.url_config = _url_config
 
         def start_response(code_status, headers):
-            eq_(sorted(headers.items()), [(k1, v1), (k2, v2)])
+            eq_(sorted(headers), [
+                ('X-sec-wall-invocation-id', 'None/None/None'),
+                ('X-sec-wall-invocation-id-signed', ''),
+                (k1, v1), (k2, v2)
+            ])
 
         headers = {k1:v1}
         response = uuid.uuid4().hex
@@ -1385,10 +1407,129 @@ class RequestAppTestCase(unittest.TestCase):
         _ctx.url_config = None
 
         def start_response(code_status, headers):
-            eq_(sorted(headers.items()), [('Server', request_app.server_tag)])
+            eq_(sorted(headers), [
+                ('Server', request_app.server_tag),
+                ('X-sec-wall-invocation-id', 'None/None/None'),
+                ('X-sec-wall-invocation-id-signed', ''),
+            ])
 
         response = uuid.uuid4().hex
         request_app._response(_ctx, start_response, '200', 'OK', {}, response)
+
+    def test_add_invocation_id(self):
+        """ When configured to do so, the proxy should add a 'X-sec-wall-invocation-id'
+        HTTP header when invoking backend servers and returning responses to client
+        applications.
+        """
+        for add_invocation_id in(True, False):
+            for sign_invocation_id in(True, False):
+                with Replacer() as r:
+                    _config = copy.deepcopy(self.config)
+                    _config.add_invocation_id = add_invocation_id
+                    _config.sign_invocation_id = sign_invocation_id
+                    _config.from_backend_ignore = ['Server']
+
+                    request_app = server._RequestApp(_config, app_ctx)
+
+                    _env = {}
+
+                    _wsgi_input = cStringIO.StringIO()
+                    _wsgi_input.write('')
+
+                    _env['wsgi.input'] = _wsgi_input
+                    _env['PATH_INFO'] = '/' + uuid.uuid4().hex
+
+                    def start_response(code_status, headers):
+                        headers = dict(headers)
+                        eq_(headers['Content-Type'], 'text/plain')
+
+                        if add_invocation_id:
+                            eq_(len(headers['X-sec-wall-invocation-id'].split('/')), 3)
+                        else:
+                            assert_false(('X-sec-wall-invocation-id' in headers), headers)
+
+                        if sign_invocation_id:
+                            eq_(len(headers['X-sec-wall-invocation-id-signed']), 64)
+                        else:
+                            assert_false(('X-sec-wall-invocation-id-signed' in headers), headers)
+
+                    request_app(_env, start_response)
+
+        for add_invocation_id in(True, False):
+            for sign_invocation_id in(True, False):
+                with Replacer() as r:
+                    _config = copy.deepcopy(self.config)
+                    _config.add_invocation_id = add_invocation_id
+                    _config.sign_invocation_id = sign_invocation_id
+                    _config.from_backend_ignore = ['Server']
+
+                    _url_config = {'custom-http':True, 'host':'http://' + uuid.uuid4().hex,
+                                   'from-client-ignore':[], 'to-backend-add':{}}
+
+                    request_app = server._RequestApp(_config, app_ctx)
+
+                    _env = {}
+
+                    instance_name = uuid.uuid4().hex
+                    instance_unique = uuid.uuid4().hex
+                    message_number = uuid.uuid4().hex
+                    invocation_id_signed = uuid.uuid4().hex
+
+                    _ctx = core.InvocationContext(instance_name, instance_unique, message_number)
+                    _ctx.proc_start = datetime.now()
+                    _ctx.auth_result = core.AuthResult(True)
+                    _ctx.env = _env
+
+                    if sign_invocation_id:
+                        _ctx.invocation_id_signed = invocation_id_signed
+
+                    _wsgi_input = cStringIO.StringIO()
+                    _wsgi_input.write('')
+
+                    _env['wsgi.input'] = _wsgi_input
+                    _env['PATH_INFO'] = '/' + uuid.uuid4().hex
+
+                    def start_response(code_status, headers):
+                        pass
+
+                    def _on_custom_http(*ignored_args, **ignored_kwargs):
+                        return core.AuthResult(True)
+
+                    def _http_open(self, req):
+
+                        if add_invocation_id:
+                            eq_(req.headers['X-sec-wall-invocation-id'],
+                                '{0}/{1}/{2}'.format(instance_name, instance_unique, message_number))
+
+                        if sign_invocation_id:
+                            eq_(req.headers['X-sec-wall-invocation-id-signed'], invocation_id_signed)
+
+                        class _DummyResponse(object):
+                            def __init__(self, *ignored_args, **ignored_kwargs):
+                                self.code = '200'
+                                self.msg = 'OK'
+                                self._headers = {}
+
+                            def info(*ignored_args, **ignored_kwargs):
+                                return {}
+
+                            def readline(*ignored_args, **ignored_kwargs):
+                                return 'aaa'
+
+                            def read(*ignored_args, **ignored_kwargs):
+                                return ''
+
+                            def getcode(*ignored_args, **ignored_kwargs):
+                                return self.code
+
+                            def close(*ignored_args, **ignored_kwargs):
+                                pass
+
+                        return _DummyResponse()
+
+                    r.replace('urllib2.HTTPHandler.http_open', _http_open)
+                    r.replace('secwall.server._RequestApp._on_custom_http', _on_custom_http)
+                    request_app._on_request(_ctx, start_response, _env, _url_config, None)
 
 class HTTPProxyTestCase(unittest.TestCase):
     """ Tests related to the the secwall.server.HTTPProxy class, the plain
@@ -1416,6 +1557,8 @@ class HTTPProxyTestCase(unittest.TestCase):
                 self.quote_query_string = app_ctx.get_object('quote_query_string')
                 self.server_tag = uuid.uuid4().hex
                 self.from_backend_ignore = []
+                self.add_invocation_id = True
+                self.sign_invocation_id = True
 
         _config = _Config()
 
@@ -1469,6 +1612,8 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.quote_query_string = _quote_query_string
                 self.server_tag = uuid.uuid4().hex
                 self.from_backend_ignore = []
+                self.add_invocation_id = True
+                self.sign_invocation_id = True
 
         _config = _Config()
 
@@ -1523,6 +1668,8 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.quote_query_string = app_ctx.get_object('quote_query_string')
                 self.server_tag = uuid.uuid4().hex
                 self.from_backend_ignore = []
+                self.add_invocation_id = True
+                self.sign_invocation_id = True
 
         class _RequestHandler(object):
             def __init__(self, socket, address, proxy):
@@ -1647,6 +1794,8 @@ def test_loggers():
             self.quote_query_string = None
             self.server_tag = uuid.uuid4().hex
             self.from_backend_ignore = []
+            self.add_invocation_id = True
+            self.sign_invocation_id = True
 
     config = _Config()
 

@@ -217,6 +217,20 @@ class SecWallContext(PythonConfig):
         return ['Server']
 
     @Object
+    def add_invocation_id(self):
+        """ Whether client and backend applications should receive
+        the X-sec-wall-invocation-id HTTP header.
+        """
+        return True
+
+    @Object
+    def sign_invocation_id(self):
+        """ Whether client and backend applications should receive
+        the X-sec-wall-invocation-id-signed HTTP header.
+        """
+        return True
+
+    @Object
     def config_py_template(self):
         return """# -*- coding: utf-8 -*-
 
@@ -227,7 +241,7 @@ import os.path as path, uuid
 INSTANCE_SECRET = '{INSTANCE_SECRET}'
 
 # May be shared with the outside world.
-INSTANCE_UNIQUE = '{INSTANCE_UNIQUE}'
+INSTANCE_UNIQUE = uuid.uuid4().hex
 
 # Useful constants
 cur_dir = path.dirname(__file__)

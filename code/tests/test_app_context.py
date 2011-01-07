@@ -39,7 +39,7 @@ def test_app_context():
     assert_true(issubclass(SecWallContext, PythonConfig))
     ctx = ApplicationContext(SecWallContext())
 
-    eq_(len(ctx.object_defs), 30)
+    eq_(len(ctx.object_defs), 32)
 
     assert_equal(ctx.get_object('http_proxy_class'), HTTPProxy)
     assert_equal(ctx.get_object('https_proxy_class'), HTTPSProxy)
@@ -68,5 +68,7 @@ def test_app_context():
     eq_(ctx.get_object('quote_path_info'), False)
     eq_(ctx.get_object('quote_query_string'), False)
     eq_(sorted(ctx.get_object('from_backend_ignore')), ['Server'])
-    eq_(sha256(ctx.get_object('config_py_template')).hexdigest(), '4cd91ddfa47f3bdf2801c9892a31be031976ca278958fd7ee9702d4d76e2915c')
+    eq_(ctx.get_object('add_invocation_id'), True)
+    eq_(ctx.get_object('sign_invocation_id'), True)
+    eq_(sha256(ctx.get_object('config_py_template')).hexdigest(), 'db97b59c2afecba50f368de5d320ca2741b2203b59639acd518d9ea869fa96d3')
     eq_(sha256(ctx.get_object('zdaemon_conf_proxy_template')).hexdigest(), '1c09f0011ffdc90d3ec533e11f7abf91f48a94542d6acdc886b2c4d6b7b6ff53')
