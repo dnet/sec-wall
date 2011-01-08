@@ -179,13 +179,11 @@ class _RequestApp(object):
             ctx.ext_end = self.now()
 
         return self._response(ctx, start_response, str(resp.getcode()), resp.msg,
-                              resp.headers, response)
+                              resp.headers.dict, response)
 
     def _response(self, ctx, start_response, code, status, headers, response):
         """ Actually returns the response to the client.
         """
-        ctx.proc_end = self.now()
-
         # We need details in case there was an error or we're running
         # at least on DEBUG level.
         if ctx.auth_result.status is False:
@@ -213,6 +211,7 @@ class _RequestApp(object):
         if self.sign_invocation_id:
             headers['X-sec-wall-invocation-id-signed'] = ctx.invocation_id_signed
 
+        ctx.proc_end = self.now()
         log_message = ctx.format_log_message(code, needs_details)
 
         if ctx.auth_result:

@@ -98,6 +98,10 @@ class TestHandler(BufferingHandler):
     def emit(self, record):
         self.buffer.append(record.__dict__)
 
+class _TestHeaders(object):
+    def __init__(self, dict):
+        self.dict = dict
+
 class RequestAppTestCase(unittest.TestCase):
     """ Tests related to the the secwall.server._RequestApp class, the WSGI
     application executed on each request.
@@ -267,7 +271,7 @@ class RequestAppTestCase(unittest.TestCase):
                                     self.code = _code
 
                                 def info(*ignored_args, **ignored_kwargs):
-                                    return _headers
+                                    return _TestHeaders(_headers)
 
                                 def readline(*ignored_args, **ignored_kwargs):
                                     return 'aaa'
@@ -344,7 +348,7 @@ class RequestAppTestCase(unittest.TestCase):
                 class _DummyException(urllib2.HTTPError):
                     def __init__(self, *ignored_args, **ignored_kwargs):
                         self.msg = _status
-                        self.headers = _headers
+                        self.headers = _TestHeaders(_headers)
 
                     def read(*ignored_args, **ignored_kwargs):
                         return _response
@@ -1224,7 +1228,7 @@ class RequestAppTestCase(unittest.TestCase):
                     self.code = ''
 
                 def info(*ignored_args, **ignored_kwargs):
-                    return {}
+                    return _TestHeaders({})
 
                 def readline(*ignored_args, **ignored_kwargs):
                     return 'aaa'
@@ -1284,11 +1288,10 @@ class RequestAppTestCase(unittest.TestCase):
             class _DummyResponse(object):
                 def __init__(self, *ignored_args, **ignored_kwargs):
                     self.msg = ''
-                    self.headers = ''
                     self.code = ''
 
                 def info(*ignored_args, **ignored_kwargs):
-                    return {}
+                    return _TestHeaders({})
 
                 def readline(*ignored_args, **ignored_kwargs):
                     return 'aaa'
@@ -1511,7 +1514,7 @@ class RequestAppTestCase(unittest.TestCase):
                                 self._headers = {}
 
                             def info(*ignored_args, **ignored_kwargs):
-                                return {}
+                                return _TestHeaders({})
 
                             def readline(*ignored_args, **ignored_kwargs):
                                 return 'aaa'
