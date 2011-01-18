@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-import copy, cStringIO, logging, ssl, unittest, urllib, urllib2, uuid
+import copy, cStringIO, hashlib, logging, ssl, sys, unittest, urllib, urllib2, uuid
 from datetime import datetime
 from logging.handlers import BufferingHandler
 
@@ -29,6 +29,13 @@ from lxml import etree
 
 # gevent
 from gevent import wsgi
+
+# PyYAML
+from yaml import dump
+try:
+    from yaml import CDumper as Dumper
+except ImportError:                      # pragma: no cover
+    from yaml import Dumper              # pragma: no cover
 
 # nose
 from nose.tools import assert_false, assert_raises, assert_true, eq_
@@ -641,7 +648,7 @@ class RequestAppTestCase(unittest.TestCase):
                 pass
 
             def _validate(*ignored_args, **ignored_kwargs):
-                return uuid.uuid4().hex
+                return uuid.uuid4().hex, uuid.uuid4().hex
 
             r.replace('lxml.etree.fromstring', _fromstring)
             r.replace('secwall.wsse.WSSE.validate', _validate)
@@ -1204,6 +1211,8 @@ class RequestAppTestCase(unittest.TestCase):
         _ctx.proc_start = datetime.now()
         _ctx.auth_result = core.AuthResult(True)
         _ctx.env = _env
+        
+        _config = self.config
 
         def start_response(*ignored_args, **ignored_kwargs):
             pass
@@ -1212,11 +1221,18 @@ class RequestAppTestCase(unittest.TestCase):
             return core.AuthResult(True)
 
         def _http_open(handler, request):
+            
+            expected_auth_info_signed = hashlib.sha256()
+            expected_auth_info_signed.update('{0}:{1}:{2}'.format(_ctx.invocation_id, 
+                                    _config.INSTANCE_SECRET,  ''))
+            expected_auth_info_signed = expected_auth_info_signed.hexdigest()
 
             # 'k1' and 'v1' must not be passed to backend server because 'k1'
             # is on the 'from-client-ignore' list.
             eq_(sorted(request.headers.items()), [
                 (k2, v2),
+                ('X-sec-wall-auth-info', ''),
+                ('X-sec-wall-auth-info-signed', expected_auth_info_signed),
                 ('X-sec-wall-invocation-id', 'None/None/None'),
                 ('X-sec-wall-invocation-id-signed', '')
             ])
@@ -1271,6 +1287,8 @@ class RequestAppTestCase(unittest.TestCase):
         _ctx.proc_start = datetime.now()
         _ctx.auth_result = core.AuthResult(True)
         _ctx.env = _env
+        
+        _config = self.config
 
         def start_response(*ignored_args, **ignored_kwargs):
             pass
@@ -1279,8 +1297,17 @@ class RequestAppTestCase(unittest.TestCase):
             return core.AuthResult(True)
 
         def _http_open(handler, request):
+
+            expected_auth_info_signed = hashlib.sha256()
+            expected_auth_info_signed.update('{0}:{1}:{2}'.format(_ctx.invocation_id, 
+                                    _config.INSTANCE_SECRET,  ''))
+            
+            expected_auth_info_signed = expected_auth_info_signed.hexdigest()
+            
             eq_(sorted(request.headers.items()), [
                 (k1, v1),
+                ('X-sec-wall-auth-info', ''),
+                ('X-sec-wall-auth-info-signed', expected_auth_info_signed),
                 ('X-sec-wall-invocation-id', 'None/None/None'),
                 ('X-sec-wall-invocation-id-signed', '')
             ])
@@ -1530,9 +1557,182 @@ class RequestAppTestCase(unittest.TestCase):
 
                         return _DummyResponse()
 
+                    def start_response(code_status, headers):
+                        pass
+
                     r.replace('urllib2.HTTPHandler.http_open', _http_open)
                     r.replace('secwall.server._RequestApp._on_custom_http', _on_custom_http)
                     request_app._on_request(_ctx, start_response, _env, _url_config, None)
+
+    def test_add_sign_auth_info(self):
+        """ Tests if adding and signing the auth info works OK.
+        """
+        
+        class TestData(object):
+            def __init__(self, fields, expected):
+                self.fields = fields
+                self.expected = expected
+
+        ssl_fields = {
+            'ssl-cert':True,
+            'ssl-cert-commonName':'foobar-baz',
+            'ssl-cert-serialNumber': '12345678',
+            'ssl-cert-localityName':'Mountain View'
+        }
+        ssl_expected = "{ssl-cert-commonName: foobar-baz, ssl-cert-localityName: Mountain+View, ssl-cert-serialNumber: '12345678'}\n"
+                
+        wsse_fields = {
+            'wsse-pwd':True,
+            'wsse-pwd-username': b'zxc',
+            'wsse-pwd-password': b'asd',
+            'wsse-pwd-realm':b'zxc',
+            'wsse-pwd-reject-empty-nonce-creation': True,
+            'wsse-pwd-reject-stale-tokens': True,
+            'wsse-pwd-reject-expiry-limit': sys.maxint,
+            'wsse-pwd-nonce-freshness-time': sys.maxint,
+            'wsse-pwd-password-digest': False
+        }
+        wsse_username = wsse_fields['wsse-pwd-username']
+        wsse_expected = b"{{wsse-pwd-username: {0}}}\n".format(str(wsse_username))
+        wsse_request = """<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:typ="http://example.org/math/types/">
+        <soapenv:Header>
+           <wsse:Security soapenv:mustUnderstand="1" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+              <wsse:UsernameToken wsu:Id="UsernameToken-6" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+                 <wsse:Username>zxc</wsse:Username>
+                 <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">asd</wsse:Password>
+                 <wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">iF0Cavy0XdAyZZargXtCdQ==</wsse:Nonce>
+                 <wsu:Created>2011-01-16T22:19:56.722Z</wsu:Created>
+              </wsse:UsernameToken>
+           </wsse:Security>
+        </soapenv:Header>
+        <soapenv:Body>
+           <typ:Add>
+              <x>aaa</x>
+              <y>bbb</y>
+           </typ:Add>
+        </soapenv:Body>
+     </soapenv:Envelope>
+"""
+        basic_auth_fields = {
+            'basic-auth':True,
+            'basic-auth-realm':'zxc',
+            'basic-auth-username':'foo foo',
+            'basic-auth-password':'bar',
+        }
+        basic_auth_username = basic_auth_fields['basic-auth-username']
+        basic_auth_expected = b"{{basic-auth-username: {0}}}\n".format(
+            urllib.quote_plus(str(basic_auth_username)))
+        
+        custom_http_fields = {
+            'custom-http':True,
+            'custom-http-foo':'foo foo',
+            'custom-http-bar':'bar',
+        }
+        custom_http_foo = custom_http_fields['custom-http-foo']
+        custom_http_bar = custom_http_fields['custom-http-bar']
+        custom_http_expected = b"{{custom-http-bar: {0}, custom-http-foo: {1}}}\n".format(
+            custom_http_bar, custom_http_foo)
+        
+        xpath_fields = {
+            'xpath':True,
+            'xpath-x':etree.XPath("//x/text() = 'aaa'"),
+            'xpath-y':etree.XPath("//y/text() = 'bbb'"),
+        }
+        xpath_x = xpath_fields['xpath-x']
+        xpath_y = xpath_fields['xpath-y']
+        xpath_expected = b"[{0}, {1}]\n".format(xpath_y, xpath_x)
+        
+        ssl_data = TestData(ssl_fields, ssl_expected)
+        wsse_data = TestData(wsse_fields, wsse_expected)
+        basic_auth_data = TestData(basic_auth_fields, basic_auth_expected)
+        custom_http_data = TestData(custom_http_fields, custom_http_expected)
+        xpath_data = TestData(xpath_fields, xpath_expected)
+        
+        for data in [ssl_data, wsse_data, basic_auth_data, custom_http_data, xpath_data]:
+        
+            with Replacer() as r:
+                _env = {}
+    
+                _wsgi_input = cStringIO.StringIO()
+                _wsgi_input.write(wsse_request)
+                _wsgi_input.seek(0)
+                
+                _env['wsgi.input'] = _wsgi_input
+                _env['PATH_INFO'] = '/' + uuid.uuid4().hex
+                
+                _env['HTTP_' + 'foo'.upper().replace('-', '_')] = 'foo foo'
+                _env['HTTP_' + 'bar'.upper().replace('-', '_')] = 'bar'
+                
+                basic_auth = 'Basic ' + ('foo foo' + ':' + 'bar').encode('base64')
+                _env['HTTP_AUTHORIZATION'] = basic_auth
+    
+                _url_config = {
+                    'host':'http://' + uuid.uuid4().hex,
+                    'from-client-ignore':[],
+                    'to-backend-add':{}
+                }
+                
+                _url_config.update(data.fields)
+                
+                instance_name, instance_unique, message_number = (uuid.uuid4().hex, uuid.uuid4().hex,
+                                              uuid.uuid4().hex)
+                
+                _ctx = core.InvocationContext(instance_name, instance_unique, message_number)
+    
+                request_app = server._RequestApp(self.config, app_ctx)
+                _config = self.config
+    
+                def _http_open(self, req):
+    
+                    expected_auth_info_signed = hashlib.sha256()
+                    expected_auth_info_signed.update('{0}:{1}:{2}'.format(_ctx.invocation_id, 
+                                            _config.INSTANCE_SECRET,  data.expected))
+                    expected_auth_info_signed = expected_auth_info_signed.hexdigest()
+    
+                    auth_info = req.headers['X-sec-wall-auth-info']
+                    auth_info_signed = req.headers['X-sec-wall-auth-info-signed']
+    
+                    eq_(auth_info, data.expected)
+                    eq_(auth_info_signed, expected_auth_info_signed)
+                    
+                    class _DummyResponse(object):
+                        def __init__(self, *ignored_args, **ignored_kwargs):
+                            self.code = '200'
+                            self.msg = 'OK'
+                            self._headers = {}
+    
+                        def info(*ignored_args, **ignored_kwargs):
+                            return _TestHeaders({})
+    
+                        def readline(*ignored_args, **ignored_kwargs):
+                            return 'aaa'
+    
+                        def read(*ignored_args, **ignored_kwargs):
+                            return ''
+    
+                        def getcode(*ignored_args, **ignored_kwargs):
+                            return self.code
+    
+                        def close(*ignored_args, **ignored_kwargs):
+                            pass
+    
+                    return _DummyResponse()
+    
+                def start_response(code_status, headers):
+                    pass
+    
+                def _on_ssl_cert(*ignored_args, **ignored_kwargs):
+                    auth_result = core.AuthResult(True)
+                    auth_result.auth_info = dict((urllib.quote_plus(k), urllib.quote_plus(v)) for k, v in data.fields.iteritems() if not type(v) is bool)
+                    return auth_result
+    
+                _ctx.proc_start = datetime.now()
+                _ctx.auth_result = core.AuthResult(True)
+                _ctx.env = _env
+    
+                r.replace('urllib2.HTTPHandler.http_open', _http_open)
+                r.replace('secwall.server._RequestApp._on_ssl_cert', _on_ssl_cert)
+                request_app._on_request(_ctx, start_response, _env, _url_config, None)
 
 class HTTPProxyTestCase(unittest.TestCase):
     """ Tests related to the the secwall.server.HTTPProxy class, the plain

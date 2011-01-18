@@ -22,7 +22,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 # stdlib
 import hashlib, itertools, logging, re, ssl, sys, time, traceback, urllib2, uuid
 from datetime import datetime
-from urllib import quote_plus
+from urllib import quote_plus, quote
 
 # lxml
 from lxml import etree
@@ -84,7 +84,7 @@ class _RequestApp(object):
 
         if self.sign_invocation_id:
             h = hashlib.sha256()
-            h.update('{0}:{1}'.format(ctx.invocation_id, self.instance_secret))
+            h.update('{0}:{1}'.format(self.instance_secret, ctx.invocation_id))
             ctx.invocation_id_signed = h.hexdigest()
 
         path_info = env['PATH_INFO']
@@ -127,7 +127,7 @@ class _RequestApp(object):
 
         data = env['wsgi.input'].read()
         ctx.data = data
-
+        
         for config_type in self.config.validation_precedence:
             if config_type in url_config:
 
@@ -165,6 +165,15 @@ class _RequestApp(object):
 
         if self.sign_invocation_id:
             req.add_header('X-sec-wall-invocation-id-signed', ctx.invocation_id_signed)
+
+        if url_config.get('add-auth-info', True):
+            req.add_header('X-sec-wall-auth-info', ctx.auth_result.auth_info)
+
+        if url_config.get('sign-auth-info', True):
+            h = hashlib.sha256()
+            h.update('{0}:{1}:{2}'.format(ctx.invocation_id, self.instance_secret, 
+                                          ctx.auth_result.auth_info))
+            req.add_header('X-sec-wall-auth-info-signed', h.hexdigest())
 
         try:
             opener = urllib2.build_opener()
@@ -307,7 +316,10 @@ class _RequestApp(object):
                     if cert_value != config_value:
                         return AuthResult(False, AUTH_CERT_VALUE_MISMATCH)
                 else:
-                    return AuthResult(True, '0')
+                    auth_result = AuthResult(True, '0')
+                    auth_result.auth_info = dict((quote_plus(k), quote_plus(v)) for k, v in cert_fields.iteritems())
+
+                    return auth_result
 
     def _on_wsse_pwd(self, env, url_config, unused_client_cert, data):
         """ Uses WS-Security UsernameToken/Password to validate the request.
@@ -317,22 +329,25 @@ class _RequestApp(object):
 
         request = etree.fromstring(data)
         try:
-            ok = self.wsse.validate(request, url_config)
+            ok, wsse_username = self.wsse.validate(request, url_config)
         except SecurityException, e:
             return AuthResult(False, AUTH_WSSE_VALIDATION_ERROR, e.description)
         else:
-            return AuthResult(True, '0')
+            auth_result = AuthResult(True, '0')
+            auth_result.auth_info = {b'wsse-pwd-username': str(wsse_username)}
+
+            return auth_result
 
     def _on_basic_auth(self, env, url_config, *ignored):
         """ Handles HTTP Basic Authentication.
         """
         auth = env.get('HTTP_AUTHORIZATION')
         if not auth:
-            return False
+            return AuthResult(False, AUTH_BASIC_NO_AUTH)
 
         prefix = 'Basic '
         if not auth.startswith(prefix):
-            return False
+            return AuthResult(False, AUTH_BASIC_INVALID_PREFIX)
 
         _, auth = auth.split(prefix)
         auth = auth.strip().decode('base64')
@@ -341,7 +356,10 @@ class _RequestApp(object):
 
         if username == url_config['basic-auth-username'] and \
            password == url_config['basic-auth-password']:
-            return AuthResult(True, '0')
+            auth_result = AuthResult(True, '0')
+            auth_result.auth_info = {b'basic-auth-username': quote_plus(username)}
+
+            return auth_result
         else:
             return AuthResult(False, AUTH_BASIC_USERNAME_OR_PASSWORD_MISMATCH)
 
@@ -409,7 +427,11 @@ class _RequestApp(object):
                                 env['REQUEST_METHOD'], auth['nonce'])
 
         if auth['response'] == expected_response:
-            return AuthResult(True, '0')
+            auth_result = AuthResult(True, '0')
+            auth_result._auth_info = {b'digest-auth-username':quote_plus(expected_username),
+                                      b'digest-auth-realm':quote_plus(expected_realm)}
+
+            return auth_result
         else:
             return AuthResult(False, AUTH_DIGEST_RESPONSE_MISMATCH)
 
@@ -417,26 +439,32 @@ class _RequestApp(object):
         """ Handles the authentication based on custom HTTP headers.
         """
         prefix = 'custom-http-'
-        expected_headers = [header for header in url_config if header.startswith(prefix)]
+
+        expected_headers = {}
+        expected_headers_keys = (header for header in url_config if header.startswith(prefix))
+
+        for key in expected_headers_keys:
+            # This set of operations (.split, .upper, .replace) could be done once
+            # when the config's read, well, it's a room for improvement.
+            expected_headers[str(key)] = str(env.get('HTTP_' + key.split(prefix)[1].upper().replace('-', '_'), ''))
 
         if not expected_headers:
 
             # It's clearly an error. We've been requested to use custom HTTP
             # headers but none are in the config.
             raise SecWallException('No custom HTTP headers were found in the config')
-
-        for expected_header in expected_headers:
-            # This set of operations (.split, .upper, .replace) could be done once
-            # when the config's read, well, it's a room for improvement.
-            value = env.get('HTTP_' + expected_header.split(prefix)[1].upper().replace('-', '_'))
-
+        
+        for key, value in expected_headers.iteritems():
             if not value:
                 return AuthResult(False, AUTH_DIGEST_NO_HEADER)
 
-            if value != url_config[expected_header]:
+            if value != url_config[key]:
                 return AuthResult(False, AUTH_DIGEST_HEADER_MISMATCH)
         else:
-            return AuthResult(True, '0')
+            auth_result = AuthResult(True, '0')
+            auth_result.auth_info = expected_headers
+
+            return auth_result
 
     def _on_xpath(self, unused_env, url_config, unused_client_cert, data):
         """ Handles the authentication based on XPath expressions.
@@ -459,7 +487,10 @@ class _RequestApp(object):
             if not expr(request):
                 return AuthResult(False, AUTH_XPATH_EXPR_MISMATCH)
         else:
-            return AuthResult(True, '0')
+            auth_result = AuthResult(True, '0')
+            auth_result.auth_info = [str(e) for e in expressions]
+
+            return auth_result
 
 class _RequestHandler(pywsgi.WSGIHandler):
     """ A subclass which conveniently exposes a client SSL/TLS certificate

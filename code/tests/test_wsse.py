@@ -372,4 +372,4 @@ def test_validate_password_digest_ok():
 
     wsse = WSSE()
     return_value = wsse.validate(soap, config)
-    eq_(return_value, True)
+    eq_(return_value, (True, 'foo'))

@@ -207,4 +207,4 @@ class WSSE(object):
             self.on_nonce_non_unique(config, wsse_nonce, now, soap)
 
         # All good, we let the client in.
-        return True
+        return True, wsse_username

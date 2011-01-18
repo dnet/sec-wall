@@ -23,6 +23,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 from datetime import timedelta
 
+# PyYAML
+from yaml import dump
+try:
+    from yaml import CDumper as Dumper
+except ImportError:                      # pragma: no cover
+    from yaml import Dumper              # pragma: no cover
+
 version_info = ('1', '0', '0')
 version = '.'.join(version_info)
 
@@ -44,6 +51,8 @@ class AuthResult(object):
     is a failure, note that 'code' may be a multi-character string including
     punctuation. 'description' is an optional attribute holding any additional
     textual information a callee might wish to pass to the calling layer.
+    'auth_info' is either an empty string or information regarding the authorization
+    data presented by the calling application.
 
     Instances of this class are considered True or False in boolean comparisons
     according to the boolean value of self.status.
@@ -52,11 +61,20 @@ class AuthResult(object):
         self.status = status
         self.code = code
         self.description = description
+        self._auth_info = ''
+
+    @property
+    def auth_info(self):
+        return self._auth_info
+
+    @auth_info.setter
+    def auth_info(self, value):
+        self._auth_info = dump(value, Dumper=Dumper)
 
     def __repr__(self):
-        return '<{0} at {1} status={2} code={3} description={4}>'.format(
+        return '<{0} at {1} status={2} code={3} description={4} auth_info={5}>'.format(
             self.__class__.__name__, hex(id(self)), self.status, self.code,
-            self.description)
+            self.description, self.auth_info)
 
     def __nonzero__(self):
         """ Returns the boolean value of self.status. Useful when an instance

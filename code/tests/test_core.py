@@ -80,10 +80,12 @@ def test_auth_result_repr():
     """
     at_pattern = '\w*'
     status, code, description = [uuid4().hex for x in range(3)]
+    auth_info = {b'abc':b'def'}
     a1 = AuthResult(status, code, description)
+    a1.auth_info = auth_info
     r = repr(a1)
 
-    pattern = '<AuthResult at {0} status={1} code={2} description={3}>'
+    pattern = '<AuthResult at {0} status={1} code={2} description={3} auth_info={{abc: def}}\n>'
     pattern = pattern.format(at_pattern, status, code, description)
 
     regexp = re.compile(pattern)
