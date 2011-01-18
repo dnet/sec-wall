@@ -35,7 +35,7 @@ def test_constants():
 
     exec 'from secwall.constants import *' in _globals, _locals
 
-    expected = 17
+    expected = 19
 
     eq_(len(_locals), expected)
     eq_(len(set(_locals.values())), expected)

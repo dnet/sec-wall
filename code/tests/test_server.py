@@ -964,7 +964,7 @@ class RequestAppTestCase(unittest.TestCase):
         env = {}
         auth_result = request_app._on_custom_http(env, url_config)
         eq_(False, auth_result.status)
-        eq_(constants.AUTH_DIGEST_NO_HEADER, auth_result.code)
+        eq_(constants.AUTH_CUSTOM_HTTP_NO_HEADER, auth_result.code)
 
         # 2) All headers were sent yet their values were incorrect
         env = {'HTTP_' + name1.upper().replace('-', '_'):uuid.uuid4().hex,
@@ -972,7 +972,7 @@ class RequestAppTestCase(unittest.TestCase):
 
         auth_result = request_app._on_custom_http(env, url_config)
         eq_(False, auth_result.status)
-        eq_(constants.AUTH_DIGEST_HEADER_MISMATCH, auth_result.code)
+        eq_(constants.AUTH_CUSTOM_HTTP_HEADER_MISMATCH, auth_result.code)
 
         # 4) One header's correct (including its value), the other has incorrect
         # name and value.
@@ -981,7 +981,7 @@ class RequestAppTestCase(unittest.TestCase):
 
         auth_result = request_app._on_custom_http(env, url_config)
         eq_(False, auth_result.status)
-        eq_(constants.AUTH_DIGEST_NO_HEADER, auth_result.code)
+        eq_(constants.AUTH_CUSTOM_HTTP_NO_HEADER, auth_result.code)
 
         # 4) One header's correct (including its value), the other has incorrect
         # value despite its name being correct.
@@ -990,7 +990,7 @@ class RequestAppTestCase(unittest.TestCase):
 
         auth_result = request_app._on_custom_http(env, url_config)
         eq_(False, auth_result.status)
-        eq_(constants.AUTH_DIGEST_HEADER_MISMATCH, auth_result.code)
+        eq_(constants.AUTH_CUSTOM_HTTP_HEADER_MISMATCH, auth_result.code)
 
     def test_on_custom_http_exception_on_no_custom_headers_in_config(self):
         """ An Exception is being raised when the config's invalid,

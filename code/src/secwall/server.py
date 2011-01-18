@@ -456,10 +456,10 @@ class _RequestApp(object):
         
         for key, value in expected_headers.iteritems():
             if not value:
-                return AuthResult(False, AUTH_DIGEST_NO_HEADER)
+                return AuthResult(False, AUTH_CUSTOM_HTTP_NO_HEADER)
 
             if value != url_config[key]:
-                return AuthResult(False, AUTH_DIGEST_HEADER_MISMATCH)
+                return AuthResult(False, AUTH_CUSTOM_HTTP_HEADER_MISMATCH)
         else:
             auth_result = AuthResult(True, '0')
             auth_result.auth_info = expected_headers
