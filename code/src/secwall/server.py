@@ -304,15 +304,12 @@ class _RequestApp(object):
                 if field.startswith(field_prefix):
                     config_fields[field.split(field_prefix)[1]] = value
 
-            # The user just wants the connection be encrypted and the client
-            # use client certificate however they're not interested in the
-            # cert's fields - so as long as the CA is OK (and we know it is
-            # because otherwise we wouldn't have gotten so far), we let the
-            # client in.
+            # There are no fields so the user just wants the connection be
+            # encrypted and the client use client certificate however they're
+            # not interested in the cert's fields - so as long as the CA is
+            # OK (and we know it is because otherwise we wouldn't have gotten
+            # so far), we let the client in.
             if not config_fields:
-                ## XXX: That should be reconsidered and made consistent with
-                # the rest of validation methods that would've raise an exception
-                # in that case.
                 return True
             else:
                 subject =  client_cert.get('subject')
