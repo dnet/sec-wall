@@ -20,8 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-from logging.handlers import SysLogHandler
 import multiprocessing, os.path as path
+from logging.handlers import SysLogHandler
+from uuid import uuid4
 
 # Spring Python
 from springpython.config import Object, PythonConfig
@@ -227,6 +228,28 @@ class SecWallContext(PythonConfig):
     def sign_invocation_id(self):
         """ Whether client and backend applications should receive
         the X-sec-wall-invocation-id-signed HTTP header.
+        """
+        return True
+    
+    @Object
+    def default_url_config(self):
+        """ The configuration to use for the '/*' URL pattern in case a user
+        didn't provide any. Uses lots of random UUIDs to make sure no client
+        data will ever match the config, that is, by default no one will be able
+        to invoke the URL.
+        """
+        return {
+            'ssl': True,
+            'ssl-cert': True,
+            'ssl-cert-commonName': uuid4().hex,
+            'host': 'http://{0}'.format(uuid4().hex),
+        }
+    
+    @Object
+    def add_default_if_not_found(self):
+        """ When starting a proxy, whether to add a default configuration for
+        a catch-all '/*' pattern if a user-defined configuration for that pattern
+        wasn't found.
         """
         return True
 

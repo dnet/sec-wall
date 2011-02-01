@@ -112,7 +112,8 @@ class _Command(object):
                  'no_url_match', 'validation_precedence', 'client_cert_401_www_auth',
                  'syslog_facility', 'syslog_address', 'log_level', 'log_file_config',
                  'server_tag', 'instance_name', 'quote_path_info', 'quote_query_string',
-                 'from_backend_ignore', 'add_invocation_id', 'sign_invocation_id')
+                 'from_backend_ignore', 'add_invocation_id', 'sign_invocation_id',
+                 'default_url_config', 'add_default_if_not_found')
 
         for name in names:
             attr = getattr(config_mod, name, None)

@@ -31,6 +31,9 @@ from lxml import etree
 from gevent import pywsgi, sleep, wsgi
 from gevent.hub import GreenletExit
 
+# pesto
+from pesto.dispatch import ExtensiblePattern
+
 # sec-wall
 from secwall import wsse
 from secwall.constants import *
@@ -42,7 +45,7 @@ class _RequestApp(object):
     def __init__(self, config=None, app_ctx=None):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.config = config
-        self.urls_compiled = []
+        self.urls = []
         self.app_ctx = app_ctx
         self.wsse = self.app_ctx.get_object('wsse')
 
@@ -55,13 +58,18 @@ class _RequestApp(object):
         self.from_backend_ignore  = config.from_backend_ignore
         self.add_invocation_id = config.add_invocation_id
         self.sign_invocation_id = config.sign_invocation_id
+        self.add_default_if_not_found = config.add_default_if_not_found
 
         self.msg_counter = itertools.count(1)
         self.now = datetime.now
         self.log_level = self.logger.getEffectiveLevel()
-
+        
+        seen_default = False
         for url_pattern, url_config in self.config.urls:
-            self.urls_compiled.append((re.compile(url_pattern), url_config))
+            if url_pattern == '/*':
+                seen_default = True
+                
+            self.urls.append((ExtensiblePattern(url_pattern), url_config))
 
             url_config.setdefault('from-client-ignore', [])
             url_config.setdefault('to-backend-add', {})
@@ -70,8 +78,12 @@ class _RequestApp(object):
 
             # Just in case the user didn't do it, upper-case all the headers
             # to make all the comparisons case-insensitive.
-            url_config['from-client-ignore'][:] = [elem.upper() for elem in url_config['from-client-ignore']]
-
+            url_config['from-client-ignore'][:] = [elem.upper() for elem in url_config.get('from-client-ignore', {})]
+            
+        if not seen_default and self.add_default_if_not_found:
+            default_pattern = ExtensiblePattern("<default:path>")
+            self.urls.append((default_pattern, self.config.default_url_config))
+            
     def __call__(self, env, start_response, client_cert=None):
         """ Finds the configuration for the given URL and passes the control on
         to the main request handler. In case no config for the given URL is
@@ -102,8 +114,8 @@ class _RequestApp(object):
         ctx.remote_address = env.get('REMOTE_ADDR')
         ctx.request_metod = env.get('REQUEST_METHOD')
 
-        for c, url_config in self.urls_compiled:
-            match = c.match(path_info)
+        for c, url_config in self.urls:
+            match = c.test(path_info)
             if match:
                 ctx.url_config = url_config
                 return self._on_request(ctx, start_response, env, url_config, client_cert)

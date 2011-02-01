@@ -80,6 +80,8 @@ class _DummyConfig(object):
         self.from_backend_ignore = []
         self.add_invocation_id = True
         self.sign_invocation_id = True
+        self.default_url_config = _default_url_config()
+        self.add_default_if_not_found = True
 
 class _DummyCertInfo(object):
     pass
@@ -109,6 +111,9 @@ class _TestHeaders(object):
     def __init__(self, dict):
         self.dict = dict
 
+def _default_url_config(*ignored_args, **ignored_kwargs):
+    return {}
+        
 class RequestAppTestCase(unittest.TestCase):
     """ Tests related to the the secwall.server._RequestApp class, the WSGI
     application executed on each request.
@@ -140,37 +145,37 @@ class RequestAppTestCase(unittest.TestCase):
         """ Tests how the __call__ method handles a matching URL.
         """
         dummy_cert = _DummyCertInfo()
+        
+        path = '/' + uuid.uuid4().hex
+        _config = _DummyConfig([[path, {}]])
 
         for cert in None, dummy_cert:
             with Replacer() as r:
 
-                _env = {'PATH_INFO': uuid.uuid4().hex}
-                _url_config = self.config.urls
+                _env = {'PATH_INFO': path}
+                _url_config = _config.urls
 
                 def _on_request(self, ctx, start_response, env, url_config, client_cert):
                     assert_true(isinstance(ctx, core.InvocationContext))
                     eq_(start_response, _start_response)
                     eq_(sorted(env.items()), sorted(_env.items()))
 
-                    url_configs = [elem[1] for elem in self.urls_compiled]
-                    assert_true(url_config in url_configs, (url_config, self.urls_compiled))
-
                     eq_(client_cert, cert)
 
                 r.replace('secwall.server._RequestApp._on_request', _on_request)
 
-                req_app = server._RequestApp(self.config, app_ctx)
+                req_app = server._RequestApp(_config, app_ctx)
                 req_app(_env, _start_response, cert)
 
     def test_call_no_match(self):
         """ Tests how the __call__ method handles a non-matching URL.
         """
         config = _DummyConfig([])
+        config.add_default_if_not_found = False
 
         with Replacer() as r:
 
             _env = {'PATH_INFO': uuid.uuid4().hex}
-            _url_config = []
 
             def _404(self, ctx, start_response):
                 assert_true(isinstance(ctx, core.InvocationContext))
@@ -1762,6 +1767,8 @@ class HTTPProxyTestCase(unittest.TestCase):
                 self.from_backend_ignore = []
                 self.add_invocation_id = True
                 self.sign_invocation_id = True
+                self.default_url_config = _default_url_config()
+                self.add_default_if_not_found = True
 
         _config = _Config()
 
@@ -1817,6 +1824,8 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.from_backend_ignore = []
                 self.add_invocation_id = True
                 self.sign_invocation_id = True
+                self.default_url_config = _default_url_config()
+                self.add_default_if_not_found = True
 
         _config = _Config()
 
@@ -1873,6 +1882,8 @@ class HTTPSProxyTestCase(unittest.TestCase):
                 self.from_backend_ignore = []
                 self.add_invocation_id = True
                 self.sign_invocation_id = True
+                self.default_url_config = _default_url_config()
+                self.add_default_if_not_found = True
 
         class _RequestHandler(object):
             def __init__(self, socket, address, proxy):
@@ -1999,7 +2010,9 @@ def test_loggers():
             self.from_backend_ignore = []
             self.add_invocation_id = True
             self.sign_invocation_id = True
-
+            self.default_url_config = _default_url_config()
+            self.add_default_if_not_found = True
+            
     config = _Config()
 
     request_app = server._RequestApp(config, app_ctx)

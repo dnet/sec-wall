@@ -23,6 +23,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from hashlib import sha256
 from logging.handlers import SysLogHandler
 from os import path
+from uuid import UUID
 
 # nose
 from nose.tools import assert_equal, assert_true, eq_
@@ -39,7 +40,7 @@ def test_app_context():
     assert_true(issubclass(SecWallContext, PythonConfig))
     ctx = ApplicationContext(SecWallContext())
 
-    eq_(len(ctx.object_defs), 32)
+    eq_(len(ctx.object_defs), 34)
 
     assert_equal(ctx.get_object('http_proxy_class'), HTTPProxy)
     assert_equal(ctx.get_object('https_proxy_class'), HTTPSProxy)
@@ -72,3 +73,19 @@ def test_app_context():
     eq_(ctx.get_object('sign_invocation_id'), True)
     eq_(sha256(ctx.get_object('config_py_template')).hexdigest(), 'db97b59c2afecba50f368de5d320ca2741b2203b59639acd518d9ea869fa96d3')
     eq_(sha256(ctx.get_object('zdaemon_conf_proxy_template')).hexdigest(), '1c09f0011ffdc90d3ec533e11f7abf91f48a94542d6acdc886b2c4d6b7b6ff53')
+    
+    default_url_config = ctx.get_object('default_url_config')
+    eq_(default_url_config['ssl'], True)
+    eq_(default_url_config['ssl-cert'], True)
+    
+    common_name = default_url_config['ssl-cert-commonName']
+    host = default_url_config['host'].replace('http://', '')
+    
+    # Will raise ValueError if values aren't UUIDs.
+    UUID(common_name)
+    UUID(host)
+    
+    eq_(UUID(common_name).version, 4)
+    eq_(UUID(host).version, 4)
+
+    eq_(ctx.get_object('add_default_if_not_found'), True)
