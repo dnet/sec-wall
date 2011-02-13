@@ -118,12 +118,13 @@ class _RequestApp(object):
             match = c.test(path_info)
             if match:
                 ctx.url_config = url_config
-                return self._on_request(ctx, start_response, env, url_config, client_cert)
+                return self._on_request(ctx, start_response, env, url_config, 
+                                        client_cert, match)
         else:
             # No config for that URL, we can't let the client in.
             return self._404(ctx, start_response)
 
-    def _on_request(self, ctx, start_response, env, url_config, client_cert):
+    def _on_request(self, ctx, start_response, env, url_config, client_cert, match=None):
         """ Checks security, invokes the backend server, returns the response.
         """
         # Some quick SSL-related checks first.
@@ -155,7 +156,13 @@ class _RequestApp(object):
         else:
             return self._500(ctx, start_response)
 
-        req = urllib2.Request(url_config['host'] + env['PATH_INFO'], data)
+        rewrite = url_config.get('rewrite')
+        if rewrite:
+            path_info = rewrite.format(**match[1])
+        else:
+            path_info = env['PATH_INFO']
+        
+        req = urllib2.Request(url_config['host'] + path_info, data)
 
         from_client_ignore = url_config['from-client-ignore']
         to_backend_add = url_config['to-backend-add']

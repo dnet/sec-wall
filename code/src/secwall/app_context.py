@@ -243,6 +243,10 @@ class SecWallContext(PythonConfig):
             'ssl-cert': True,
             'ssl-cert-commonName': uuid4().hex,
             'host': 'http://{0}'.format(uuid4().hex),
+            'from-client-ignore': [],
+            'to-backend-add': {},
+            'from-backend-ignore': [],
+            'to-client-add': {}
         }
     
     @Object
