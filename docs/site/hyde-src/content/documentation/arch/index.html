@@ -165,10 +165,22 @@ The main sec-wall's parts are:
       validation methods for Basic Auth, Digest Auth, custom HTTP headers,
       XPath expressions and SSL/TLS certificates are coded directly into _RequestApp whereas WSSE
       validation makes use of the secwall.wsse.WSSE class,
-    * Having passed the validation, the request is proxied to the backend server
-      and the response from the server is returned to the caller. A gevent's
+    * If the validation phase is successful, the URL is optionally being rewritten
+      into a new one, if no *rewrite* config option exists, the URL for invoking
+      the backend server is taken as-is from the client request.
+    * What comes next is the first stage of the enrichment process, HTTP headers
+      specified in the *from-client-ignore* config list
+      are removed from the request and new headers, taken from the *to-backend-add*
+      dictionary are added to the list of headers. If not configured otherwise,
+      the authentication-related headers are first cryptographically signed and
+      then the whole request is proxied to the backend server. A gevent's
       monkey-patched version of urllib2 is used for invoking far servers which means
       the code's not blocking the processing of other incoming requests.
+      The response is a subject to the second phase of the enrichment,
+      headers belonging to the *from-backend-ignore* list are being removed from
+      the response and new ones, taken from the *to-client-add* dictionary
+      are added. The response from the server is returned to the caller - note that
+      all the auth-related headers mentioned above may also be returned to the caller.
 
 - secwall.server._RequestHandler, known as *wsgi_request_handler* in IoC. A simple subclass
   of gevent.pywsgi.WSGIHandler which allows for secwall.server._RequestApp to optionally
