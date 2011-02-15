@@ -394,7 +394,7 @@ height:auto;
 background-color:transparent
 }
 
-div.support {
+div.info-box {
   float:left;
   width:45%;
   background-color:#ffffff;
@@ -403,7 +403,12 @@ div.support {
   border:1px solid #cccccc
 }
 
-div.support h2 {
+div.info-box h2 {
   text-align:center;
   color:#333333
+}
+
+
+div.wide {
+  width:95%
 }
