@@ -393,3 +393,17 @@ width:auto;
 height:auto;
 background-color:transparent
 }
+
+div.support {
+  float:left;
+  width:45%;
+  background-color:#ffffff;
+  padding:15px;
+  margin:3px;
+  border:1px solid #cccccc
+}
+
+div.support h2 {
+  text-align:center;
+  color:#333333
+}
