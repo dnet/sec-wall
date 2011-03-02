@@ -139,6 +139,7 @@ class _RequestApp(object):
                 return self._401(ctx, start_response, self._get_www_auth(url_config, 'ssl-cert'))
 
         data = env['wsgi.input'].read()
+        data = data if data else None
         ctx.data = data
         
         for config_type in self.config.validation_precedence:
