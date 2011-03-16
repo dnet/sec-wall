@@ -10,13 +10,28 @@
 
 {% markdown %}
 
-Welcome to sec-wall
-===================
+{% endmarkdown %}
 
-**sec-wall** is a feature packed high-performance security proxy supporting
-[SSL/TLS](#), [WSSE](#), [HTTP Auth Basic](#)/[Digest](#), extensible authentication
-&amp; authorization schemes based on [custom HTTP headers](#) and [XPath](#) expressions, powerful
-[URL matching](#)/[rewriting](#) and an optional [headers enrichment](#).
+<div id="blurb">
+    <strong>sec-wall</strong> is a high-performance security proxy
+    that comes with tons of interesting features, a very good documentation
+    and an exceptionally friendly community.
+</div>
+
+<div style="text-align:center">
+  <img src="/media/gfx/overview.png" alt="A visualization of dependencies between sec-wall's interal components (not including, which is an external dependency)" title="A visualization of dependencies between sec-wall's interal components (not including zdaemon, which is an external dependency)"/>
+</div>
+
+{% markdown %}
+
+If you're new to sec-wall you may wish to follow the
+[Getting started tutorial](/documentation/tutorial/index.html) which includes downloading the
+software, installing it and preparing the first security configuration.
+
+sec-wall supports
+[SSL/TLS](zz), [WSSE](zz), [HTTP Auth Basic](zz)/[Digest](zz), extensible authentication
+&amp; authorization schemes based on [custom HTTP headers](zz) and [XPath](zz) expressions, powerful
+[URL matching](zz)/[rewriting](zz) and an optional [headers enrichment](zz).
 It's a security wall you can conveniently fence the otherwise defenseless backend servers with.
 
 Although best suited for securing middleware and backend application
@@ -27,10 +42,6 @@ liberal [GPLv3](http://opensource.org/licenses/gpl-3.0.html) ![](/media/gfx/exte
 it's free for any purpose, including commercial use.
 
 * * *
-
-If you're new to sec-wall you may wish to follow the
-[Getting started guide](/documentation/getting-started/index.html) which includes downloading the
-software, installing it and preparing the first security configuration.
 
 Having understood the basics, you are encouraged to dive into the
 [Reference documentation](/documentation/ref-docs/index.html), a set of goal-oriented

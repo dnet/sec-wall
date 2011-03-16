@@ -63,12 +63,15 @@ class _RequestApp(object):
         self.msg_counter = itertools.count(1)
         self.now = datetime.now
         self.log_level = self.logger.getEffectiveLevel()
-        
+
         seen_default = False
+        default_pattern = ExtensiblePattern("<default:path>")
+
         for url_pattern, url_config in self.config.urls:
             if url_pattern == '/*':
+                self.urls.append((default_pattern, self.config.default_url_config))
                 seen_default = True
-                
+
             self.urls.append((ExtensiblePattern(url_pattern), url_config))
 
             url_config.setdefault('from-client-ignore', [])
@@ -79,11 +82,10 @@ class _RequestApp(object):
             # Just in case the user didn't do it, upper-case all the headers
             # to make all the comparisons case-insensitive.
             url_config['from-client-ignore'][:] = [elem.upper() for elem in url_config.get('from-client-ignore', {})]
-            
+
         if not seen_default and self.add_default_if_not_found:
-            default_pattern = ExtensiblePattern("<default:path>")
             self.urls.append((default_pattern, self.config.default_url_config))
-            
+
     def __call__(self, env, start_response, client_cert=None):
         """ Finds the configuration for the given URL and passes the control on
         to the main request handler. In case no config for the given URL is
@@ -118,7 +120,7 @@ class _RequestApp(object):
             match = c.test(path_info)
             if match:
                 ctx.url_config = url_config
-                return self._on_request(ctx, start_response, env, url_config, 
+                return self._on_request(ctx, start_response, env, url_config,
                                         client_cert, match)
         else:
             # No config for that URL, we can't let the client in.
@@ -141,7 +143,7 @@ class _RequestApp(object):
         data = env['wsgi.input'].read()
         data = data if data else None
         ctx.data = data
-        
+
         for config_type in self.config.validation_precedence:
             if config_type in url_config:
 
@@ -162,7 +164,7 @@ class _RequestApp(object):
             path_info = rewrite.format(**match[1])
         else:
             path_info = env['PATH_INFO']
-        
+
         req = urllib2.Request(url_config['host'] + path_info, data)
 
         from_client_ignore = url_config['from-client-ignore']
@@ -191,7 +193,7 @@ class _RequestApp(object):
 
         if url_config.get('sign-auth-info', True):
             h = hashlib.sha256()
-            h.update('{0}:{1}:{2}'.format(ctx.invocation_id, self.instance_secret, 
+            h.update('{0}:{1}:{2}'.format(ctx.invocation_id, self.instance_secret,
                                           ctx.auth_result.auth_info))
             req.add_header('X-sec-wall-auth-info-signed', h.hexdigest())
 
@@ -470,7 +472,7 @@ class _RequestApp(object):
             # It's clearly an error. We've been requested to use custom HTTP
             # headers but none are in the config.
             raise SecWallException('No custom HTTP headers were found in the config')
-        
+
         for key, value in expected_headers.iteritems():
             if not value:
                 return AuthResult(False, AUTH_CUSTOM_HTTP_NO_HEADER)

@@ -1,0 +1,320 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}Getting started tutorial{% endblock %}
+
+{% block content %}
+
+<h1>Getting started tutorial</h1>
+
+{% markdown %}
+
+This tutorial will walk you through the creation of a simple configuration file
+designed for securing a backend server and we'll make it require
+<a href="http://en.wikipedia.org/wiki/Basic_access_authentication" title="(external link) HTTP Basic Authentication on Wikipedia">HTTP Basic Authentication</a>
+<img src="/media/gfx/external-link.png" alt="" /> .
+We'll be doing it from scratch, with no previous experience with sec-wall assumed.
+
+The only thing you need to make sure of is that <a href="TODO" title="The installation guide">sec-wall has already been
+installed</a> and it's ready to use. If you're not sure if sec-wall's already installed,
+you can simply type *sec-wall* in the command line shell and any response similar
+to the one below means you're good to go. Head over to <a href="TODO">the installation guide</a>
+if it seems the sec-wall package has not been installed on your system yet.
+
+{% syntax bash %}
+
+$ sec-wall
+usage: sec-wall [-h] (--init INIT | --start START | --stop STOP)
+sec-wall: error: one of the arguments --init --start --stop is required
+$
+
+{% endsyntax %}
+{% endmarkdown %}
+<br/>
+{% markdown %}
+
+The process of securing servers is always carried out in several simple steps:
+
+1. Initializing the security proxy in an empty directory,
+2. Updating the automatically generated config file with the changes needed for
+   securing a particular URL,
+3. Starting the proxy,
+4. (optionally) Stopping the proxy and jumping to the point 2. above
+
+# Initializing the proxy
+
+To initialize the proxy, you need to create an empty directory and then invoke
+the sec-wall command so that it prepares the template config file and marks the
+directory as belonging to sec-wall:
+
+{% syntax bash %}
+
+$ mkdir /path/to/my-proxy
+$ sec-wall --init /path/to/my-proxy
+
+{% endsyntax %}
+
+That's all there is to that step, you only need to sure that the directory the
+--init switch is pointing to is really empty, an error message will be shown if
+there are any files or subdirectories inside.
+
+{% endmarkdown %}
+<br/>
+{% markdown %}
+
+
+# Understanding the auto-generated config file
+
+If you browse into the newly created directory (/path/to/my-proxy above) you'll notice
+a *config.py* file which is the central place for configuring sec-wall, that's
+where the most actions happens and it's the file you'll be spending the most time
+while working with sec-wall so let's dissect one to make sure it hides no surprises
+to anyone:
+
+{% syntax python %}
+# -*- coding: utf-8 -*-
+
+# stdlib
+import os.path as path, uuid
+
+# Don't share it with anyone.
+INSTANCE_SECRET = 'af192106065d424baa391e5c77dc66ab'
+
+# May be shared with the outside world.
+INSTANCE_UNIQUE = uuid.uuid4().hex
+
+# Useful constants
+cur_dir = path.dirname(__file__)
+
+# Crypto
+keyfile = path.join(cur_dir, './crypto/server-priv.pem')
+certfile = path.join(cur_dir, './crypto/server-cert.pem')
+ca_certs = path.join(cur_dir, './crypto/ca-cert.pem')
+
+# ##############################################################################
+
+def default():
+    return {
+        'ssl': True,
+        'ssl-cert': True,
+        'ssl-cert-commonName':INSTANCE_SECRET,
+        'host': 'http://' + INSTANCE_SECRET
+    }
+
+urls = [
+    ('/*', default()),
+]
+{% endsyntax %}
+
+That's how a default config file looks like, it's a regular Python source code file
+and it may broken out into two sections.
+
+What goes above the comment line should
+rarely be changed, if ever - it's a mostly static configuration, things like UUIDs
+needed for cryptographically signing the headers off (note the INSTANCE_SECRET
+one and just like the comment says, never show that UUID to anyone), or things
+like paths to SSL material.
+
+The part below the comment line is where the actual configuration goes. There's
+a *url* object (a variable) which is a list of two-element tuples. The first element
+is a URL pattern to be secured and the second element is the configuration dictionary
+governing the security. In the default case, sec-wall's configuration basically forbids access
+to any URLs, to any resources, with a configuration which says that the requesting
+application should be using a client certificate, and that certificate's commonName
+field should be equal to that sec-wall instance's INSTANCE_SECRET UUID. In other
+words, by default, as long as you keep INSTANCE_SECRET for yourself there's no chance someone
+will pass through the proxy.
+
+# Making updates to the config file
+
+OK, we know that by default sec-wall won't allow anyone in so why don't we let
+a client in now with sec-wall requesting the client to use HTTP Basic Authentication.
+For the purpose of this tutorial we'll be using a username of "foo" and the
+password "bar". The URL to be secured will be of the
+/account/\<account_name:unicode\> pattern, that is, there will be an /account prefix
+followed by any string and any other URL will be picked up by the default pattern.
+/account/hey-joe and /account/123456 will match the config while /my/settings/hey-joe
+will not. We'll be proxying the requests over to the  <a href="/">http://tutorial.sec-wall.gefira.pl</a> domain in this particular case.
+Assigning labels to chosen parts of a URL ('account_name' here) is useful when a URL
+rewrite is needed - it won't be used in the tutorial but it's good to know that
+<a href="#">it's possible to rewrite the URLs with sec-wall</a>.
+
+The whole configuration file should now read like below:
+
+{% syntax python %}
+# -*- coding: utf-8 -*-
+
+# stdlib
+import os.path as path, uuid
+
+# Don't share it with anyone.
+INSTANCE_SECRET = 'af192106065d424baa391e5c77dc66ab'
+
+# May be shared with the outside world.
+INSTANCE_UNIQUE = uuid.uuid4().hex
+
+# Useful constants
+cur_dir = path.dirname(__file__)
+
+# Crypto
+keyfile = path.join(cur_dir, './crypto/server-priv.pem')
+certfile = path.join(cur_dir, './crypto/server-cert.pem')
+ca_certs = path.join(cur_dir, './crypto/ca-cert.pem')
+
+# ##############################################################################
+
+def default():
+    return {
+        'ssl': True,
+        'ssl-cert': True,
+        'ssl-cert-commonName':INSTANCE_SECRET,
+        'host': 'http://' + INSTANCE_SECRET
+    }
+
+def tutorial():
+    return {
+        'basic-auth':True,
+        'basic-auth-realm': 'sec-wall tutorial',
+        'basic-auth-username': 'foo',
+        'basic-auth-password': 'bar',
+        'host': 'http://tutorial.sec-wall.gefira.pl'
+    }
+
+urls = [
+    ('/account/<account_name:unicode>', tutorial()),
+    ('/*', default()),
+]
+{% endsyntax %}
+
+Assign True to the 'basic-auth' key suffices for sec-wall to understand that
+an HTTP Basic Auth is to be used for the given URL. Consequently, sec-wall requires
+us to provide it with three other keywords required for a proper functioning of
+that scheme, these are 'basic-auth-realm', 'basic-auth-username' and
+'basic-auth-password' (note that the password is stored in clear text). The 'host'
+key obviously points to the name of the target domain, the one that should receive
+the requests.
+
+Note that the order of URL patterns does matter. In run-time, the first match
+will always win and will take precedence over any subsequent patterns that could've
+possibly also matched the given URL. That's why the catch-all <strong>'/*'</strong> pattern has
+been added at the end, so that it doesn't hijack all the requests regardless
+of our intent.
+
+That's exactly what's needed for configuring sec-wall. Regardless of the
+authentication & authorization scheme, you simply need to choose a URL pattern
+and assign a dictionary of options to that pattern. All the possible
+<a href="#">options are listed and explained in the reference documentation</a>.
+
+Note the flexibility that comes with the approach of assigning options to URL patterns -
+although it's a simple tutorial only and we won't be doing it, there's absolutely
+nothing preventing us from reusing the same options throughout more than one URL
+pattern so that the options can be specified once only and be used in multiple places.
+Not only that! Given that they're really pure-Python dictionaries, the options
+can be read from virtually everywhere. As far as sec-wall is concerned, they must
+be dictionaries, but it's none of sec-wall's business if they're really stored
+in the same config file, in separate modules, SQL databases, LDAP or wherever your
+environment dictates they should be fetched from. All sec-wall is caring about is
+whether the *urls* objects of the config.py module contains a tuple of patterns
+and config options, how they are to materialize there is completely transparent
+to sec-wall.
+
+Let's proceed to starting the proxy now.
+
+# Starting the proxy
+
+The command below will start the proxy:
+
+{% syntax bash %}
+
+$ sec-wall --start /path/to/my-proxy
+
+{% endsyntax %}
+
+That is, there's a *--start* switch that accepts a single parameter, the directory
+a sec-wall instance has been previously initialized in using the *--init* option.
+
+The proxy is started in background and you don't have to resort to creating your
+own [nohup][nohup] <img src="/media/gfx/external-link.png" alt="" /> wrappers for sec-wall,
+it's all there out of the box.
+
+Fire up your favourite web browser now and open the [http://localhost:15100/account/hey-there][localhost]
+URL, 15100 is the default port sec-wall is listening on but as just about anything
+it can also be customized. You will be prompted for a username and a password ('foo' and 'bar' respectively,
+remember?) and upon entering the credentials you'll be greeted with the content
+fetched by sec-wall from the remote site and delivered to your browser, in other
+words, the security proxy will have worked fine. Now open an invalid URL, such as
+[http://localhost:15100/invalid/blog/page/1][invalid] and witness the
+"You are not allowed to access this resource" message along with an appropriate
+HTTP 403 Forbidden status - just as it was promised, opening any URL that matches
+the default configuration means the client request - your browser's in that case -
+will be rejected.
+
+# Stopping the proxy
+
+Appropriately enough, the option *--stop* of the sec-wall command is used for
+stopping the proxy, just like below:
+
+{% syntax bash %}
+
+$ sec-wall --stop /path/to/my-proxy
+
+{% endsyntax %}
+
+You just give it a path to the directory containing a sec-wall instance and it will
+gracefully stop it.
+
+# Summing it all up and what's next
+
+So that's how the life cycle looks like, first the proxy needs to be initialized,
+and don't forget that sec-wall needs an empty directory for it. The auto-generated file needs to be
+modified by you and then the proxy can be started and stopped as needed.
+
+Of course, that's only a quick tutorial meant to get you quickly started and
+it doesn't cover that much of what sec-wall has to offer. There's still [SSL/TLS][ssltls],
+[WSSE][wsse], [HTTP Auth Digest][auth_digest], [custom HTTP headers][custom_headers]
+[XPath expressions][xpath], [URL matching/rewriting][matching_rewriting] and
+the option of [enriching the headers][enrichment]. If there's anything
+missing in sec-wall and you'd like to see it be added in future releases, please
+don't hesitate to have a look at the [support page][support]. See you there!
+
+[nohup]: http://en.wikipedia.org/wiki/Nohup "(external link) nohup on Wikipedia"
+[localhost]: http://localhost:15100/account/hey-there
+[invalid]: http://localhost:15100/invalid/blog/page/1
+[ssltls]: TODO
+[wsse]: TODO
+[auth_digest]: TODO
+[custom_headers]: TODO
+[xpath]: TODO
+[matching_rewriting]: TODO
+[enrichment]: TODO
+[support]: ../../support/index.html
+
+<div class="exercises">
+    <h1>Exercises</h1>
+    <div class="description">
+        Most of the sec-wall documentation's chapters end in an "Exercises" section
+        which contains a set of assignments for you to tackle. They're meant to make yourself
+        comfortable with the newly acquired material. If you feel like stumbling
+        or would like to suggest any improvements, please
+        <a href="../../support/index.html" title="Support options">let the project know</a>.
+        Thanks!
+        <br/>
+        <br/>
+        Here are the exercises prepared for this chapter:
+    </div>
+    <ol>
+        <li>Create a new sec-wall instance in an empty directory,</li>
+        <li>Modify the config file so that it proxies the requests to an address
+        of your liking and have it require HTTP Basic Auth. Let the username be 'myuser'
+        and the password 'mysecret', the name of the realm can be anything,</li>
+        <li>Start and stop a sec-wall instance several times. Try passing it an incorrect
+        path, what information does sec-wall show you when you try to?</li>
+    </ol>
+</div>
+
+{% endmarkdown %}
+
+{% endblock %}

@@ -53,12 +53,6 @@ factor for choosing both libevent and gevent was that even though there was no
 need for supporting *BSD systems at the time sec-wall was originally created,
 there shouldn't be any obstacles if people want to use sec-wall on those systems.
 
-sec-wall is a modern application written on top of libevent and gevent which out of the box
-means high performance and resource-friendly behaviour. There's no need for
-running a cluster of 12-way servers to achieve a sensible throughput, a single CPU will do,
-sec-wall does all of its processing in a single thread, being based on libevent/gevent,
-it doesn't need to use multiple threads or processes.
-
 The drawing below explains the major processing paths. Command line tool initializes,
 starts and stops an HTTP/HTTPS proxy. The proxy accepts client connections and if the
 configuration says a client should be let in, the request is then proxied over
@@ -67,7 +61,7 @@ to the calling application in case the configuration prohibits it from accessing
 the requested resource.
 
 <div style="text-align:center">
-  <img src="/media/gfx/overview.png" alt="A visualization of dependencies between sec-wall's interal components (not including, which is an external dependency)" title="A visualization of dependencies between sec-wall's interal components (not including, which is an external dependency)"/>
+  <img src="/media/gfx/overview.png" alt="A visualization of dependencies between sec-wall's interal components (not including, which is an external dependency)" title="A visualization of dependencies between sec-wall's interal components (not including zdaemon, which is an external dependency)"/>
 </div>
 
 The only user-facing command line tool is called *sec-wall*. It's a simple command

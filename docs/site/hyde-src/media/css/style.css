@@ -7,9 +7,17 @@ html
 
 body
 { font: normal .80em 'trebuchet ms', arial, sans-serif;
+  text-shadow: 3px 3px 3px #ffffff;
   background: #646557 url(../gfx/pattern.png) repeat fixed;
   color: #5D5D5D;}
 
+#menu a {
+  text-shadow: 1px 1px 1px #333333;
+}
+
+#footer * {
+  text-shadow: none;
+}
 p
 { padding: 0 0 15px 0;
   line-height: 1.5em;}
@@ -21,7 +29,13 @@ h1, h2, h3, h4, h5, h6
 { font: normal 175% 'century gothic', arial, sans-serif;
   color: #43423f;
   margin: 0 0 15px 0;
-  padding: 5px 0 5px 0;}
+  padding: 5px 0 5px 0;
+  text-shadow: 2px 2px 2px #ffffff;
+}
+
+#logo_text h1, #logo_text h2 {
+  text-shadow: 1px 1px 1px #333333;
+}
 
 h2
 { font: normal 175% 'century gothic', arial, sans-serif;
@@ -65,10 +79,10 @@ ul li
   padding: 0 0 4px 5px;}
 
 ol
-{ margin: 8px 0 22px 20px;}
+{ margin: 8px 0 42px 20px;}
 
 ol li
-{ margin: 0 0 11px 0;}
+{ margin: 0 0 4px 0;}
 
 .left
 { float: left;
@@ -411,4 +425,55 @@ div.info-box h2 {
 
 div.wide {
   width:95%
+}
+
+
+div.code {
+  border:1px solid #999999;
+  font-size:0.8em;
+  padding:10px;
+  padding-bottom:0px;
+  background-color:#ddddee;
+  margin-bottom:20px;
+  text-shadow: none
+}
+
+div.highlight {
+  padding:10px;
+  padding-bottom:0px;
+  background-color:#ddddee;
+}
+
+
+#blurb, .exercises {
+  background-color:#ddddee;
+  padding:10px;
+  margin-bottom:20px;
+  font-size:120%;
+  color:#333345;
+  text-shadow: 2px 2px 2px #ffffff;
+}
+
+.exercises {
+  padding:20px;
+  padding-left:5px;
+  padding-bottom:0px;
+  margin-bottom:0px;
+}
+
+.exercises h1 {
+  font-size:110%;
+  padding:0px;
+  padding-left:5px;
+  margin:0px;
+}
+
+.exercises .description {
+  font-size:75%;
+  padding:5px
+}
+
+.exercises ol {
+  font-size:85%;
+  padding:5px;
 }
