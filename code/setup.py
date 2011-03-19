@@ -32,6 +32,10 @@ setup(
       author = "Dariusz Suchojad",
       author_email = "dsuch at gefira.pl",
       url = "https://launchpad.net/sec-wall",
+      description = "A feature packed high-performance security proxy",
+      long_description = "sec-wall is a high-performance security proxy supporting SSL/TLS, WS-Security, HTTP Auth Basic/Digest, extensible authentication schemes based on custom HTTP headers and XPath expressions, powerful URL matching/rewriting and an optional headers enrichment. It's a security wall you can conveniently fence the otherwise defenseless backend servers with.",
+      platforms = ["OS Independent"],
+      license = "GNU General Public License (GPL) 3",
 
       package_dir = {"":b"src"},
       packages = find_packages(b"src"),
@@ -39,4 +43,27 @@ setup(
       namespace_packages = [b"secwall"],
 
       zip_safe = False,
+
+      classifiers = [
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Other Audience',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'Natural Language :: English',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'License :: OSI Approved :: Python Software Foundation License',
+        'Intended Audience :: Developers',
+        'Topic :: Communications',
+        'Topic :: Internet',
+        'Topic :: Internet :: Proxy Servers',
+        'Topic :: Internet :: WWW/HTTP',
+        'Topic :: Internet :: WWW/HTTP :: HTTP Servers',
+        'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
+        'Topic :: Security',
+        'Topic :: System :: Networking',
+        'Topic :: System :: Networking :: Firewalls'
+        ],
 )

@@ -1,0 +1,33 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}Reference documentation{% endblock %}
+
+{% block content %}
+
+<h1>Reference documentation</h1>
+
+<ul>
+    <li>
+        <a href="/documentation/ref-docs/command-line.html">sec-wall, the command-line tool</a>
+        - explains sec-wall, the command-line interface used for administration
+    </li>
+    <li>
+        <a href="/documentation/ref-docs/config-file.html">Configuration file format</a> - what the options are,
+        what range of values they accept
+    </li>
+    <li>
+        <a href="/documentation/ref-docs/sec-config.html">Configuring security for a particular URL</a> - all the details
+        of configuring individual URL patterns so they use SSL/TLS, WS-Security or
+        whatever it's needed
+    </li>
+    <li>
+        <a href="/documentation/ref-docs/logging.html">Logging</a> - what gets logged where and how to
+        configure it
+    </li>
+</ul>
+
+{% endblock %}

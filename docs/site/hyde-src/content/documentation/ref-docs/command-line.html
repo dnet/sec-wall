@@ -1,0 +1,48 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}sec-wall, the command-line tool{% endblock %}
+
+{% block this_page %}
+        <div class="sidebar">
+          <div class="sidebar_top"></div>
+          <div class="sidebar_item">
+            <h1>On this page</h1>
+            <ul>
+              <li><a href="#init">Initializing a directory for sec-wall's use</a></li>
+              <li><a href="#start">Starting a proxy</a></li>
+              <li><a href="#stop">Stopping a proxy</a></li>
+            </ul>
+          </div>
+          <div class="sidebar_base"></div>
+        </div>
+{% endblock %}
+
+{% block content %}
+
+<h1>sec-wall, the command-line tool</h1>
+
+{% markdown %}
+
+Upon completing the
+[installation](/documentation/getting-started/index.html), you'll be able to make use
+of the sec-wall command. It's the only tool for administering sec-wall instances
+and it's usually installed to /usr/bin/sec-wall on Linux so you should have no problems
+with finding it on your system.
+
+There are 3 things the command is used for:
+
+* [Initializing a directory for sec-wall's use](#init)
+* [Starting a proxy](#start)
+* [Stopping a proxy](#stop)
+
+<h2>Initializing a directory for sec-wall's use<a name="init" class="permalink">¶</a></h2>
+<h2>Starting a proxy<a name="start" class="permalink">¶</a></h2>
+<h2>Stopping a proxy<a name="stop" class="permalink">¶</a></h2>
+
+{% endmarkdown %}
+
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}Choose your tutorial track{% endblock %}
+
+{% block content %}
+
+<h1>Choose your tutorial track</h1>
+
+{% markdown %}
+
+<ul>
+    <li>
+        First I'd like to install sec-wall on
+            <img src="/media/gfx/logo-ubuntu.png" style="vertical-align:middle" alt="Ubuntu Linux logo" />&nbsp;<a href="/documentation/getting-started/ubuntu.html" title="Installing sec-wall on Ubuntu">Ubuntu</a>
+            <img src="/media/gfx/logo-debian.png" style="vertical-align:middle" alt="Debian GNU/Linux logo" />&nbsp;<a href="/documentation/getting-started/debian.html" title="Installing sec-wall on Debian">Debian</a>
+            <img src="/media/gfx/logo-fedora.png" style="vertical-align:middle" alt="Debian GNU/Linux logo" />&nbsp;<a href="/documentation/getting-started/fedora.html" title="Installing sec-wall on Fedora">Fedora</a>&trade;
+            or <a href="/documentation/getting-started/other-systems.html" title="Installing sec-wall on systems other than Ubuntu, Debian or Fedora"> on some other system</a>
+    </li>
+    <li>
+        <a href="/documentation/getting-started/tutorial.html">I already have sec-wall installed and would like to get started</a>
+    </li>
+    <li>
+        On a second thought, I'd rather read go directly to the
+            <a href="/documentation/ref-docs/index.html">Reference documentation</a>,
+            <a href="/documentation/usage-examples/index.html">Usage examples</a>
+            and
+            <a href="/documentation/arch/index.html">Architecture &amp; design notes</a>
+    </li>
+    <li>
+        I still don't know what to do, show me the
+        <a href="/support/index.html">support options</a>
+        instead
+    </li>
+</ul>
+
+{% endmarkdown %}
+
+{% endblock %}

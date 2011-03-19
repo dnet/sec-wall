@@ -222,21 +222,13 @@ text-decoration:underline
 
 .sidebar_item ul
 { width: 178px;
-  padding: 0px 0 0 0;
+  padding: 0px 0 0 10px;
   margin: 0px 0 0px 0;}
 
 .sidebar_item li
-{ list-style: none;
-  padding: 0 0 6px 0;margin: 0; }
-
-.sidebar_item li a, .sidebar_item li a:hover
-{ padding: 0 0 0 35px;
-  display: block;
-  background: transparent url(../gfx/link.png) no-repeat left center;}
-
-.sidebar_item li a.selected
-{ color: #444;
-  text-decoration: none;}
+{ list-style: square;
+  padding: 0 0 6px 0;
+  margin: 0; }
 
 #content
 { text-align: justify;
@@ -247,14 +239,11 @@ text-decoration:underline
   font-size:11pt
 }
 
-#content ul
-{ margin: 2px 0 12px 0px;}
-
 #content ul li
-{ list-style-type: none;
-  background: url(../gfx/bullet.png) no-repeat;
+{
+  list-style-type: square;
   margin: 0 0 2px 0;
-  padding: 0 0 4px 25px;
+  padding: 0 0 4px 4px;
   line-height: 1.5em;}
 
 #footer
@@ -476,4 +465,8 @@ div.highlight {
 .exercises ol {
   font-size:85%;
   padding:5px;
+}
+
+a.permalink {
+  visibility:hidden;
 }
