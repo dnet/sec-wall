@@ -2,9 +2,30 @@
 
 {% hyde
     section_title: Documentation
+    has_exercises: "True"
+    has_this_page: "True"
 %}
 
 {% block section_title %}Getting started tutorial{% endblock %}
+
+{% block exercises %}
+    <li>Create a new sec-wall instance in an empty directory</li>
+    <li>Modify the config file so that it proxies the requests to an address
+    of your liking and have it require HTTP Basic Auth. Let the username be 'myuser'
+    and the password 'mysecret', the name of the realm can be anything</li>
+    <li>Start and stop a sec-wall instance several times. Try passing it an incorrect
+    path, what information does sec-wall show you when you try to?</li>
+{% endblock %}
+
+{% block this_page %}
+  <li><a href="#init">Initializing the proxy</a></li>
+  <li><a href="#config">Understanding the auto-generated config file</a></li>
+  <li><a href="#updates">Making updates to the config file</a></li>
+  <li><a href="#start">Starting the proxy</a></li>
+  <li><a href="#stop">Stopping the proxy</a></li>
+  <li><a href="#summing-up">Summing it all up and what's next</a></li>
+  <li><a href="#exercises">Exercises</a></li>
+{% endblock %}
 
 {% block content %}
 
@@ -44,7 +65,7 @@ The process of securing servers is always carried out in several simple steps:
 3. Starting the proxy,
 4. (optionally) Stopping the proxy and jumping to the point 2. above
 
-# Initializing the proxy
+<h2 id="init">Initializing the proxy</h2>
 
 To initialize the proxy, you need to create an empty directory and then invoke
 the sec-wall command so that it prepares the template config file and marks the
@@ -66,7 +87,7 @@ there are any files or subdirectories inside.
 {% markdown %}
 
 
-# Understanding the auto-generated config file
+<h2 id="config">Understanding the auto-generated config file</h2>
 
 If you browse into the newly created directory (/path/to/my-proxy above) you'll notice
 a *config.py* file which is the central place for configuring sec-wall, that's
@@ -128,7 +149,7 @@ field should be equal to that sec-wall instance's INSTANCE_SECRET UUID. In other
 words, by default, as long as you keep INSTANCE_SECRET for yourself there's no chance someone
 will pass through the proxy.
 
-# Making updates to the config file
+<h2 id="updates">Making updates to the config file</h2>
 
 OK, we know that by default sec-wall won't allow anyone in so why don't we let
 a client in now with sec-wall requesting the client to use HTTP Basic Authentication.
@@ -223,7 +244,7 @@ to sec-wall.
 
 Let's proceed to starting the proxy now.
 
-# Starting the proxy
+<h2 id="start">Starting the proxy</h2>
 
 The command below will start the proxy:
 
@@ -252,7 +273,7 @@ HTTP 403 Forbidden status - just as it was promised, opening any URL that matche
 the default configuration means the client request - your browser's in that case -
 will be rejected.
 
-# Stopping the proxy
+<h2 id="stop">Stopping the proxy</h2>
 
 Appropriately enough, the option *--stop* of the sec-wall command is used for
 stopping the proxy, just like below:
@@ -266,7 +287,7 @@ $ sec-wall --stop /path/to/my-proxy
 You just give it a path to the directory containing a sec-wall instance and it will
 gracefully stop it.
 
-# Summing it all up and what's next
+<h2 id="summing-up">Summing it all up and what's next</h2>
 
 So that's how the life cycle looks like, first the proxy needs to be initialized,
 and don't forget that sec-wall needs an empty directory for it. The auto-generated file needs to be
@@ -291,29 +312,6 @@ don't hesitate to have a look at the [support page][support]. See you there!
 [matching_rewriting]: TODO
 [enrichment]: TODO
 [support]: ../../support/index.html
-
-<div class="exercises">
-    <h1>Exercises</h1>
-    <div class="description">
-        Most of the sec-wall documentation's chapters end in an "Exercises" section
-        which contains a set of assignments for you to tackle. They're meant to make yourself
-        comfortable with the newly acquired material. If you feel like stumbling
-        or would like to suggest any improvements, please
-        <a href="../../support/index.html" title="Support options">let the project know</a>.
-        Thanks!
-        <br/>
-        <br/>
-        Here are the exercises prepared for this chapter:
-    </div>
-    <ol>
-        <li>Create a new sec-wall instance in an empty directory,</li>
-        <li>Modify the config file so that it proxies the requests to an address
-        of your liking and have it require HTTP Basic Auth. Let the username be 'myuser'
-        and the password 'mysecret', the name of the realm can be anything,</li>
-        <li>Start and stop a sec-wall instance several times. Try passing it an incorrect
-        path, what information does sec-wall show you when you try to?</li>
-    </ol>
-</div>
 
 {% endmarkdown %}
 

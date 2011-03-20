@@ -2,23 +2,26 @@
 
 {% hyde
     section_title: Documentation
+    has_exercises: "True"
+    has_this_page: "True"
 %}
 
 {% block section_title %}sec-wall, the command-line tool{% endblock %}
 
+{% block exercises %}
+  <li>Create a new sec-wall instance in an empty directory. Try creating a sec-wall
+  instance in a directory which already has some content.</li>
+  <li>Start the newly created instance. Try starting it twice. Try starting it with
+  telling the command which directory it should use.</li>
+  <li>Stop the proxy. Try stopping it twice. Try passing it an incorrect directory,
+  one which doesn't contain any sec-wall data.</li>
+{% endblock %}
+
 {% block this_page %}
-        <div class="sidebar">
-          <div class="sidebar_top"></div>
-          <div class="sidebar_item">
-            <h1>On this page</h1>
-            <ul>
-              <li><a href="#init">Initializing a directory for sec-wall's use</a></li>
-              <li><a href="#start">Starting a proxy</a></li>
-              <li><a href="#stop">Stopping a proxy</a></li>
-            </ul>
-          </div>
-          <div class="sidebar_base"></div>
-        </div>
+  <li><a href="#init">Initializing a directory for sec-wall's use</a></li>
+  <li><a href="#start">Starting the proxy</a></li>
+  <li><a href="#stop">Stopping the proxy</a></li>
+  <li><a href="#exercises">Exercises</a></li>
 {% endblock %}
 
 {% block content %}
@@ -39,7 +42,7 @@ There are 3 things the command is used for:
 * [Starting a proxy](#start)
 * [Stopping a proxy](#stop)
 
-<h2>Initializing a directory for sec-wall's use<a name="init" class="permalink">¶</a></h2>
+<h2 id="init">Initializing a directory for sec-wall's use</h2>
 
 {% syntax bash %}
 $ sec-wall --init /path/to/an/empty/directory
@@ -55,7 +58,8 @@ execution. The initialization process will mark the directory as containing
 a sec-wall's instance configuration data by placing an empty
 *.sec-wall-config* file in there.
 
-<h2>Starting a proxy<a name="start" class="permalink">¶</a></h2>
+<h2 id="start">Starting the proxy</h2>
+
 
 {% syntax bash %}
 $ sec-wall --start /path/to/an/already/initialized/sec-wall/directory
@@ -65,7 +69,23 @@ Starts a sec-wall instance whose configuration data must've been already made
 available in the directory pointed to by the command line's only argument. An
 error will be returned if the directory doesn't seem to be belonging to sec-wall.
 
-<h2>Stopping a proxy<a name="stop" class="permalink">¶</a></h2>
+The proxy is started in the background and there's no need for using *nohup*
+or similar tools. Likewise, if started successfully the proxy never writes directly to
+stdout or stderr.
+
+A running proxy is under control of [zdaemon](http://pypi.python.org/pypi/zdaemon/) ![](/media/gfx/external-link.png),
+a deamon control library, which means it will be automatically respawned should
+it ever shut down due to an unhandled internal error of any sort.
+
+<h2 id="stop">Stopping the proxy</h2>
+
+{% syntax bash %}
+$ sec-wall --stop /path/to/a/directory/holding/a/running/sec-wall/instance/data
+{% endsyntax %}
+
+Stops a running proxy. An error will be returned if the proxy hasn't been previously
+started in the given directory. An error message will also be shown if the directory
+doesn't seem to be owned by a sec-wall's instance.
 
 {% endmarkdown %}
 

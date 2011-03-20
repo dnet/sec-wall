@@ -60,14 +60,49 @@
       {% block content %}
       {% endblock %}
 
+      {% ifequal page.has_exercises "True" %}
+      <h2 id="exercises">Exercises</h2>
+      <div class="exercises">
+          <div class="description">
+              Most of the sec-wall documentation's chapters end in an "Exercises" section
+              which contains a set of assignments for you to tackle. They're meant to make yourself
+              comfortable with the newly acquired material. If you feel like stumbling
+              or would like to suggest any improvements, please
+              <a href="/support/index.html" title="Support options">let the project know</a>.
+              Thanks!
+          </div>
+      </div>
+
+      <div class="exercises">
+          <div class="description">
+          Here are the exercises prepared for this chapter:
+          </div>
+          <ol>
+            {% block exercises %}
+            {% endblock %}
+          </ol>
+      </div>
+      {% endifequal %}
+
       </div>
       <!-- content end -->
 
       <!-- sidebar_container start -->
       <div id="sidebar_container">
 
-      {% block this_page %}
-      {% endblock %}
+      {% ifequal page.has_this_page "True" %}
+        <div class="sidebar">
+          <div class="sidebar_top"></div>
+          <div class="sidebar_item">
+            <h1>On this page</h1>
+            <ul>
+              {% block this_page %}
+              {% endblock %}
+            </ul>
+          </div>
+          <div class="sidebar_base"></div>
+        </div>
+      {% endifequal %}
 
         <!-- sidebar start -->
         <div class="sidebar">
