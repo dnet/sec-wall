@@ -9,11 +9,13 @@
 {% block section_title %}sec-wall, the command-line tool{% endblock %}
 
 {% block exercises %}
+    <li>123</li>
 {% endblock %}
 
 {% block this_page %}
   <li><a href="#intro">Introduction</a></li>
   <li><a href="#minimal">A minimal config file</a></li>
+  <li><a href="#variables">Variables</a></li>
 {% endblock %}
 
 {% block content %}
@@ -25,7 +27,7 @@
 <h2 id="intro">Introduction</h2>
 
 Once the sec-wall instance's directory has been
-<a href="/documentation/ref-docs/command-line.html#init">initialized</a>, it will
+[initialized](/documentation/ref-docs/command-line.html#init), it will
 contain a <i>config.py</i> file which is the central place for configuring any settings.
 The file is a regular Python source code file which means it must adhere to the
 Python's syntax.
@@ -52,7 +54,9 @@ configuration format. And please, **do not** use it as-is for creating your
 own config file from scratch - that's because the INSTANCE_SECRET variable should
 be kept out of sight, it's the value many crypto operations depend on so it should
 be treated with the utmost care, the one below has become useless the moment it's been
-published online.
+published online. Instead, you should simply
+[initialize](/documentation/ref-docs/command-line.html#init)
+sec-wall in an empty directory.
 
 {% syntax python %}
 # -*- coding: utf-8 -*-
@@ -81,6 +85,55 @@ urls = [
 ]
 {% endsyntax %}
 
+<h2 id="variables">Variables</h2>
+
+Configuration variables can be divided into two groups, several required ones
+and the prevailing majority of optional variables whose values will be set
+automatically unless overridden in the configuration file.
+
+<h4>Required variables</h4>
+
+The variables listed below are absolutely necessary for the proper functioning
+of a sec-wall's instance and new versions of sec-wall are free to assume they
+exist in the config file. They're created during
+[the initialization process](/documentation/ref-docs/command-line.html#init)
+and you just need to make sure they don't get inadvertently deleted.
+
+<table class="config">
+    <tr>
+        <td>INSTANCE_SECRET</td>
+        <td>
+            A string used as a salt when
+            <a href="/ZZZ">cryptographically signing the requests</a> and in the
+            automatically generated default configuration - for denying the access
+            to all client applications. The default value is a UUID4 which should
+            be enough for most needs. There's really no reason for changing it but
+            whatever you set the value to, be sure it's strong enough for your
+            particular requirements. Do also note that the value should be sufficiently
+            protected from prying eyes, it should be a secret.
+            <br/>
+            <br/>
+            Samples:
+            <br/>
+            <br/>
+{% syntax python %}
+INSTANCE_SECRET = '740aa279a1f74cd9903f44317e03ca41'
+{% endsyntax %}
+
+{% syntax python %}
+INSTANCE_SECRET = ':1@{8Q+W#Ilzk?:C23A{JD23A{UXQK@#:X{Z)A@#ALCSM#)'
+{% endsyntax %}
+        </td>
+    </tr>
+    <tr>
+        <td>INSTANCE_UNIQUE</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>urls</td>
+        <td></td>
+    </tr>
+</table>
 
 {% endmarkdown %}
 
