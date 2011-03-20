@@ -128,7 +128,29 @@ INSTANCE_SECRET = ':1@{8Q+W#Ilzk?:C23A{JD23A{UXQK@#:X{Z)A@#ALCSM#)'
 
 <h5 id="INSTANCE_UNIQUE">INSTANCE_UNIQUE</h5>
 
-<h5 id="url">url</h5>
+A name assigned to the instance for the purpose of uniquely identifying the requests
+transmitted through the proxy. Contrast with <a href="#instance_name">instance_name</a>
+variable below, the difference between the two being that <i>INSTANCE_UNIQUE</i> is considered
+to be more of a technical identifier than a name, which <i>instance_name</i> is.
+
+No two sec-wall instances should ever be assigned the same <i>INSTANCE_UNIQUE</i>
+value as it would potentially lead to duplicate message identifiers being
+written to logs. To ensure it, the default value is a UUID4 identifier.
+
+You probably would like to change the default value to something more meaningful
+than the default one but it's not strictly necessary.
+
+Samples:
+
+{% syntax python %}
+INSTANCE_UNIQUE = 'a88fd0b987be4f6781952e6c1c7e7116'
+{% endsyntax %}
+
+{% syntax python %}
+INSTANCE_UNIQUE = 'SecWallDev#27'
+{% endsyntax %}
+
+<h5 id="urls">urls</h5>
 
 {% endmarkdown %}
 
