@@ -99,23 +99,25 @@ exist in the config file. They're created during
 [the initialization process](/documentation/ref-docs/command-line.html#init)
 and you just need to make sure they don't get inadvertently deleted.
 
-<table class="config">
-    <tr>
-        <td>INSTANCE_SECRET</td>
-        <td>
-            A string used as a salt when
-            <a href="/ZZZ">cryptographically signing the requests</a> and in the
-            automatically generated default configuration - for denying the access
-            to all client applications. The default value is a UUID4 which should
-            be enough for most needs. There's really no reason for changing it but
-            whatever you set the value to, be sure it's strong enough for your
-            particular requirements. Do also note that the value should be sufficiently
-            protected from prying eyes, it should be a secret.
-            <br/>
-            <br/>
-            Samples:
-            <br/>
-            <br/>
+<ol>
+    <li><a href="#INSTANCE_SECRET">INSTANCE_SECRET</a></li>
+    <li><a href="#INSTANCE_UNIQUE">INSTANCE_UNIQUE</a></li>
+    <li><a href="#urls">urls</a></li>
+</ol>
+
+<h5 id="INSTANCE_SECRET">INSTANCE_SECRET</h5>
+
+A string used as a salt when
+<a href="/ZZZ">cryptographically signing the requests</a> and in the
+automatically generated default configuration - for denying the access
+to all client applications. The default value is a UUID4 which should
+be enough for most needs. There's really no reason for changing it but
+whatever you set the value to, be sure it's strong enough for your
+particular requirements. Do also note that the value should be sufficiently
+protected from prying eyes, it should be a secret.
+
+Samples:
+
 {% syntax python %}
 INSTANCE_SECRET = '740aa279a1f74cd9903f44317e03ca41'
 {% endsyntax %}
@@ -123,17 +125,10 @@ INSTANCE_SECRET = '740aa279a1f74cd9903f44317e03ca41'
 {% syntax python %}
 INSTANCE_SECRET = ':1@{8Q+W#Ilzk?:C23A{JD23A{UXQK@#:X{Z)A@#ALCSM#)'
 {% endsyntax %}
-        </td>
-    </tr>
-    <tr>
-        <td>INSTANCE_UNIQUE</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td>urls</td>
-        <td></td>
-    </tr>
-</table>
+
+<h5 id="INSTANCE_UNIQUE">INSTANCE_UNIQUE</h5>
+
+<h5 id="url">url</h5>
 
 {% endmarkdown %}
 
