@@ -45,6 +45,15 @@ the config file may be turned highly dynamic.
 
 <h2 id="minimal">A minimal config file</h2>
 
+Here's how a minimal config file may look like. It isn't particularly stunning and
+useful because what it does basically is preventing any client application from
+passing through but it serves as an example of what is to be expected from the
+configuration format. And please, **do not** use it as-is for creating your
+own config file from scratch - that's because the INSTANCE_SECRET variable should
+be kept out of sight, it's the value many crypto operations depend on so it should
+be treated with the utmost care, the one below has become useless the moment it's been
+published online.
+
 {% syntax python %}
 # -*- coding: utf-8 -*-
 
