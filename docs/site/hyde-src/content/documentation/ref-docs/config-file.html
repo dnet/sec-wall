@@ -1,0 +1,78 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+    has_exercises: "True"
+    has_this_page: "True"
+%}
+
+{% block section_title %}sec-wall, the command-line tool{% endblock %}
+
+{% block exercises %}
+{% endblock %}
+
+{% block this_page %}
+  <li><a href="#intro">Introduction</a></li>
+  <li><a href="#minimal">A minimal config file</a></li>
+{% endblock %}
+
+{% block content %}
+
+{% markdown %}
+
+<h1>Configuration file format</h1>
+
+<h2 id="intro">Introduction</h2>
+
+Once the sec-wall instance's directory has been
+<a href="/documentation/ref-docs/command-line.html#init">initialized</a>, it will
+contain a <i>config.py</i> file which is the central place for configuring any settings.
+The file is a regular Python source code file which means it must adhere to the
+Python's syntax.
+
+As far as sec-wall is concerned, the file should simply contain
+at least several variables whose values must be within the expected range and it's
+absolutely none of sec-wall's business to understand where these values come from -
+in other words, the whole configuration may, for instance,  be actually stored in
+[LDAP](http://en.wikipedia.org/wiki/LDAP) ![](/media/gfx/external-link.png),
+fetched through
+[RabbitMQ](http://rabbitmq.org) ![](/media/gfx/external-link.png)
+and pumped into said variables using
+[Telepathy](http://telepathy.freedesktop.org/wiki/) ![](/media/gfx/external-link.png).
+The chapters below all picture it like if the variables were manually set to static strings
+but it's worth emphasizing that there's no such a requirement, being written in Python,
+the config file may be turned highly dynamic.
+
+<h2 id="minimal">A minimal config file</h2>
+
+{% syntax python %}
+# -*- coding: utf-8 -*-
+
+# stdlib
+import uuid
+
+# Don't share it with anyone.
+INSTANCE_SECRET = 'dda695cff20d43f7a8d9218b2006749f'
+
+# May be shared with the outside world.
+INSTANCE_UNIQUE = uuid.uuid4().hex
+
+# ##############################################################################
+
+def default():
+    return {
+        'ssl': True,
+        'ssl-cert': True,
+        'ssl-cert-commonName':INSTANCE_SECRET,
+        'host': 'http://' + INSTANCE_SECRET
+    }
+
+urls = [
+    ('/*', default()),
+]
+{% endsyntax %}
+
+
+{% endmarkdown %}
+
+{% endblock %}
