@@ -40,7 +40,31 @@ There are 3 things the command is used for:
 * [Stopping a proxy](#stop)
 
 <h2>Initializing a directory for sec-wall's use<a name="init" class="permalink">¶</a></h2>
+
+{% syntax bash %}
+$ sec-wall --init /path/to/an/empty/directory
+{% endsyntax %}
+
+Initializes an empty directory to store the sec-wall's data. The directory must
+exist and must be empty, an error will be returned otherwise. A default
+<a href="/documentation/ref-docs/config-file.html">config file</a>
+and a directory for holding
+<a href="/documentation/ref-docs/logging.html">error log entries</a>
+will be created on a successful
+execution. The initialization process will mark the directory as containing
+a sec-wall's instance configuration data by placing an empty
+*.sec-wall-config* file in there.
+
 <h2>Starting a proxy<a name="start" class="permalink">¶</a></h2>
+
+{% syntax bash %}
+$ sec-wall --start /path/to/an/already/initialized/sec-wall/directory
+{% endsyntax %}
+
+Starts a sec-wall instance whose configuration data must've been already made
+available in the directory pointed to by the command line's only argument. An
+error will be returned if the directory doesn't seem to be belonging to sec-wall.
+
 <h2>Stopping a proxy<a name="stop" class="permalink">¶</a></h2>
 
 {% endmarkdown %}
