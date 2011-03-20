@@ -38,7 +38,7 @@
     <node id="n2">
       <data key="d6">
         <y:GenericNode configuration="BevelNodeWithShadow">
-          <y:Geometry height="28.0" width="132.0" x="318.0" y="229.0"/>
+          <y:Geometry height="28.0" width="132.0" x="318.0" y="282.0"/>
           <y:Fill color="#CCFF33" transparent="false"/>
           <y:BorderStyle color="#99CC00" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="113.21875" x="9.390625" y="5.015625">client applications</y:NodeLabel>
@@ -48,7 +48,7 @@
     <node id="n3">
       <data key="d6">
         <y:GenericNode configuration="com.yworks.bpmn.Gateway.withShadow">
-          <y:Geometry height="28.0" width="43.0" x="362.5" y="417.5"/>
+          <y:Geometry height="28.0" width="43.0" x="362.5" y="403.0"/>
           <y:Fill color="#FFFFFFE6" color2="#EFE437" transparent="false"/>
           <y:BorderStyle color="#CCCC00" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="eight_pos" modelPosition="w" textColor="#000000" visible="true" width="106.720703125" x="-110.720703125" y="5.015625">is client allowed?</y:NodeLabel>
@@ -64,7 +64,7 @@
     <node id="n4">
       <data key="d6">
         <y:GenericNode configuration="BevelNodeWithShadow">
-          <y:Geometry height="28.0" width="132.0" x="318.0" y="499.0"/>
+          <y:Geometry height="28.0" width="132.0" x="318.0" y="477.0"/>
           <y:Fill color="#CCFF33" transparent="false"/>
           <y:BorderStyle color="#99CC00" type="line" width="1.0"/>
           <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="103.17578125" x="14.412109375" y="5.015625">backend servers</y:NodeLabel>
@@ -108,7 +108,7 @@
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="six_pos" modelPosition="tail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="true" width="24.736328125" x="2.0" y="17.797607421875">yes</y:EdgeLabel>
+          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="six_pos" modelPosition="stail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="true" width="24.736328125" x="2.0" y="10.1416015625">yes</y:EdgeLabel>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
       </data>
@@ -117,12 +117,12 @@
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="0.0" tx="0.0" ty="0.0">
-            <y:Point x="527.0" y="431.5"/>
-            <y:Point x="527.0" y="243.0"/>
+            <y:Point x="527.0" y="417.0"/>
+            <y:Point x="527.0" y="296.0"/>
           </y:Path>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="six_pos" modelPosition="tail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="true" width="89.189453125" x="131.000244140625" y="-103.234375">access denied</y:EdgeLabel>
+          <y:EdgeLabel alignment="center" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="six_pos" modelPosition="tail" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" visible="true" width="89.189453125" x="131.000244140625" y="-69.484375">access denied</y:EdgeLabel>
           <y:BendStyle smoothed="true"/>
         </y:PolyLineEdge>
       </data>
