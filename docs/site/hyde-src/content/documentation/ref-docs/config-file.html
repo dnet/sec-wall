@@ -182,7 +182,7 @@ A UUID4 identifier regenerated on each sec-wall's restart
 An identifier assigned to the instance for the purpose of uniquely identifying the requests
 transmitted through the proxy. Contrast with <a href="#instance_name">instance_name</a>
 variable below, the conceptual difference between the two being that <i>INSTANCE_UNIQUE</i> is meant
-to guarantee the uniqueness of the messages while <a href="#instance_name">instance_name</a>
+to guarantee the uniqueness of the message identifiers while <a href="#instance_name">instance_name</a>
 is rather a human-friendly label assigned to the instance.
 
 The combination of <i>instance_name and</i> <i>INSTANCE_UNIQUE</i> should be unique across
@@ -193,7 +193,7 @@ the default value of <i>INSTANCE_UNIQUE</i> is a UUID4 identifier.
 You probably don't want to change the default value but if you do, you just need
 to make sure the combination of <i>INSTANCE_UNIQUE</i> and <i>instance_name and</i> stays unique
 across all requests ever processed by your environment, hence the default value
-should make sense for anyone.
+should make sense for everyone.
 
 <h5 id="urls">urls</h5>
 
@@ -293,14 +293,90 @@ True
 
 A boolean value indicating whether the backend the requests are proxied over to
 and the client sending the requests in should receive an <b>X-sec-wall-invocation-id</b>
-header. The header's value uniquely identifies the given request and may be used,
-for instance, in reconcilliation processes.
+header. Assuming <a href="#INSTANCE_UNIQUE">INSTANCE_UNIQUE</a> is configured
+according to the suggestions, the header's value uniquely identifies the given request and may be used,
+for instance, in reconcilliation processes, when backend and client applications
+are at odds over who sent what and when. Refer to
+[the logging documentation](/ZZZ)
+for more details regarding the header's format.
 
 <h5 id="ca_certs">ca_certs</h5>
+
+Default:
+<div class="default">
+An absolute value  of '.' + crypto_dir + 'ca-cert.pem' where '.' denotes a directory
+the config.py file is in and [crypto_dir](#crypto_dir) is a base directory
+for keeping the crypto material. For instance, if config.py is in
+/home/sec-wall/production/ and [crypto_dir](#crypto_dir) will be set
+to its default value of ./crypto then ca_certs will be equal to
+/home/sec-wall/production/crypto/ca-cert.pem
+</div>
+
+A string representing the path to a list of concatenated PEM-encoded certificates
+of Certificate Authorities you're willing to trust. Note that the file should
+contain certificates of CAs signing the certificates of both clients and backend
+servers, they all should be stored in the same file.
+
 <h5 id="certfile">certfile</h5>
+
+Default:
+<div class="default">
+An absolute value  of '.' + crypto_dir + 'server-cert.pem' where '.' denotes a directory
+the config.py file is in and [crypto_dir](#crypto_dir) is a base directory
+for keeping the crypto material. For instance, if config.py is in
+/home/sec-wall/production/ and [crypto_dir](#crypto_dir) will be set
+to its default value of ./crypto then ca_certs will be equal to
+/home/sec-wall/production/crypto/server-cert.pem
+</div>
+
+Path to a PEM-encoded server certificate which is used if the instance is to be
+run in the HTTPS mode.
+
 <h5 id="client_cert_401_www_auth">client_cert_401_www_auth</h5>
+
+Default:
+<div class="default">
+A string 'Transport mode="tls-client-certificate"'
+</div>
+
+Value to be used in the <b>WWW-Authenticate</b> header with the purpose of signaling
+to the client that its request wouldn't have been rejected straight away had the client sent a client certificate in.
+Inspired by the
+[IETF discussion of the idea](http://www6.ietf.org/mail-archive/web/tls/current/msg05589.html)
+![](/media/gfx/external-link.png).
+
 <h5 id="crypto_dir">crypto_dir</h5>
+
+Default:
+<div class="default">
+An absolute value  of './crypto' + where '.' denotes a directory
+the config.py file is in.
+</div>
+
+The value of crypto_dir is used by default in <a href="#ca_certs">ca_certs</a>,
+<a href="#certfile">certfile</a> and <a href="#keyfile">keyfile</a> so that the
+full path to the directory containing the crypto data doesn't have to be hardcoded
+in them directly.
+
 <h5 id="default_url_config">default_url_config</h5>
+
+Default:
+{% syntax python %}
+    {
+        'ssl': True,
+        'ssl-cert': True,
+        'ssl-cert-commonName': uuid4().hex,        # Skipped importing the 'uuid4' object
+        'host': 'http://{0}'.format(uuid4().hex),
+        'from-client-ignore': [],
+        'to-backend-add': {},
+        'from-backend-ignore': [],
+        'to-client-add': {}
+    }
+{% endsyntax %}
+
+The value to be used as a configuration for the catch-all /* URL pattern if
+[add_default_if_not_found](#add_default_if_not_found) is True.
+
 <h5 id="forbidden">forbidden</h5>
 <h5 id="from_backend_ignore">from_backend_ignore</h5>
 <h5 id="host">host</h5>
