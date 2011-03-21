@@ -69,7 +69,7 @@ class _RequestApp(object):
 
         for url_pattern, url_config in self.config.urls:
             if url_pattern == '/*':
-                self.urls.append((default_pattern, self.config.default_url_config))
+                self.urls.append((default_pattern, url_config))
                 seen_default = True
 
             self.urls.append((ExtensiblePattern(url_pattern), url_config))
