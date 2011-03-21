@@ -230,7 +230,7 @@ class SecWallContext(PythonConfig):
         the X-sec-wall-invocation-id-signed HTTP header.
         """
         return True
-    
+
     @Object
     def default_url_config(self):
         """ The configuration to use for the '/*' URL pattern in case a user
@@ -248,7 +248,7 @@ class SecWallContext(PythonConfig):
             'from-backend-ignore': [],
             'to-client-add': {}
         }
-    
+
     @Object
     def add_default_if_not_found(self):
         """ When starting a proxy, whether to add a default configuration for
@@ -262,13 +262,13 @@ class SecWallContext(PythonConfig):
         return """# -*- coding: utf-8 -*-
 
 # stdlib
-import os.path as path, uuid
+import os.path as path
 
 # Don't share it with anyone.
 INSTANCE_SECRET = '{INSTANCE_SECRET}'
 
 # May be shared with the outside world.
-INSTANCE_UNIQUE = uuid.uuid4().hex
+INSTANCE_UNIQUE = '{INSTANCE_UNIQUE}'
 
 # Useful constants
 cur_dir = path.dirname(__file__)

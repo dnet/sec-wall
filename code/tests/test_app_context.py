@@ -71,20 +71,20 @@ def test_app_context():
     eq_(sorted(ctx.get_object('from_backend_ignore')), ['Server'])
     eq_(ctx.get_object('add_invocation_id'), True)
     eq_(ctx.get_object('sign_invocation_id'), True)
-    eq_(sha256(ctx.get_object('config_py_template')).hexdigest(), 'db97b59c2afecba50f368de5d320ca2741b2203b59639acd518d9ea869fa96d3')
+    eq_(sha256(ctx.get_object('config_py_template')).hexdigest(), '9ef24a4597e4232a837828eb893cf90f16a6873d472bb8312697c094eee723ef')
     eq_(sha256(ctx.get_object('zdaemon_conf_proxy_template')).hexdigest(), '1c09f0011ffdc90d3ec533e11f7abf91f48a94542d6acdc886b2c4d6b7b6ff53')
-    
+
     default_url_config = ctx.get_object('default_url_config')
     eq_(default_url_config['ssl'], True)
     eq_(default_url_config['ssl-cert'], True)
-    
+
     common_name = default_url_config['ssl-cert-commonName']
     host = default_url_config['host'].replace('http://', '')
-    
+
     # Will raise ValueError if values aren't UUIDs.
     UUID(common_name)
     UUID(host)
-    
+
     eq_(UUID(common_name).version, 4)
     eq_(UUID(host).version, 4)
 

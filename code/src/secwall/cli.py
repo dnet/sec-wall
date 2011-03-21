@@ -109,7 +109,7 @@ class _Command(object):
 
         names = ('server_type', 'host', 'port', 'log', 'crypto_dir', 'keyfile',
                  'certfile', 'ca_certs', 'not_authorized', 'forbidden',
-                 'no_url_match', 'internal_server_error', 'validation_precedence', 
+                 'no_url_match', 'internal_server_error', 'validation_precedence',
                  'client_cert_401_www_auth', 'syslog_facility', 'syslog_address', 'log_level', 'log_file_config',
                  'server_tag', 'instance_name', 'quote_path_info', 'quote_query_string',
                  'from_backend_ignore', 'add_invocation_id', 'sign_invocation_id',
@@ -153,7 +153,8 @@ class Init(_Command):
             self._error(msg, False)
 
         config_py_template = self.app_ctx.get_object('config_py_template')
-        config_py_template = config_py_template.format(INSTANCE_SECRET=uuid.uuid4().hex)
+        config_py_template = config_py_template.format(INSTANCE_SECRET=uuid.uuid4().hex,
+                                                       INSTANCE_UNIQUE=uuid.uuid4().hex)
 
         open(os.path.join(self.config_dir, 'config.py'), 'w').write(config_py_template)
         os.mkdir(os.path.join(self.config_dir, 'logs'))
