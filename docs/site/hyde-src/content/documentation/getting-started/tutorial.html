@@ -99,13 +99,13 @@ to anyone:
 # -*- coding: utf-8 -*-
 
 # stdlib
-import os.path as path
+import os.path as path, uuid
 
 # Don't share it with anyone.
 INSTANCE_SECRET = 'af192106065d424baa391e5c77dc66ab'
 
 # May be shared with the outside world.
-INSTANCE_UNIQUE = 'e354662ac19e497b9101d9c461584a0c'
+INSTANCE_UNIQUE = uuid.uuid4().hex
 
 # Useful constants
 cur_dir = path.dirname(__file__)
@@ -169,13 +169,13 @@ The whole configuration file should now read like below:
 # -*- coding: utf-8 -*-
 
 # stdlib
-import os.path as path
+import os.path as path, uuid
 
 # Don't share it with anyone.
 INSTANCE_SECRET = 'af192106065d424baa391e5c77dc66ab'
 
 # May be shared with the outside world.
-INSTANCE_UNIQUE = 'e354662ac19e497b9101d9c461584a0c'
+INSTANCE_UNIQUE = uuid.uuid4().hex
 
 # Useful constants
 cur_dir = path.dirname(__file__)

@@ -262,13 +262,13 @@ class SecWallContext(PythonConfig):
         return """# -*- coding: utf-8 -*-
 
 # stdlib
-import os.path as path
+import os.path as path, uuid
 
 # Don't share it with anyone.
 INSTANCE_SECRET = '{INSTANCE_SECRET}'
 
 # May be shared with the outside world.
-INSTANCE_UNIQUE = '{INSTANCE_UNIQUE}'
+INSTANCE_UNIQUE = uuid.uuid4().hex
 
 # Useful constants
 cur_dir = path.dirname(__file__)
