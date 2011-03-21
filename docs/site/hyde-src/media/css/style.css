@@ -81,10 +81,14 @@ ul li
   padding: 0 0 4px 5px;}
 
 ol
-{ margin: 8px 0 42px 20px;}
+{ margin: 8px 0 0px 11px;}
 
 ol li
-{ margin: 0 0 4px 0;}
+{ margin: 0 0 0px 0;}
+
+ol li ol {
+  padding-left:-6px;
+}
 
 .left
 { float: left;

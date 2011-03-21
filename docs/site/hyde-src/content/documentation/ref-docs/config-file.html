@@ -6,7 +6,7 @@
     has_this_page: "True"
 %}
 
-{% block section_title %}sec-wall, the command-line tool{% endblock %}
+{% block section_title %}Configuration file format{% endblock %}
 
 {% block exercises %}
     <li>123</li>
@@ -15,7 +15,48 @@
 {% block this_page %}
   <li><a href="#intro">Introduction</a></li>
   <li><a href="#minimal">A minimal config file</a></li>
-  <li><a href="#variables">Variables</a></li>
+  <li><a href="#variables">Variables</a>
+    <ol>
+        <li><a href="#required">Required variables</a>
+            <ol>
+                <li><a href="#INSTANCE_SECRET">INSTANCE_SECRET</a></li>
+                <li><a href="#INSTANCE_UNIQUE">INSTANCE_UNIQUE</a></li>
+                <li><a href="#urls">urls</a></li>
+            </ol>
+        </li>
+        <li><a href="#optional">Optional variables</a>
+            <ol>
+                <li><a href="#add_default_if_not_found">add_default_if_not_found</a></li>
+                <li><a href="#add_invocation_id">add_invocation_id</a></li>
+                <li><a href="#ca_certs">ca_certs</a></li>
+                <li><a href="#certfile">certfile</a></li>
+                <li><a href="#client_cert_401_www_auth">client_cert_401_www_auth</a></li>
+                <li><a href="#crypto_dir">crypto_dir</a></li>
+                <li><a href="#default_url_config">default_url_config</a></li>
+                <li><a href="#forbidden">forbidden</a></li>
+                <li><a href="#from_backend_ignore">from_backend_ignore</a></li>
+                <li><a href="#host">host</a></li>
+                <li><a href="#instance_name">instance_name</a></li>
+                <li><a href="#internal_server_error">internal_server_error</a></li>
+                <li><a href="#keyfile">keyfile</a></li>
+                <li><a href="#log">log</a></li>
+                <li><a href="#log_file_config">log_file_config</a></li>
+                <li><a href="#log_level">log_level</a></li>
+                <li><a href="#no_url_match">no_url_match</a></li>
+                <li><a href="#not_authorized">not_authorized</a></li>
+                <li><a href="#port">port</a></li>
+                <li><a href="#quote_path_info">quote_path_info</a></li>
+                <li><a href="#quote_query_string">quote_query_string</a></li>
+                <li><a href="#server_tag">server_tag</a></li>
+                <li><a href="#server_type">server_type</a></li>
+                <li><a href="#sign_invocation_id">sign_invocation_id</a></li>
+                <li><a href="#syslog_address">syslog_address</a></li>
+                <li><a href="#syslog_facility">syslog_facility</a></li>
+                <li><a href="#validation_precedence">validation_precedence</a></li>
+            </ol>
+        </li>
+    </ol>
+  </li>
 {% endblock %}
 
 {% block content %}
@@ -88,7 +129,7 @@ Configuration variables can be divided into two groups, several required ones
 and the prevailing majority of optional variables whose values will be set
 automatically unless overridden in the configuration file.
 
-<h4>Required variables</h4>
+<h4 id="required">Required variables</h4>
 
 The variables listed below are absolutely necessary for the proper functioning
 of a sec-wall's instance and new versions of sec-wall are free to assume they
@@ -96,11 +137,11 @@ exist in the config file. They're created during
 [the initialization process](/documentation/ref-docs/command-line.html#init)
 and you just need to make sure they don't get inadvertently deleted.
 
-<ol>
+<ul>
     <li><a href="#INSTANCE_SECRET">INSTANCE_SECRET</a></li>
     <li><a href="#INSTANCE_UNIQUE">INSTANCE_UNIQUE</a></li>
     <li><a href="#urls">urls</a></li>
-</ol>
+</ul>
 
 <h5 id="INSTANCE_SECRET">INSTANCE_SECRET</h5>
 
@@ -125,7 +166,7 @@ INSTANCE_SECRET = ':1@{8Q+W#Ilzk?:C23A{JD23A{UXQK@#:X{Z)A@#ALCSM#)'
 
 <h5 id="INSTANCE_UNIQUE">INSTANCE_UNIQUE</h5>
 
-A name assigned to the instance for the purpose of uniquely identifying the requests
+An identifier assigned to the instance for the purpose of uniquely identifying the requests
 transmitted through the proxy. Contrast with <a href="#instance_name">instance_name</a>
 variable below, the conceptual difference between the two being that <i>INSTANCE_UNIQUE</i> is considered
 to be more of a technical identifier than a name, which <i>instance_name</i> is.
@@ -136,7 +177,8 @@ potentially lead to duplicate message identifiers being written to logs. To ensu
 the default value of <i>INSTANCE_UNIQUE</i> is a UUID4 identifier.
 
 You probably would like to change the default value to something more meaningful
-than the default one but it's not strictly necessary.
+than the default one but it's not strictly necessary as long, as was said before,
+the combination of <i>INSTANCE_UNIQUE</i> and <i>instance_name and</i> stays unique.
 
 Samples:
 
@@ -149,6 +191,97 @@ INSTANCE_UNIQUE = '13917'
 {% endsyntax %}
 
 <h5 id="urls">urls</h5>
+
+A list of 2-element lists or tuples each of which describes the URL pattern to
+be secured and the particular security configuration guarding the given URL pattern.
+Visit the
+[chapter dedicated to configuring security for a particular pattern](/documentation/ref-docs/sec-config.html)
+for more details.
+
+Sample:
+
+{% syntax python %}
+def default():
+    return {
+        'ssl': False,
+        'custom-http': True,
+        'custom-http-X-ABC':'foo',
+        'add-auth-info': True,
+        'sign-auth-info': True,
+        'host': 'http://localhost:17090/'
+    }
+
+urls = [
+    ('/*', default()),
+]
+{% endsyntax %}
+
+<h4 id="optional">Optional variables</h4>
+
+The variables documented below are all optional and allow for a detailed customization
+of sec-wall instances although sane defaults will be used when they're not set explicitly.
+Note that what's listed below are only these options that are specific to a sec-wall
+instance as a whole,
+[all the choices for configuring security of particular URLs are listed in a separate chapter](/documentation/ref-docs/sec-config.html).
+
+<ul>
+    <li><a href="#add_default_if_not_found">add_default_if_not_found</a></li>
+    <li><a href="#add_invocation_id">add_invocation_id</a></li>
+    <li><a href="#ca_certs">ca_certs</a></li>
+    <li><a href="#certfile">certfile</a></li>
+    <li><a href="#client_cert_401_www_auth">client_cert_401_www_auth</a></li>
+    <li><a href="#crypto_dir">crypto_dir</a></li>
+    <li><a href="#default_url_config">default_url_config</a></li>
+    <li><a href="#forbidden">forbidden</a></li>
+    <li><a href="#from_backend_ignore">from_backend_ignore</a></li>
+    <li><a href="#host">host</a></li>
+    <li><a href="#instance_name">instance_name</a></li>
+    <li><a href="#internal_server_error">internal_server_error</a></li>
+    <li><a href="#keyfile">keyfile</a></li>
+    <li><a href="#log">log</a></li>
+    <li><a href="#log_file_config">log_file_config</a></li>
+    <li><a href="#log_level">log_level</a></li>
+    <li><a href="#no_url_match">no_url_match</a></li>
+    <li><a href="#not_authorized">not_authorized</a></li>
+    <li><a href="#port">port</a></li>
+    <li><a href="#quote_path_info">quote_path_info</a></li>
+    <li><a href="#quote_query_string">quote_query_string</a></li>
+    <li><a href="#server_tag">server_tag</a></li>
+    <li><a href="#server_type">server_type</a></li>
+    <li><a href="#sign_invocation_id">sign_invocation_id</a></li>
+    <li><a href="#syslog_address">syslog_address</a></li>
+    <li><a href="#syslog_facility">syslog_facility</a></li>
+    <li><a href="#validation_precedence">validation_precedence</a></li>
+</ul>
+
+<h5 id="add_default_if_not_found">add_default_if_not_found</h5>
+<h5 id="add_invocation_id">add_invocation_id</h5>
+<h5 id="ca_certs">ca_certs</h5>
+<h5 id="certfile">certfile</h5>
+<h5 id="client_cert_401_www_auth">client_cert_401_www_auth</h5>
+<h5 id="crypto_dir">crypto_dir</h5>
+<h5 id="default_url_config">default_url_config</h5>
+<h5 id="forbidden">forbidden</h5>
+<h5 id="from_backend_ignore">from_backend_ignore</h5>
+<h5 id="host">host</h5>
+<h5 id="instance_name">instance_name</h5>
+<h5 id="internal_server_error">internal_server_error</h5>
+<h5 id="keyfile">keyfile</h5>
+<h5 id="log">log</h5>
+<h5 id="log_file_config">log_file_config</h5>
+<h5 id="log_level">log_level</h5>
+<h5 id="no_url_match">no_url_match</h5>
+<h5 id="not_authorized">not_authorized</h5>
+<h5 id="port">port</h5>
+<h5 id="quote_path_info">quote_path_info</h5>
+<h5 id="quote_query_string">quote_query_string</h5>
+<h5 id="server_tag">server_tag</h5>
+<h5 id="server_type">server_type</h5>
+<h5 id="sign_invocation_id">sign_invocation_id</h5>
+<h5 id="syslog_address">syslog_address</h5>
+<h5 id="syslog_facility">syslog_facility</h5>
+<h5 id="validation_precedence">validation_precedence</h5>
+
 
 {% endmarkdown %}
 
