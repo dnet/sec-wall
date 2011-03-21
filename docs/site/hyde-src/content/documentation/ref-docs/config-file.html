@@ -33,7 +33,7 @@ The file is a regular Python source code file which means it must adhere to the
 Python's syntax.
 
 As far as sec-wall is concerned, the file should simply contain
-at least several variables whose values must be within the expected range and it's
+at least several variables whose values must be within the expected range and type and it's
 absolutely none of sec-wall's business to understand where these values come from -
 in other words, the whole configuration may, for instance,  be actually stored in
 [LDAP](http://en.wikipedia.org/wiki/LDAP) ![](/media/gfx/external-link.png),
@@ -61,14 +61,11 @@ sec-wall in an empty directory.
 {% syntax python %}
 # -*- coding: utf-8 -*-
 
-# stdlib
-import uuid
-
 # Don't share it with anyone.
 INSTANCE_SECRET = 'dda695cff20d43f7a8d9218b2006749f'
 
 # May be shared with the outside world.
-INSTANCE_UNIQUE = uuid.uuid4().hex
+INSTANCE_UNIQUE = '13ab20244fd04b94af6c55e943faf440'
 
 # ##############################################################################
 
@@ -130,12 +127,13 @@ INSTANCE_SECRET = ':1@{8Q+W#Ilzk?:C23A{JD23A{UXQK@#:X{Z)A@#ALCSM#)'
 
 A name assigned to the instance for the purpose of uniquely identifying the requests
 transmitted through the proxy. Contrast with <a href="#instance_name">instance_name</a>
-variable below, the difference between the two being that <i>INSTANCE_UNIQUE</i> is considered
+variable below, the conceptual difference between the two being that <i>INSTANCE_UNIQUE</i> is considered
 to be more of a technical identifier than a name, which <i>instance_name</i> is.
 
-No two sec-wall instances should ever be assigned the same <i>INSTANCE_UNIQUE</i>
-value as it would potentially lead to duplicate message identifiers being
-written to logs. To ensure it, the default value is a UUID4 identifier.
+The combination of <i>instance_name and</i> <i>INSTANCE_UNIQUE</i> should be unique across
+all sec-wall instances in your environment as it would otherwise
+potentially lead to duplicate message identifiers being written to logs. To ensure it,
+the default value of <i>INSTANCE_UNIQUE</i> is a UUID4 identifier.
 
 You probably would like to change the default value to something more meaningful
 than the default one but it's not strictly necessary.
@@ -143,11 +141,11 @@ than the default one but it's not strictly necessary.
 Samples:
 
 {% syntax python %}
-INSTANCE_UNIQUE = 'a88fd0b987be4f6781952e6c1c7e7116'
+INSTANCE_UNIQUE = '13ab20244fd04b94af6c55e943faf440'
 {% endsyntax %}
 
 {% syntax python %}
-INSTANCE_UNIQUE = 'SecWallDev#27'
+INSTANCE_UNIQUE = '13917'
 {% endsyntax %}
 
 <h5 id="urls">urls</h5>
