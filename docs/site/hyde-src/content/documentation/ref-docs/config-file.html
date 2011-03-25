@@ -362,27 +362,101 @@ in them directly.
 
 Default:
 {% syntax python %}
-    {
-        'ssl': True,
-        'ssl-cert': True,
-        'ssl-cert-commonName': uuid4().hex,        # Skipped importing the 'uuid4' object
-        'host': 'http://{0}'.format(uuid4().hex),
-        'from-client-ignore': [],
-        'to-backend-add': {},
-        'from-backend-ignore': [],
-        'to-client-add': {}
-    }
+{
+    'ssl': True,
+    'ssl-cert': True,
+    'ssl-cert-commonName': uuid4().hex,        # Skipped importing the built-in 'uuid.uuid4' object
+    'host': 'http://{0}'.format(uuid4().hex),
+    'from-client-ignore': [],
+    'to-backend-add': {},
+    'from-backend-ignore': [],
+    'to-client-add': {}
+}
 {% endsyntax %}
 
 The value to be used as a configuration for the catch-all /* URL pattern if
 [add_default_if_not_found](#add_default_if_not_found) is True.
 
 <h5 id="forbidden">forbidden</h5>
+
+Default:
+{% syntax python %}
+['403', 'Forbidden', 'text/plain', str('You are not allowed to access this resource')]
+{% endsyntax %}
+
+A four-element list whose elements indicate what to return in case the client
+was forbidden access to a resource. The elements are:
+
+* HTTP response code
+* reason phrase
+* media type returned
+* human-friendly explanation returned to the client application
+
+
 <h5 id="from_backend_ignore">from_backend_ignore</h5>
+
+Default:
+{% syntax python %}
+['Server']
+{% endsyntax %}
+
+A list of HTTP headers that should never be proxied from a backend to the client
+application. Use an empty list if you'd like to have the proxy return all the headers
+the backend application returns.
+
 <h5 id="host">host</h5>
+
+Default:
+{% syntax python %}
+'0.0.0.0'
+{% endsyntax %}
+
+Host to listen on.
+
 <h5 id="instance_name">instance_name</h5>
+
+Default:
+{% syntax python %}
+'default'
+{% endsyntax %}
+
+An operator-friendly name assigned to the given instance of sec-wall. Used for logging
+purposes. There's no real enforcement of the name being unique among the sec-wall
+instances running in your environment yet the name should be unique, otherwise
+resolving any problems or understanding the message flow may be difficult. Compare
+with [INSTANCE_UNIQUE](#INSTANCE_UNIQUE) which servers a related purpose.
+
 <h5 id="internal_server_error">internal_server_error</h5>
+
+Default:
+{% syntax python %}
+['500', 'Internal Server Error', 'text/plain', str('Internal Server Error')]
+{% endsyntax %}
+
+A four-element list whose elements indicate what to return in case an internal
+server error has been encountered. The elements are:
+
+* HTTP response code
+* reason phrase
+* media type returned
+* human-friendly explanation returned to the client application
+
 <h5 id="keyfile">keyfile</h5>
+
+
+Default:
+<div class="default">
+An absolute value  of '.' + crypto_dir + 'server-priv.pem' where '.' denotes a directory
+the config.py file is in and [crypto_dir](#crypto_dir) is a base directory
+for keeping the crypto material. For instance, if config.py is in
+/home/sec-wall/production/ and [crypto_dir](#crypto_dir) will be set
+to its default value of ./crypto then keyfile will be equal to
+/home/sec-wall/production/crypto/server-priv.pem
+</div>
+
+Path to a PEM-encoded server's private key which is used if the instance is to be
+run in the HTTPS mode.
+
 <h5 id="log">log</h5>
 <h5 id="log_file_config">log_file_config</h5>
 <h5 id="log_level">log_level</h5>
