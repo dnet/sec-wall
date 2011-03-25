@@ -90,7 +90,7 @@ class SecWallContext(PythonConfig):
     def log(self):
         """ Whether to log plain HTTP traffic.
         """
-        return None
+        return False
 
     @Object
     def crypto_dir(self):

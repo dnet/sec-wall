@@ -49,7 +49,7 @@ def test_app_context():
     eq_(ctx.get_object('server_type'), 'http')
     eq_(ctx.get_object('host'), '0.0.0.0')
     eq_(ctx.get_object('port'), 15100)
-    eq_(ctx.get_object('log'), None)
+    eq_(ctx.get_object('log'), False)
     eq_(ctx.get_object('crypto_dir'), './crypto')
     eq_(ctx.get_object('keyfile'), path.join('./crypto', 'server-priv.pem'))
     eq_(ctx.get_object('certfile'), path.join('./crypto', 'server-cert.pem'))
