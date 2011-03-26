@@ -272,7 +272,7 @@ Default:
 True
 </div>
 
-When reading the <a href="#urls">URLs to be secured</a>, sec-wall makes a note
+On startup, when reading the <a href="#urls">URLs to be secured</a>, sec-wall makes a note
 of whether it has seen the catch-all <b>/*</b> URL pattern (that's a slash followed
 by an asterisk, meaning "any URL"). If all URLs have been read and no configuration
 for the /* pattern has been found, the boolean value of <i>add_default_if_not_found</i>
@@ -443,7 +443,6 @@ server error has been encountered. The elements are:
 
 <h5 id="keyfile">keyfile</h5>
 
-
 Default:
 <div class="default">
 An absolute value  of '.' + crypto_dir + 'server-priv.pem' where '.' denotes a directory
@@ -457,8 +456,19 @@ to its default value of ./crypto then keyfile will be equal to
 Path to a PEM-encoded server's private key which is used if the instance is to be
 run in the HTTPS mode.
 
-<h5 id="log">log</h5>
 <h5 id="log_file_config">log_file_config</h5>
+
+Default:
+<div class="default">
+None
+</div>
+
+Path to a logging configuration file, must be in
+<a href="http://docs.python.org/library/logging.html#configuring-logging">the format Python stdlib's logging.fileConfig function can understand</a>.
+Configuration read from the file pointed to
+by this variable will override any other logging-related options set in the config.py
+file. <a href="ZZZ">Click here to read more about confiruging sec-wall's logging features</a>.
+
 <h5 id="log_level">log_level</h5>
 <h5 id="no_url_match">no_url_match</h5>
 <h5 id="not_authorized">not_authorized</h5>

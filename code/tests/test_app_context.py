@@ -62,7 +62,7 @@ def test_app_context():
     eq_(ctx.get_object('client_cert_401_www_auth'), 'Transport mode="tls-client-certificate"')
     eq_(ctx.get_object('syslog_facility'), SysLogHandler.LOG_USER)
     eq_(ctx.get_object('syslog_address'), b'/dev/log')
-    eq_(ctx.get_object('log_level'), 'DEBUG')
+    eq_(ctx.get_object('log_level'), 'INFO')
     eq_(ctx.get_object('log_file_config'), None)
     eq_(ctx.get_object('server_tag'), 'sec-wall/1.0.0')
     eq_(ctx.get_object('instance_name'), 'default')

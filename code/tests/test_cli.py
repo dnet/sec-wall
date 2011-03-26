@@ -217,7 +217,7 @@ class CommandTestCase(_BaseTestCase):
 
         names = ('server_type', 'host', 'port', 'log', 'crypto_dir', 'keyfile',
                  'certfile', 'ca_certs', 'not_authorized', 'forbidden',
-                 'no_url_match', 'internal_server_error', 'validation_precedence', 
+                 'no_url_match', 'internal_server_error', 'validation_precedence',
                  'client_cert_401_www_auth', 'syslog_facility', 'syslog_address', 'log_level', 'log_file_config',
                  'server_tag', 'instance_name', 'quote_path_info', 'quote_query_string',
                  'from_backend_ignore', 'add_invocation_id', 'sign_invocation_id',
