@@ -470,11 +470,80 @@ by this variable will override any other logging-related options set in the conf
 file. <a href="ZZZ">Click here to read more about confiruging sec-wall's logging features</a>.
 
 <h5 id="log_level">log_level</h5>
+
+<div class="default">
+'INFO'
+</div>
+
+A string representing the log level the instance is running on. Must be one of
+[the levels Python's logging module understands](http://docs.python.org/library/logging.html#logging-levels).
+
 <h5 id="no_url_match">no_url_match</h5>
+
+<div class="default">
+['404', 'Not Found', 'text/plain', str('Not Found')]
+</div>
+
+A four-element list whose elements indicate that although the client's auth
+data allowed it to establish a connection to the proxy, there was no configuration
+for the URL client has requested, in other words, the instance doesn't know
+anything about that URL. The elements are:
+
+* HTTP response code
+* reason phrase
+* media type returned
+* human-friendly explanation returned to the client application
+
 <h5 id="not_authorized">not_authorized</h5>
+
+<div class="default">
+['401', 'Not Authorized', 'text/plain', str('You are not authorized to access this resource')]
+</div>
+
+A four-element list whose elements indicate that the client connectin to the instance
+is not authorized to access the URL. The elements are:
+
+* HTTP response code
+* reason phrase
+* media type returned
+* human-friendly explanation returned to the client application
+
 <h5 id="port">port</h5>
+
+Default:
+{% syntax python %}
+15100
+{% endsyntax %}
+
+Port to bind to. The value should be an integer, not a string.
+
 <h5 id="quote_path_info">quote_path_info</h5>
+
+Default:
+{% syntax python %}
+False
+{% endsyntax %}
+
+Set to True if you expect path info elements in URLs accessed by client applications to contain
+characters from outside of the ASCII range. Various spurious errors may pop up
+if the path info isn't ASCII-only and *quote_path_info* isn't True. For instance,
+if there's any chance you need to secure a URL along the lines of /ęóąśłżźćń
+then *quote_path_info* should be True.
+
 <h5 id="quote_query_string">quote_query_string</h5>
+
+Default:
+{% syntax python %}
+False
+{% endsyntax %}
+
+Similar to [quote_path_info](#quote_path_info), set to True if you expect query strings
+in URLs accessed by client applications to contain
+characters from outside of the ASCII range. Various spurious errors may pop up
+if the query string isn't ASCII-only and *quote_query_string* isn't True. If it's
+likely you'll be securing URLs similar to /foo?ęó=ąś then *quote_query_string*
+should be True.
+
 <h5 id="server_tag">server_tag</h5>
 <h5 id="server_type">server_type</h5>
 <h5 id="sign_invocation_id">sign_invocation_id</h5>
