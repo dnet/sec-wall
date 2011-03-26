@@ -57,6 +57,7 @@
         </li>
     </ol>
   </li>
+  <li><a href="#examples">Examples</a>
 {% endblock %}
 
 {% block content %}
@@ -296,7 +297,8 @@ and the client sending the requests in should receive an <b>X-sec-wall-invocatio
 header. Assuming <a href="#INSTANCE_UNIQUE">INSTANCE_UNIQUE</a> is configured
 according to the suggestions, the header's value uniquely identifies the given request and may be used,
 for instance, in reconcilliation processes, when backend and client applications
-are at odds over who sent what and when. Refer to
+are at odds over who sent what and when. Note that the value may be also cryptographically signed off
+if [sign_invocation_id](#sign_invocation_id) is True. Refer to
 [the logging documentation](/ZZZ)
 for more details regarding the header's format.
 
@@ -471,6 +473,7 @@ file. <a href="ZZZ">Click here to read more about confiruging sec-wall's logging
 
 <h5 id="log_level">log_level</h5>
 
+Default:
 <div class="default">
 'INFO'
 </div>
@@ -480,6 +483,7 @@ A string representing the log level the instance is running on. Must be one of
 
 <h5 id="no_url_match">no_url_match</h5>
 
+Default:
 <div class="default">
 ['404', 'Not Found', 'text/plain', str('Not Found')]
 </div>
@@ -496,6 +500,7 @@ anything about that URL. The elements are:
 
 <h5 id="not_authorized">not_authorized</h5>
 
+Default:
 <div class="default">
 ['401', 'Not Authorized', 'text/plain', str('You are not authorized to access this resource')]
 </div>
@@ -545,12 +550,99 @@ likely you'll be securing URLs similar to /foo?ęó=ąś then *quote_query_strin
 should be True.
 
 <h5 id="server_tag">server_tag</h5>
+
+Default:
+{% syntax text %}
+'sec-wall/1.0.0' for version 1.0.0, or in general - 'sec-wall/' followed by a full sec-wall's version
+{% endsyntax %}
+
+Value to return to client applications in the 'Server' header' if the
+[from_backend_ignore](#from_backend_ignore) variable contains 'Server' - which
+it does by default. Set it, for instance, to 'Apache' or 'nginx' if for some
+reason you'd rather prefer client applications thought they were talking directly
+to the backend servers.
+
 <h5 id="server_type">server_type</h5>
+
+Default:
+{% syntax python %}
+'http'
+{% endsyntax %}
+
+Must be either 'http' or 'https' and says whether the instance should be running
+in plain HTTP or in HTTPS mode. Don't forget about [ca_certs](#ca_certs), [certfile](#certfile),
+and [keyfile](#keyfile) if you set it to 'https'.
+
 <h5 id="sign_invocation_id">sign_invocation_id</h5>
+
+Default:
+{% syntax python %}
+True
+{% endsyntax %}
+
+If [add_invocation_id](#add_invocation_id) is True, 
+whether to add an **X-sec-wall-invocation-id-signed** header. The header's value
+is computed as follows (pseudocode):
+
+delimeter = ':'
+<br/>
+X-sec-wall-invocation-id-signed = SHA256(<a href="#INSTANCE_SECRET">INSTANCE_SECRET</a> + delimeter + X-sec-wall-invocation-id)
+
 <h5 id="syslog_address">syslog_address</h5>
+
+Default:
+{% syntax python %}
+b'/dev/log'
+{% endsyntax %}
+
+Address of the syslog to use by default. Note that if it's a string, it must be prepended
+with 'b' (just like the default is). In can also point to a UDP address in the form
+of a two-element list, such as ['127.0.0.1', 514]. See 
+[the logging documentation](/ZZZ) for more regarding sec-wall's approach to logging.
+
 <h5 id="syslog_facility">syslog_facility</h5>
+
+Default:
+{% syntax python %}
+SysLogHandler.LOG_USER
+{% endsyntax %}
+
+The syslog's facility to use. It must be one of 
+[the symbolic values understood by the Python's logging machinery](http://docs.python.org/library/logging.html#sysloghandler).
+
 <h5 id="validation_precedence">validation_precedence</h5>
 
+Default:
+{% syntax python %}
+['ssl-cert', 'basic-auth', 'digest-auth', 'wsse-pwd', 'custom-http', 'xpath']
+{% endsyntax %}
+
+Sets the precedence, the priority, of the config types. Used when there are conflicts
+in the [urls](#urls) variable. For instance, in the sample config below, both
+a custom HTTP header and an XPath expression have been configured. The HTTP header
+will be of a higher priority because 'custom-http' comes prior to 'xpath' on
+the *validation_precedence* list.
+
+{% syntax python %}
+def my_config():
+    return {
+        'ssl': False,
+        'custom-http': True,
+        'custom-http-X-ABC':'foo',
+        'xpath': True,
+        'xpath-my-expr':"//foobar/@myattr='myvalue'",
+        'host': 'http://localhost:17090/'
+    }
+
+urls = [
+    ('/abc', my_config()),
+]
+{% endsyntax %}
+
+<h2 id="examples">Examples</h2>
+
+There's [a whole chapter devoted to nothing but showing various examples of sec-wall's configuration files](/ZZZ),
+head over there for more information.
 
 {% endmarkdown %}
 
