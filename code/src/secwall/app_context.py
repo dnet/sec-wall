@@ -173,7 +173,7 @@ class SecWallContext(PythonConfig):
 
     @Object
     def log_level(self):
-        """ Syslog facility.
+        """ The log level to use.
         """
         return 'INFO'
 
