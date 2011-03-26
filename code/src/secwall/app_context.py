@@ -133,7 +133,7 @@ class SecWallContext(PythonConfig):
     @Object
     def no_url_match(self):
         """ HTTP code, the content type and a user friendly description
-        for 401 error.
+        for 404 error.
         """
         return ['404', 'Not Found', 'text/plain', str('Not Found')]
 
