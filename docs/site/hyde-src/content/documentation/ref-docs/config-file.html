@@ -9,9 +9,56 @@
 {% block section_title %}Configuration file format{% endblock %}
 
 {% block exercises %}
-    <li>Create a new sec-wall instance and modify the <a href="#INSTANCE_SECRET">INSTANCE_SECRET</a> variable</li>
-    <li>Try running sec-wall with at least one of the <a href="#required">required variables</a> missing.
-        What happens when the instance is starting? What happens in runtime, when you access sec-wall from a browser?</li>
+    <li>Create a new sec-wall instance and modify
+        the <a href="#INSTANCE_SECRET">INSTANCE_SECRET</a> variable
+    </li>
+    <li>Try running sec-wall with at least one of
+        the <a href="#required">required variables</a> missing.
+        What happens when the instance is starting? What happens in runtime,
+        when you access sec-wall from a browser?
+    </li>
+    <li>
+        Create a new proxy, let the <a href="#urls">urls</a> variable be an empty
+        dictionary and set <a href="#add_default_if_not_found">add_default_if_not_found</a>
+        to False. What happens if you access the proxy?
+    </li>
+    <li>
+        Make use of <a href="#ca_certs">ca_certs</a>, <a href="#certfile">certfile</a>,
+        <a href="#crypto_dir">crypto_dir</a>, <a href="#keyfile">keyfile</a>
+        and <a href="#server_type">server_type</a> variables for
+        configuring an instance to run using HTTPS instead of HTTP.
+    </li>
+    <li>
+        Observe what headers the backend you're using returns and add them
+        on the <a href="#from_backend_ignore">from_backend_ignore</a> list. Confirm
+        the result from your browser using <a href="http://getfirebug.com/">Firebug</a>
+        or a similar tool.
+    </li>
+    <li>
+        Use the <a href="#host">host</a> and <a href="#port">port</a> variables
+        for running an instance on a different interface and port than it defaults to.
+    </li>
+    <li>
+        Generate two new instances, set the <a href="#instance_name">instance_name</a>
+        of both to a different value and confirm the name is being logged by syslog
+        when accessing the proxies.
+    </li>
+    <li>
+        Use <a href="#log_file_config">log_file_config</a> and change the way
+        logging messages are being emitted. For instance - but let that not bind
+        you in any way - try configuring it to use
+        <a href="http://plumberjack.blogspot.com/2010/09/queuehandler-and-zeromq-support.html" alt="Using ZeroMQ for logging">ZeroMQ</a>
+        <img src="/media/gfx/external-link.png" alt="" /> instead of syslog.
+    </li>
+    <li>
+        Run syslog on a separate host and use the <a href="#syslog_address">variable</a>
+        for configuring a sec-wall instance to use UDP for logging.
+    </li>
+    <li>
+        Make use of the <a href="#log_level">log_level</a> variable and change the logging
+        level to ERROR. Then to DEBUG.
+    </li>
+
 {% endblock %}
 
 {% block this_page %}
@@ -59,6 +106,7 @@
     </ol>
   </li>
   <li><a href="#examples">Examples</a>
+  <li><a href="#exercises">Exercises</a>
 {% endblock %}
 
 {% block content %}
@@ -628,7 +676,7 @@ Default:
 True
 {% endsyntax %}
 
-If [add_invocation_id](#add_invocation_id) is True, 
+If [add_invocation_id](#add_invocation_id) is True,
 whether to add an **X-sec-wall-invocation-id-signed** header. The header's value
 is computed as follows (pseudocode):
 
@@ -647,7 +695,7 @@ b'/dev/log'
 
 Address of the syslog to use by default. Note that if it's a string, it must be prepended
 with 'b' (just like the default is). In can also point to a UDP address in the form
-of a two-element list, such as ['127.0.0.1', 514]. See 
+of a two-element list, such as ['127.0.0.1', 514]. See
 [the logging documentation](/ZZZ) for more regarding sec-wall's approach to logging.
 
 See also: [log_file_config](#log_file_config), [log_level](#log_level) and [syslog_facility](#syslog_facility).
@@ -659,7 +707,7 @@ Default:
 SysLogHandler.LOG_USER
 {% endsyntax %}
 
-The syslog's facility to use. It must be one of 
+The syslog's facility to use. It must be one of
 [the symbolic values understood by the Python's logging machinery](http://docs.python.org/library/logging.html#sysloghandler) ![](/media/gfx/external-link.png).
 
 See also: [log_file_config](#log_file_config), [log_level](#log_level) and [syslog_address](#syslog_address).
