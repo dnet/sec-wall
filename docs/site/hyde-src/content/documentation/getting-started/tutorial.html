@@ -210,7 +210,7 @@ urls = [
 ]
 {% endsyntax %}
 
-Assign True to the 'basic-auth' key suffices for sec-wall to understand that
+Assigning True to the 'basic-auth' key suffices for sec-wall to understand that
 an HTTP Basic Auth is to be used for the given URL. Consequently, sec-wall requires
 us to provide it with three other keywords required for a proper functioning of
 that scheme, these are 'basic-auth-realm', 'basic-auth-username' and
@@ -235,7 +235,7 @@ nothing preventing us from reusing the same options throughout more than one URL
 pattern so that the options can be specified once only and be used in multiple places.
 Not only that! Given that they're really pure-Python dictionaries, the options
 can be read from virtually everywhere. As far as sec-wall is concerned, they must
-be dictionaries, but it's none of sec-wall's business if they're really stored
+be dictionaries, but sec-wall isn't really interested in whether they're really stored
 in the same config file, in separate modules, SQL databases, LDAP or wherever your
 environment dictates they should be fetched from. All sec-wall is caring about is
 whether the *urls* objects of the config.py module contains a tuple of patterns
