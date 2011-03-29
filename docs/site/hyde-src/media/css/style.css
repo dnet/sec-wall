@@ -338,7 +338,12 @@ table tr th, table tr td
 { background: #3B3B3B;
   color: #FFF;
   padding: 7px 4px;
-  text-align: left;}
+  text-align: left;
+  }
+
+table tr th {
+  text-shadow: 2px 2px 2px #333333;
+}
 
 table tr td
 { background: #DDD;

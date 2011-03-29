@@ -180,6 +180,108 @@ variable.
 
 <h2 id="sec-options">Security options</h2>
 
+Once [a URL pattern has been choosen](#url-patterns), it needs to be paired
+with one and more of the security options listed below. Some of the options are required
+and others become required when certain parent options have been choosen.
+
+The table lists all the options broken out by the group they fall into
+and briefly explains whether the option becomes required under certain conditions,
+if at all, and what the default value is, if there is any.
+
+<table style="width:100%">
+    <tr>
+        <th>Group</th>
+        <th>Option</th>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td rowspan="2">general options</td>
+        <td><a href="#option-host">host</a></td>
+        <td>Yes</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td><a href="#option-host">ssl</a></td>
+        <td>No</td>
+        <td>False</td>
+    </tr>
+    <tr>
+        <td rowspan="4">headers enrichment</td>
+        <td><a href="#option-from-client-ignore">from-client-ignore (ZZZ: mention the case doesn't matter)</a></td>
+        <td>No</td>
+        <td>[]</td>
+    </tr>
+    <tr>
+        <td><a href="#option-to-backend-add">to-backend-add</a></td>
+        <td>No</td>
+        <td>{}</td>
+    </tr>
+    <tr>
+        <td><a href="#option-from-backend-ignore">from-backend-ignore</a></td>
+        <td>No</td>
+        <td>Taken from the config's <a href="/documentation/ref-docs/config-file.html#from_backend_ignore">from_backend_ignore</a> variable</td>
+    </tr>
+    <tr>
+        <td><a href="#option-to-client-add">to-client-add</a></td>
+        <td>No</td>
+        <td>{}</td>
+    </tr>
+    <tr>
+        <td rowspan="2">SSL/TLS certificates</td>
+        <td><a href="#option-ssl-cert">ssl-cert</a></td>
+        <td>No</td>
+        <td>False</td>
+    </tr>
+    <tr>
+        <td><a href="#option-ssl-cert-fields">ssl-cert-*</a></td>
+        <td>No</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td rowspan="4">HTTP Basic Auth</td>
+        <td><a href="#option-basic-auth">basic-auth</a></td>
+        <td>No</td>
+        <td>False</td>
+    </tr>
+    <tr>
+        <td><a href="#option-basic-auth-username">basic-auth-username</a></td>
+        <td>Yes, if <a href="#basic-auth">basic-auth</a> is True</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td><a href="#option-basic-auth-password">basic-auth-password</a></td>
+        <td>Yes, if <a href="#basic-auth">basic-auth</a> is True</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td><a href="#option-basic-auth-realm">basic-auth-realm</a></td>
+        <td>Yes, if <a href="#basic-auth">basic-auth</a> is True</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td rowspan="4">HTTP Digest Auth</td>
+        <td><a href="#option-digest-auth">digest-auth</a></td>
+        <td>No</td>
+        <td>False</td>
+    </tr>
+    <tr>
+        <td><a href="#option-digest-auth-username">digest-auth-username</a></td>
+        <td>Yes, if <a href="#digest-auth">digest-auth</a> is True</td>
+        <td>False</td>
+    </tr>
+    <tr>
+        <td><a href="#option-digest-auth-password">digest-auth-password</a></td>
+        <td>Yes, if <a href="#digest-auth">digest-auth</a> is True</td>
+        <td>False</td>
+    </tr>
+    <tr>
+        <td><a href="#option-digest-auth-realm">digest-auth-realm</a></td>
+        <td>Yes, if <a href="#digest-auth">digest-auth</a> is True</td>
+        <td>False</td>
+    </tr>
+</table>
+
 <h2 id="examples">Examples</h2>
 
 There's [a whole chapter devoted to nothing but showing various examples of sec-wall's configuration files](/ZZZ),
