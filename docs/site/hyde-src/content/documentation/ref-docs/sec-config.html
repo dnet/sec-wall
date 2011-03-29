@@ -24,7 +24,71 @@
             <li><a href="#catch-all">/* (catch-all) pattern</a></li>
         </ol>
     </li>
-    <li><a href="#sec-options">Security options</a></li>
+    <li><a href="#sec-options">Security options</a>
+        <ol>
+            <li><a href="#general-options">General options</a>
+                <ol>
+                    <li><a href="#option-host">host</a></li>
+                    <li><a href="#option-ssl">ssl</a></li>
+                    <li><a href="#option-add-auth-info">add-auth-info</a></li>
+                    <li><a href="#option-sign-auth-info">sign-auth-info</a></li>
+                </ol>
+            </li>
+            <li><a href="#headers-enrichment">Headers enrichment</a>
+                <ol>
+                    <li><a href="#option-from-client-ignore">from-client-ignore</a></li>
+                    <li><a href="#option-to-backend-add">to-backend-add</a></li>
+                    <li><a href="#option-from-backend-ignore">from-backend-ignore</a></li>
+                    <li><a href="#option-to-client-add">to-client-add</a></li>
+                </ol>
+            </li>
+            <li><a href="#client-certs">SSL/TLS client certificates</a>
+                <ol>
+                    <li><a href="#option-ssl-cert">ssl-cert</a></li>
+                    <li><a href="#option-ssl-cert-fields">ssl-cert-*</a></li>
+                </ol>
+            </li>
+            <li><a href="#basic-auth">HTTP Basic Auth</a>
+                <ol>
+                    <li><a href="#option-basic-auth">basic-auth</a></li>
+                    <li><a href="#option-basic-auth-username">basic-auth-username</a></li>
+                    <li><a href="#option-basic-auth-password">basic-auth-password</a></li>
+                    <li><a href="#option-basic-auth-realm">basic-auth-realm</a></li>
+                </ol>
+            </li>
+            <li><a href="#digest-auth">HTTP Digest Auth</a>
+                <ol>
+                    <li><a href="#option-digest-auth">digest-auth</a></li>
+                    <li><a href="#option-digest-auth-username">digest-auth-username</a></li>
+                    <li><a href="#option-digest-auth-password">digest-auth-password</a></li>
+                    <li><a href="#option-digest-auth-realm">digest-auth-realm</a></li>
+                </ol>
+            </li>
+            <li><a href="#ws-security">WS-Security</a>
+                <ol>
+                    <li><a href="#option-wsse-pwd">wsse-pwd</a></li>
+                    <li><a href="#option-wsse-pwd-username">wsse-pwd-username</a></li>
+                    <li><a href="#option-wsse-pwd-password">wsse-pwd-password</a></li>
+                    <li><a href="#option-wsse-pwd-password-digest">wsse-pwd-password-digest</a></li>
+                    <li><a href="#option-wsse-pwd-reject-empty-nonce-creation">wsse-pwd-reject-empty-nonce-creation</a></li>
+                    <li><a href="#option-wsse-pwd-reject-expiry-limit">wsse-pwd-reject-expiry-limit</a></li>
+                    <li><a href="#option-wsse-pwd-nonce-freshness-time">wsse-pwd-nonce-freshness-time</a></li>
+                </ol>
+            </li>
+            <li><a href="#custom-http">Custom HTTP headers</a>
+                <ol>
+                    <li><a href="#option-custom-http">custom-http</a></li>
+                    <li><a href="#option-custom-http-headers">custom-http-*</a></li>
+                </ol>
+            </li>
+            <li><a href="#xpath">XPath</a>
+                <ol>
+                    <li><a href="#option-xpath">xpath</a></li>
+                    <li><a href="#option-xpath-expr">xpath-*</a></li>
+                </ol>
+            </li>
+        </ol>
+    </li>
     <li><a href="#exercises">Exercises</a></li>
 {% endblock %}
 
@@ -196,18 +260,28 @@ if at all, and what the default value is, if there is any.
         <th>Default</th>
     </tr>
     <tr>
-        <td rowspan="2">general options</td>
+        <td rowspan="4"><a href="#general-options">General options</a></td>
         <td><a href="#option-host">host</a></td>
         <td>Yes</td>
         <td>(None)</td>
     </tr>
     <tr>
-        <td><a href="#option-host">ssl</a></td>
+        <td><a href="#option-ssl">ssl</a></td>
         <td>No</td>
         <td>False</td>
     </tr>
     <tr>
-        <td rowspan="4">headers enrichment</td>
+        <td><a href="#option-add-auth-info">add-auth-info</a></td>
+        <td>No</td>
+        <td>True</td>
+    </tr>
+    <tr>
+        <td><a href="#option-sign-auth-info">sign-auth-info</a></td>
+        <td>No</td>
+        <td>True</td>
+    </tr>
+    <tr>
+        <td rowspan="4"><a href="#headers-enrichment">Headers enrichment</a></td>
         <td><a href="#option-from-client-ignore">from-client-ignore (ZZZ: mention the case doesn't matter)</a></td>
         <td>No</td>
         <td>[]</td>
@@ -228,7 +302,7 @@ if at all, and what the default value is, if there is any.
         <td>{}</td>
     </tr>
     <tr>
-        <td rowspan="2">SSL/TLS certificates</td>
+        <td rowspan="2"><a href="#client-certs">SSL/TLS client certificates</a></td>
         <td><a href="#option-ssl-cert">ssl-cert</a></td>
         <td>No</td>
         <td>False</td>
@@ -239,7 +313,7 @@ if at all, and what the default value is, if there is any.
         <td>(None)</td>
     </tr>
     <tr>
-        <td rowspan="4">HTTP Basic Auth</td>
+        <td rowspan="4"><a href="#basic-auth">HTTP Basic Auth</a></td>
         <td><a href="#option-basic-auth">basic-auth</a></td>
         <td>No</td>
         <td>False</td>
@@ -260,7 +334,7 @@ if at all, and what the default value is, if there is any.
         <td>(None)</td>
     </tr>
     <tr>
-        <td rowspan="4">HTTP Digest Auth</td>
+        <td rowspan="4"><a href="#digest-auth">HTTP Digest Auth</a></td>
         <td><a href="#option-digest-auth">digest-auth</a></td>
         <td>No</td>
         <td>False</td>
@@ -268,19 +342,155 @@ if at all, and what the default value is, if there is any.
     <tr>
         <td><a href="#option-digest-auth-username">digest-auth-username</a></td>
         <td>Yes, if <a href="#digest-auth">digest-auth</a> is True</td>
-        <td>False</td>
+        <td>(None)</td>
     </tr>
     <tr>
         <td><a href="#option-digest-auth-password">digest-auth-password</a></td>
         <td>Yes, if <a href="#digest-auth">digest-auth</a> is True</td>
-        <td>False</td>
+        <td>(None)</td>
     </tr>
     <tr>
         <td><a href="#option-digest-auth-realm">digest-auth-realm</a></td>
         <td>Yes, if <a href="#digest-auth">digest-auth</a> is True</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td rowspan="7"><a href="#ws-security">WS-Security</a></td>
+        <td><a href="#option-wsse-pwd">wsse-pwd</a></td>
+        <td>No</td>
         <td>False</td>
     </tr>
+    <tr>
+        <td><a href="#option-wsse-pwd-username">wsse-pwd-username</a></td>
+        <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td><a href="#option-wsse-pwd-password">wsse-pwd-password</a></td>
+        <td>Either <a href="#option-wsse-pwd-password">wsse-pwd-password</a> or
+            <a href="#option-wsse-pwd-password-digest">wsse-pwd-password-digest</a> must be given if
+            <a href="#option-wsse-pwd">wsse-pwd</a> is True
+        </td>
+        <td>None</td>
+    </tr>
+    <tr>
+        <td><a href="#option-wsse-pwd-password-digest">wsse-pwd-password-digest</a></td>
+        <td>Either <a href="#option-wsse-pwd-password">wsse-pwd-password</a> or
+            <a href="#option-wsse-pwd-password-digest">wsse-pwd-password-digest</a> must be given if
+            <a href="#option-wsse-pwd">wsse-pwd</a> is True
+        </td>
+        <td>None</td>
+    </tr>
+    <tr>
+        <td><a href="#option-wsse-pwd-reject-empty-nonce-creation">wsse-pwd-reject-empty-nonce-creation</a></td>
+        <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td><a href="#option-wsse-pwd-reject-expiry-limit">wsse-pwd-reject-expiry-limit</a></td>
+        <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td><a href="#option-wsse-pwd-nonce-freshness-time">wsse-pwd-nonce-freshness-time</a></td>
+        <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td rowspan="2"><a href="#custom-http">Custom HTTP headers</a></td>
+        <td><a href="#option-custom-http">custom-http</a></td>
+        <td>No</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td><a href="#option-custom-http-headers">custom-http-*</a></td>
+        <td>Yes, if <a href="#option-custom-http">custom-http</a> is True</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td rowspan="2"><a href="#xpath">XPath</a></td>
+        <td><a href="#option-xpath">xpath</a></td>
+        <td>No</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td><a href="#option-xpath-expr">xpath-*</a></td>
+        <td>Yes, if <a href="#option-xpath">xpath</a> is True</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td><a href="/ZZZ">URL-rewriting</a></td>
+        <td><a href="/ZZZ">rewrite</a> (not exactly a security option, added here for completness
+        and documented <a href="/ZZZ" title="URL-rewriting docs">elsewhere</a>)</td>
+        <td>No</td>
+        <td>(None)</td>
+    </tr>
 </table>
+
+<h3 id="general-options">General options</h3>
+
+<h4 id="option-host">host</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Yes</td>
+        <td>(None)</td>
+    </tr>
+</table>
+
+<h4 id="option-ssl">ssl</h4>
+<h4 id="option-add-auth-info">add-auth-info</h4>
+<h4 id="option-sign-auth-info">sign-auth-info</h4>
+
+<h3 id="headers-enrichment">Headers enrichment</h3>
+
+<h4 id="option-from-client-ignore">from-client-ignore</h4>
+<h4 id="option-to-backend-add">to-backend-add</h4>
+<h4 id="option-from-backend-ignore">from-backend-ignore</h4>
+<h4 id="option-to-client-add">to-client-add</h4>
+
+<h3 id="client-certs">SSL/TLS client certificates</h3>
+
+<h4 id="option-ssl-cert">ssl-cert</h4>
+<h4 id="option-ssl-cert-fields">ssl-cert-*</h4>
+
+<h3 id="basic-auth">HTTP Basic Auth</h3>
+
+<h4 id="option-basic-auth">basic-auth</h4>
+<h4 id="option-basic-auth-username">basic-auth-username</h4>
+<h4 id="option-basic-auth-password">basic-auth-password</h4>
+<h4 id="option-basic-auth-realm">basic-auth-realm</h4>
+
+<h3 id="digest-auth">HTTP Digest Auth</h3>
+
+<h4 id="option-digest-auth">digest-auth</h4>
+<h4 id="option-digest-auth-username">digest-auth-username</h4>
+<h4 id="option-digest-auth-password">digest-auth-password</h4>
+<h4 id="option-digest-auth-realm">digest-auth-realm</h4>
+
+<h3 id="ws-security">WS-Security</h3>
+
+<h4 id="option-wsse-pwd">wsse-pwd</h4>
+<h4 id="option-wsse-pwd-username">wsse-pwd-username</h4>
+<h4 id="option-wsse-pwd-password">wsse-pwd-password</h4>
+<h4 id="option-wsse-pwd-password-digest">wsse-pwd-password-digest</h4>
+<h4 id="option-wsse-pwd-reject-empty-nonce-creation">wsse-pwd-reject-empty-nonce-creation</h4>
+<h4 id="option-wsse-pwd-reject-expiry-limit">wsse-pwd-reject-expiry-limit</h4>
+<h4 id="option-wsse-pwd-nonce-freshness-time">wsse-pwd-nonce-freshness-time</h4>
+
+<h3 id="custom-http">Custom HTTP headers</h3>
+
+<h4 id="option-custom-http">custom-http</h4>
+<h4 id="option-custom-http-headers">custom-http-*</h4>
+
+<h3 id="xpath">XPath</h3>
+
+<h4 id="option-xpath">xpath</h4>
+<h4 id="option-xpath-expr">xpath-*</h4>
 
 <h2 id="examples">Examples</h2>
 
