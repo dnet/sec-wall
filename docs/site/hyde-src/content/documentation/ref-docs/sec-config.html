@@ -1,0 +1,190 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+    has_exercises: "True"
+    has_this_page: "True"
+%}
+
+{% block section_title %}Configuring security for a particular URL{% endblock %}
+
+{% block exercises %}
+    <li>123
+    </li>
+{% endblock %}
+
+{% block this_page %}
+    <li><a href="#intro">Introduction</a></li>
+    <li><a href="#url-patterns">URL patterns</a>
+        <ol>
+            <li><a href="#pesto-int">int</a></li>
+            <li><a href="#pesto-unicode">unicode</a></li>
+            <li><a href="#pesto-path">path</a></li>
+            <li><a href="#pesto-any">any</a></li>
+            <li><a href="#catch-all">/* (catch-all) pattern</a></li>
+        </ol>
+    </li>
+    <li><a href="#sec-options">Security options</a></li>
+    <li><a href="#exercises">Exercises</a></li>
+{% endblock %}
+
+{% block content %}
+
+{% markdown %}
+
+<h1>Configuring security for a particular URL</h1>
+
+<h2 id="intro">Introduction</h2>
+
+This chapter deals with the config file's <a href="/documentation/ref-docs/config-file.html#urls">urls</a>
+variable exclusively. While other parts of the documentation are about
+<a href="/documentation/ref-docs/config-file.html">the general syntax of the config file</a>,
+this one is concerned with how one should use the *urls* variable to secure a particular
+URL.
+
+As a quick recap, here's how a sample config file may look like:
+
+{% syntax python %}
+# -*- coding: utf-8 -*-
+
+# stdlib
+import uuid
+
+# Don't share it with anyone.
+INSTANCE_SECRET = '2573116c48444b7ba90632e16e60ac5f'
+
+# May be shared with the outside world.
+INSTANCE_UNIQUE = uuid.uuid4().hex
+
+# ##############################################################################
+
+def default():
+    return {
+        'ssl': True,
+        'ssl-cert': True,
+        'ssl-cert-commonName':INSTANCE_SECRET,
+        'host': 'http://' + INSTANCE_SECRET
+    }
+
+urls = [
+    ('/*', default()),
+]
+{% endsyntax %}
+
+What we'll be dealing with is what goes into the *urls* variable, which should
+be a list of two-element lists or tuples. The first element is
+<a href="#url-patterns">a pattern of the URL to be secured</a>,
+the second one is
+<a href="#sec-options">a dictionary of options</a>
+that apply to the pattern.
+
+From now on, most of the chapter's examples will show only the *urls* variable
+but you still need to remember that it's merely a part, albeit an important one,
+of the whole configuration file.
+
+<h2 id="url-patterns">URL patterns</h2>
+
+Let's discuss the following configuration:
+
+{% syntax python %}
+
+def config1():
+    return {
+        'ssl': True,
+        'ssl-cert': True,
+        'ssl-cert-commonName':'My Client1',
+        'host': 'http://somewhere.example.com'
+    }
+
+def config2():
+    return {
+        'ssl': True,
+        'ssl-cert': True,
+        'ssl-cert-commonName':'My Client2',
+        'host': 'http://somewhere.example.com'
+    }
+
+urls = [
+    ('/client/1/<service_name:unicode>', config1()),
+    ('/client/2/<service_name:any("customer", "billing")>', config2()),
+]
+{% endsyntax %}
+
+There are two configuration dictionaries which we'll leave out for a second
+but what's important now is the URL patterns. sec-wall uses
+[Pesto](http://www.ollycope.com/software/pesto/) ![](/media/gfx/external-link.png)
+for pattern matching and this particular patterns should read:
+
+* '/client/1/\<service_name:unicode\>' - URL must start with the '/client/1/' string
+    which is then followed by any Unicode expression, excluding '/', the path separator.
+    Example URLs that will be picked up by this pattern may include
+    '/client/1/invoice' and '/client/1/customer-account' whereas
+    '/client/1/customer/cases' would not match.
+* '/client/2/\<service_name:any("customer", "billing")\>' - URL must start with
+    the '/client/1/' string and may be followed only by what's listed in the
+    *any* expression. So the only matching URLs will be '/client/2/customer' and
+    '/client/2/billing' but any other won't match the pattern.
+
+You sure have noticed that expressions are named, it's *service_name* in the examples
+above, and the names come in handy when configuring <a href="/ZZZ">URL-rewriting</a>.
+
+In run-time, patterns are checked in the order they're given in the *urls*
+variable and the first match wins. The other ones are ignored and there won't
+be even any information in the logs that they would've been used hadn't there been
+duplicate entries.
+
+The expression may be one of the following:
+[int](#pesto-int),
+[unicode](#pesto-unicode),
+[path](#pesto-path)
+and
+[any](#pesto-any).
+A related concept is a
+[/* (catch-all)](#catch-all) pattern.
+
+<h4 id="pesto-int">int</h4>
+
+Matches any integer. Assuming a pattern in the form of '/foo/\<my_int:int\>/bar',
+it would be matched by a '/foo/123/bar' URL but not if it were '/foo/zxc/bar'.
+
+<h4 id="pesto-unicode">unicode</h4>
+
+Matches any Unicode string, not including '/', the URL-path separator. If the pattern
+is '/foo/\<my_unicode:unicode\>/bar' then both '/foo/123/bar' and '/foo/zxc/bar'
+will match it yet '/foo/zxc/qwe/bar' won't because there's a '/' in there.
+
+<h4 id="pesto-path">path</h4>
+
+Matches any URL path. In other words, it's like [unicode](#unicode) but accepts
+'/' as well. All of the following will match the '/foo/\<my_path:path\>/bar'
+pattern - '/foo/123/bar', '/foo/zxc/bar' and '/foo/zxc/qwe/bar'.
+
+<h4 id="pesto-any">any</h4>
+
+Indicates that a part of a URL must be within a range of listed values. If there's
+a '/foo/\<my_any:any("baz", "zxc")\>/bar' pattern then the only two matching URLs
+will be '/foo/baz/bar' and '/foo/zxc/bar'.
+
+<h4 id="catch-all">/* (catch-all) pattern</h4>
+
+'/*' is a special-cased pattern not directly related to
+[Pesto](http://www.ollycope.com/software/pesto/) ![](/media/gfx/external-link.png)
+that catches any URL that wasn't picked up by patterns coming prior to it. Remembering
+the patterns are being checked in the order they're listed in the urls
+variable, you'll want to make sure '/*' always comes at the end. Because the default
+strategy for handling URLs should be as secure as possible, the pattern will be automatically
+injected in the list even if you don't specify it yourself, although the exact behaviour
+can be customized with the
+[add_default_if_not_found](/documentation/ref-docs/config-file.html#add_default_if_not_found)
+variable.
+
+<h2 id="sec-options">Security options</h2>
+
+<h2 id="examples">Examples</h2>
+
+There's [a whole chapter devoted to nothing but showing various examples of sec-wall's configuration files](/ZZZ),
+head over there for more information.
+
+{% endmarkdown %}
+
+{% endblock %}
