@@ -248,9 +248,33 @@ Once [a URL pattern has been choosen](#url-patterns), it needs to be paired
 with one and more of the security options listed below. Some of the options are required
 and others become required when certain parent options have been choosen.
 
-The table lists all the options broken out by the group they fall into
+The table below lists all the options broken out by the group they fall into
 and briefly explains whether the option becomes required under certain conditions,
 if at all, and what the default value is, if there is any.
+
+You are required to provide the [host](#host) requests are destined to, zero or
+more [headers enrichment-related options](#headers-enrichment) and pick one of the security schemes:
+[SSL/TLS client certificates](#client-certs),
+[HTTP Basic Auth](#basic-auth),
+[HTTP Digest Auth](#digest-auth),
+[WS-Security](#ws-security),
+[Custom HTTP headers](#custom-http),
+or
+[XPath](#xpath).
+
+Let's say that we want to let the client in only if the custom HTTP *X-My-Secret*
+header's value is equal to 'sSekreTT', here's how the config will look like:
+
+{% syntax python %}
+{
+    'host': 'http://somewhere.example.com',
+    'custom-http': True,
+    'custom-http-X-My-Secret':'sSekreTT'
+}
+{% endsyntax %}
+
+The table's right below and if you need usage examples, just
+<a href="/ZZZ" title="Usage examples">click here</a>.
 
 <table style="width:100%">
     <tr>
