@@ -308,12 +308,12 @@ The table's right below and if you need usage examples, just
         <td rowspan="4"><a href="#headers-enrichment">Headers enrichment</a></td>
         <td><a href="#option-from-client-ignore">from-client-ignore (ZZZ: mention the case doesn't matter)</a></td>
         <td>No</td>
-        <td>[]</td>
+        <td>[] (an empty list)</td>
     </tr>
     <tr>
         <td><a href="#option-to-backend-add">to-backend-add</a></td>
         <td>No</td>
-        <td>{}</td>
+        <td>{} (an empty dictionary)</td>
     </tr>
     <tr>
         <td><a href="#option-from-backend-ignore">from-backend-ignore</a></td>
@@ -323,7 +323,7 @@ The table's right below and if you need usage examples, just
     <tr>
         <td><a href="#option-to-client-add">to-client-add</a></td>
         <td>No</td>
-        <td>{}</td>
+        <td>{} (an empty dictionary)</td>
     </tr>
     <tr>
         <td rowspan="2"><a href="#client-certs">SSL/TLS client certificates</a></td>
@@ -467,54 +467,388 @@ The table's right below and if you need usage examples, just
 </table>
 
 <h4 id="option-ssl">ssl</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>False</td>
+    </tr>
+</table>
+
 <h4 id="option-add-auth-info">add-auth-info</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>True</td>
+    </tr>
+</table>
+
 <h4 id="option-sign-auth-info">sign-auth-info</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>True</td>
+    </tr>
+</table>
 
 <h3 id="headers-enrichment">Headers enrichment</h3>
 
 <h4 id="option-from-client-ignore">from-client-ignore</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>[] (an empty list)</td>
+    </tr>
+</table>
+
 <h4 id="option-to-backend-add">to-backend-add</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>{} (an empty dictionary)</td>
+    </tr>
+</table>
+
 <h4 id="option-from-backend-ignore">from-backend-ignore</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>Taken from the config's <a href="/documentation/ref-docs/config-file.html#from_backend_ignore">from_backend_ignore</a> variable</td>
+    </tr>
+</table>
+
 <h4 id="option-to-client-add">to-client-add</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>{} (an empty dictionary)</td>
+    </tr>
+</table>
 
 <h3 id="client-certs">SSL/TLS client certificates</h3>
 
 <h4 id="option-ssl-cert">ssl-cert</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>False</td>
+    </tr>
+</table>
+
 <h4 id="option-ssl-cert-fields">ssl-cert-*</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>(None)</td>
+    </tr>
+</table>
 
 <h3 id="basic-auth">HTTP Basic Auth</h3>
 
 <h4 id="option-basic-auth">basic-auth</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>False</td>
+    </tr>
+</table>
+
 <h4 id="option-basic-auth-username">basic-auth-username</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Yes, if <a href="#option-basic-auth">basic-auth</a> is True</td>
+        <td>(None)</td>
+    </tr>
+</table>
+
 <h4 id="option-basic-auth-password">basic-auth-password</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Yes, if <a href="#option-basic-auth">basic-auth</a> is True</td>
+        <td>(None)</td>
+    </tr>
+</table>
+
 <h4 id="option-basic-auth-realm">basic-auth-realm</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Yes, if <a href="#option-basic-auth">basic-auth</a> is True</td>
+        <td>(None)</td>
+    </tr>
+</table>
 
 <h3 id="digest-auth">HTTP Digest Auth</h3>
 
 <h4 id="option-digest-auth">digest-auth</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>False</td>
+    </tr>
+</table>
+
 <h4 id="option-digest-auth-username">digest-auth-username</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Yes, if <a href="#option-digest-auth">digest-auth</a> is True</td>
+        <td>(None)</td>
+    </tr>
+</table>
+
 <h4 id="option-digest-auth-password">digest-auth-password</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Yes, if <a href="#option-digest-auth">digest-auth</a> is True</td>
+        <td>(None)</td>
+    </tr>
+</table>
+
 <h4 id="option-digest-auth-realm">digest-auth-realm</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Yes, if <a href="#option-digest-auth">digest-auth</a> is True</td>
+        <td>(None)</td>
+    </tr>
+</table>
 
 <h3 id="ws-security">WS-Security</h3>
 
 <h4 id="option-wsse-pwd">wsse-pwd</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>False</td>
+    </tr>
+</table>
+
 <h4 id="option-wsse-pwd-username">wsse-pwd-username</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
+        <td>(None)</td>
+    </tr>
+</table>
+
 <h4 id="option-wsse-pwd-password">wsse-pwd-password</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Either <a href="#option-wsse-pwd-password">wsse-pwd-password</a> or
+            <a href="#option-wsse-pwd-password-digest">wsse-pwd-password-digest</a> must be given if
+            <a href="#option-wsse-pwd">wsse-pwd</a> is True
+        </td>
+        <td>(None)</td>
+    </tr>
+</table>
+
 <h4 id="option-wsse-pwd-password-digest">wsse-pwd-password-digest</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Either <a href="#option-wsse-pwd-password">wsse-pwd-password</a> or
+            <a href="#option-wsse-pwd-password-digest">wsse-pwd-password-digest</a> must be given if
+            <a href="#option-wsse-pwd">wsse-pwd</a> is True
+        </td>
+        <td>None</td>
+    </tr>
+</table>
+
 <h4 id="option-wsse-pwd-reject-empty-nonce-creation">wsse-pwd-reject-empty-nonce-creation</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
+        <td>None</td>
+    </tr>
+</table>
+
 <h4 id="option-wsse-pwd-reject-expiry-limit">wsse-pwd-reject-expiry-limit</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
+        <td>(None)</td>
+    </tr>
+</table>
+
 <h4 id="option-wsse-pwd-nonce-freshness-time">wsse-pwd-nonce-freshness-time</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
+        <td>(None)</td>
+    </tr>
+</table>
 
 <h3 id="custom-http">Custom HTTP headers</h3>
 
 <h4 id="option-custom-http">custom-http</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>(None)</td>
+    </tr>
+</table>
+
 <h4 id="option-custom-http-headers">custom-http-*</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>Yes, if <a href="#option-custom-http">custom-http</a> is True</td>
+    </tr>
+</table>
 
 <h3 id="xpath">XPath</h3>
 
 <h4 id="option-xpath">xpath</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>(None)</td>
+    </tr>
+</table>
+
 <h4 id="option-xpath-expr">xpath-*</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>Yes, if <a href="#option-xpath">xpath</a> is True</td>
+    </tr>
+</table>
 
 <h2 id="examples">Examples</h2>
 
