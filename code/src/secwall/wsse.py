@@ -193,11 +193,11 @@ class WSSE(object):
         if config['wsse-pwd-reject-stale-tokens'] and elapsed.seconds > config['wsse-pwd-reject-expiry-limit']:
             self.on_username_token_expired(config, elapsed, soap)
 
-        if config['wsse-pwd-password-digest']:
+        if config.get('wsse-pwd-password-digest'):
             expected_password =  self._get_digest(config['wsse-pwd-password'],
                                             wsse_nonce, wsu_username_created)
         else:
-            expected_password = config['wsse-pwd-password']
+            expected_password = config.get('wsse-pwd-password')
 
         if wsse_password != expected_password:
             self.on_invalid_password(config, wsse_username, wsse_password, soap)
