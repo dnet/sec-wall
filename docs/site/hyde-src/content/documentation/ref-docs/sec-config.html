@@ -262,7 +262,7 @@ more [headers enrichment-related options](#headers-enrichment) and pick one of t
 or
 [XPath](#xpath).
 
-Let's say that we want to let the client in only if the custom HTTP *X-My-Secret*
+As a quick example, let's say that we want to let the client in only if the custom HTTP *X-My-Secret*
 header's value is equal to 'sSekreTT', here's how the config will look like:
 
 {% syntax python %}
@@ -466,6 +466,16 @@ The table's right below and if you need usage examples, just
     </tr>
 </table>
 
+Host the client requests should be proxied over to, including scheme (http:// or https://)
+and an optional port number of the backend server  but no URL path because the path - unless
+[URL-rewriting](/ZZZ)
+is in effect - will be copied over as-is.
+
+That is, by default, if sec-wall is running on
+http://10.151.17.179:15000, *host* is 'http://10.152.3.191:18090' and client is accessing
+the http://10.151.17.179:15000/my/service URL, sec-wall will forward it to http://10.152.3.191:18090/my/service,
+without ever touching the URL path.
+
 <h4 id="option-ssl">ssl</h4>
 
 <table>
@@ -479,6 +489,10 @@ The table's right below and if you need usage examples, just
     </tr>
 </table>
 
+If True, indicates that the sec-wall's URL must be accessed through HTTPS, plain HTTP
+connections are forbidden - regardless of whether the client credentials had been supplied
+and were correct.
+
 <h4 id="option-add-auth-info">add-auth-info</h4>
 
 <table>
@@ -491,6 +505,65 @@ The table's right below and if you need usage examples, just
         <td>True</td>
     </tr>
 </table>
+
+Whether the backend should receive a YAML-formatted information regarding the
+credentials used by the client for accessing sec-wall. Backend may use the information
+for further restricting the access depending on what's in the YAML document sec-wall sends it through.
+The data is sent in the HTTP  <b>X-sec-wall-auth-info</b> header and what's being forwarded depends on the
+security scheme which was being used.
+
+<ul>
+    <li><b>SSL/TLS client certificates</b> - X-sec-wall-auth-info is a dictionary of
+    relative distinguished names read from the client certificate's 'subject' field,
+    <a href="http://docs.python.org/library/ssl.html#ssl.SSLSocket.getpeercert" title="Python's ssl.SSLSocket.getpeercert">as understood by Python</a>,
+    such as:
+{% syntax python %}
+{commonName: MyClientApp,
+    countryName: US,
+    stateOrProvinceName: Alaska
+    localityName: Cordova,
+    organizationName: MyCompany,
+    organizationalUnitName: MyUnit}
+{% endsyntax %}
+
+    </li>
+    <li><b>HTTP Basic Auth</b> - X-sec-wall-auth-info is a dictionary with one key only,
+    'basic-auth-username', which indicates what username the client application
+    used for accessing sec-wall, such as:
+{% syntax python %}
+{basic-auth-username: MyUsername}
+{% endsyntax %}
+    </li>
+    <li><b>HTTP Digest Auth</b> - X-sec-wall-auth-info is a dictionary with elements
+    that point to the username and realm used by the client application when
+    accessing the proxy, such as:
+{% syntax python %}
+{digest-auth-username: MyUsername, digest-auth-realm: My secret realm}
+{% endsyntax %}
+    </li>
+    <li><b>WS-Security</b> - X-sec-wall-auth-info is a dictionary with one key only,
+    'wsse-pwd-username', which indicates what username the client application
+    used for accessing sec-wall, such as:
+{% syntax python %}
+{wsse-pwd-username: MyWSSEUsername}
+{% endsyntax %}
+    </li>
+    <li><b>Custom HTTP headers</b> - X-sec-wall-auth-info is a dictionary of HTTP
+    headers the client was expected to send to sec-wall, that's including both their
+    names and values. Let's say the client was to send two headers, 'Accept-Encoding' equal
+    to 'gzip,deflate' and 'User-Agent' equal to 'Mozilla/5.0', in that case
+    X-sec-wall-auth-info will have the value of:
+{% syntax python %}
+{Accept-Encoding: 'gzip,deflate', User-Agent: Mozilla/5.0}
+{% endsyntax %}
+    </li>
+    <li><b>XPath</b> - X-sec-wall-auth-info is a list of XPath that must've been
+    been matched against the client request, such as:
+{% syntax python %}
+['//my-elem[text()="my-expected-value"]']
+{% endsyntax %}
+    </li>
+</ul>
 
 <h4 id="option-sign-auth-info">sign-auth-info</h4>
 
