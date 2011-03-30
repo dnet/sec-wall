@@ -578,6 +578,21 @@ security scheme which was being used.
     </tr>
 </table>
 
+Whether the <a href="#option-add-auth-info">X-sec-wall-auth-info</a> should be cryptographically
+signed off. If yes, the value will sent to a backend server in the <b>X-sec-wall-auth-info-signed</b> HTTP header.
+The exact formula is as follows:
+
+delimeter = ':'
+<br/>
+invocation_id = <a href="/ZZZ">as documented in the logging docs</a>
+<br/>
+instance_secret = <a href="/ZZZ">INSTANCE_SECRET</a>
+<br/>
+auth_info = <a href="#option-add-auth-info">X-sec-wall-auth-info</a>
+<br/>
+X-sec-wall-auth-info-signed = SHA256(invocation_id + delimeter + instance_secret + delimeter + auth_info)
+
+
 <h3 id="headers-enrichment">Headers enrichment</h3>
 
 <h4 id="option-from-client-ignore">from-client-ignore</h4>
