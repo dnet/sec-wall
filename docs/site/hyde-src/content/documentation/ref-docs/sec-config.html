@@ -608,6 +608,18 @@ X-sec-wall-auth-info-signed = SHA256(invocation_id + delimeter + instance_secret
     </tr>
 </table>
 
+List of client headers that should be ignored and never forwarded to the backend
+server.
+
+Sample:
+
+{% syntax python %}
+{
+    'from-client-ignore': ['User-Agent', 'Connection']
+    # .. skip other options
+}
+{% endsyntax %}
+
 <h4 id="option-to-backend-add">to-backend-add</h4>
 
 <table>
@@ -620,6 +632,18 @@ X-sec-wall-auth-info-signed = SHA256(invocation_id + delimeter + instance_secret
         <td>{} (an empty dictionary)</td>
     </tr>
 </table>
+
+A dictionary of headers to be injected by sec-wall while proxying requests to the
+backend server.
+
+Sample:
+
+{% syntax python %}
+{
+    'to-backend-add': {'X-MyCustomHeader1': 'Hey there', 'X-MyCustomHeader2': "How's going, mate?"}
+    # .. skip other options
+}
+{% endsyntax %}
 
 <h4 id="option-from-backend-ignore">from-backend-ignore</h4>
 
@@ -634,6 +658,16 @@ X-sec-wall-auth-info-signed = SHA256(invocation_id + delimeter + instance_secret
     </tr>
 </table>
 
+List of HTTP headers sent by a backend server that should be ignored and never
+forwarded to the client application.
+
+{% syntax python %}
+{
+    'from-backend-ignore': ['Server', 'Set-Cookie']
+    # .. skip other options
+}
+{% endsyntax %}
+
 <h4 id="option-to-client-add">to-client-add</h4>
 
 <table>
@@ -646,6 +680,18 @@ X-sec-wall-auth-info-signed = SHA256(invocation_id + delimeter + instance_secret
         <td>{} (an empty dictionary)</td>
     </tr>
 </table>
+
+A dictionary of headers to be injected by sec-wall while returning the backend
+responses to a client application.
+
+Sample:
+
+{% syntax python %}
+{
+    'to-client-add': {'X-Powered-By': 'Python', 'Pragma': 'no-cache'}
+    # .. skip other options
+}
+{% endsyntax %}
 
 <h3 id="client-certs">SSL/TLS client certificates</h3>
 
