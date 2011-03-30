@@ -708,6 +708,19 @@ Sample:
     </tr>
 </table>
 
+If True, the client application must use an SSL/TLS certificate when connecting
+to sec-wall. The certificate needs to be signed off by one of the recognized CAs,
+as configured through the <a href="/documentation/ref-docs/config-file.html#ca_certs">ca_certs</a>
+variable.
+
+{% syntax python %}
+{
+    'ssl': True,
+    'ssl-cert': True
+    # .. skip other options
+}
+{% endsyntax %}
+
 <h4 id="option-ssl-cert-fields">ssl-cert-*</h4>
 
 <table>
@@ -720,6 +733,27 @@ Sample:
         <td>(None)</td>
     </tr>
 </table>
+
+In addition to stating that a client application must use
+<a href="#option-ssl-cert" title="Requiring the client to use a certificate">a certificate</a>,
+it's also possible to require the certificate's fields be equal to agreed values.
+For instance, if you'd like the certificate not only be signed off by
+<a href="/documentation/ref-docs/config-file.html#ca_certs" title="Configuring which CAs to trust">a trusted CA</a>
+but also to have a 'commonName' equal to "MyClient" and 'locality' equal to 'Paris',
+here's how the configuration should look like:
+
+{% syntax python %}
+{
+    'ssl': True,
+    'ssl-cert': True
+    'ssl-cert-commonName': 'MyClient',
+    'ssl-cert-locality': 'Paris'
+    # .. skip other options
+}
+{% endsyntax %}
+
+That is, the pattern is <b>'ssl-cert-' + FIELD_NAME: FIELD_VALUE</b>, where FIELD_NAME is
+one of the certificate fields and FIELD_VALUE is the value you expect it to have.
 
 <h3 id="basic-auth">HTTP Basic Auth</h3>
 
