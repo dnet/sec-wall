@@ -71,6 +71,7 @@
                     <li><a href="#option-wsse-pwd-password">wsse-pwd-password</a></li>
                     <li><a href="#option-wsse-pwd-password-digest">wsse-pwd-password-digest</a></li>
                     <li><a href="#option-wsse-pwd-reject-empty-nonce-creation">wsse-pwd-reject-empty-nonce-creation</a></li>
+                    <li><a href="#option-wsse-pwd-reject-stale-tokens">wsse-pwd-reject-stale-tokens</a></li>
                     <li><a href="#option-wsse-pwd-reject-expiry-limit">wsse-pwd-reject-expiry-limit</a></li>
                     <li><a href="#option-wsse-pwd-nonce-freshness-time">wsse-pwd-nonce-freshness-time</a></li>
                 </ol>
@@ -379,7 +380,7 @@ The table's right below and if you need usage examples, just
         <td>(None)</td>
     </tr>
     <tr>
-        <td rowspan="7"><a href="#ws-security">WS-Security</a></td>
+        <td rowspan="8"><a href="#ws-security">WS-Security</a></td>
         <td><a href="#option-wsse-pwd">wsse-pwd</a></td>
         <td>No</td>
         <td>False</td>
@@ -407,6 +408,11 @@ The table's right below and if you need usage examples, just
     </tr>
     <tr>
         <td><a href="#option-wsse-pwd-reject-empty-nonce-creation">wsse-pwd-reject-empty-nonce-creation</a></td>
+        <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td><a href="#option-wsse-pwd-reject-stale-tokens">wsse-pwd-reject-stale-tokens</a></td>
         <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
         <td>(None)</td>
     </tr>
@@ -713,6 +719,8 @@ to sec-wall. The certificate needs to be signed off by one of the recognized CAs
 as configured through the <a href="/documentation/ref-docs/config-file.html#ca_certs">ca_certs</a>
 variable.
 
+Sample:
+
 {% syntax python %}
 {
     'ssl': True,
@@ -770,6 +778,20 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
     </tr>
 </table>
 
+If True, the client application is expected to use
+[HTTP Basic access authentication](http://en.wikipedia.org/wiki/Basic_access_authentication)
+![](/media/gfx/external-link.png)
+when connecting to a sec-wall instance.
+
+Sample:
+
+{% syntax python %}
+{
+    'basic-auth': True
+    # .. skip other options
+}
+{% endsyntax %}
+
 <h4 id="option-basic-auth-username">basic-auth-username</h4>
 
 <table>
@@ -782,6 +804,16 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
         <td>(None)</td>
     </tr>
 </table>
+
+The username for the client application to use when [basic-auth](#option-basic-auth) is
+in effect.
+
+{% syntax python %}
+{
+    'basic-auth-username': 'MyUser'
+    # .. skip other options
+}
+{% endsyntax %}
 
 <h4 id="option-basic-auth-password">basic-auth-password</h4>
 
@@ -796,6 +828,16 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
     </tr>
 </table>
 
+The password for the client application to use when [basic-auth](#option-basic-auth) is
+in effect. Note that it needs to be in plain text.
+
+{% syntax python %}
+{
+    'basic-auth-password': 's~sSee!!Kr99e_>\eT'
+    # .. skip other options
+}
+{% endsyntax %}
+
 <h4 id="option-basic-auth-realm">basic-auth-realm</h4>
 
 <table>
@@ -808,6 +850,15 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
         <td>(None)</td>
     </tr>
 </table>
+
+The realm to use when sending an HTTP 401 status to the client application.
+
+{% syntax python %}
+{
+    'basic-auth-realm': 'Secure area'
+    # .. skip other options
+}
+{% endsyntax %}
 
 <h3 id="digest-auth">HTTP Digest Auth</h3>
 
@@ -824,6 +875,22 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
     </tr>
 </table>
 
+If True, the client application is expected to use
+[HTTP Digest access authentication](http://en.wikipedia.org/wiki/Digest_access_authentication)
+![](/media/gfx/external-link.png)
+as understood by
+[RFC 2069](http://tools.ietf.org/html/rfc2069) ![](/media/gfx/external-link.png)
+when connecting to a sec-wall instance.
+
+Sample:
+
+{% syntax python %}
+{
+    'digest-auth': True
+    # .. skip other options
+}
+{% endsyntax %}
+
 <h4 id="option-digest-auth-username">digest-auth-username</h4>
 
 <table>
@@ -836,6 +903,18 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
         <td>(None)</td>
     </tr>
 </table>
+
+The username for the client application to use when [digest-auth](#option-digest-auth) is
+in effect.
+
+Sample:
+
+{% syntax python %}
+{
+    'digest-auth-username': 'MyUser'
+    # .. skip other options
+}
+{% endsyntax %}
 
 <h4 id="option-digest-auth-password">digest-auth-password</h4>
 
@@ -850,6 +929,18 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
     </tr>
 </table>
 
+The password for the client application to use when [digest-auth](#option-digest-auth) is
+in effect. Note that it needs to be in plain text.
+
+Sample:
+
+{% syntax python %}
+{
+    'digest-auth-password': 'Se++3Kre#t'
+    # .. skip other options
+}
+{% endsyntax %}
+
 <h4 id="option-digest-auth-realm">digest-auth-realm</h4>
 
 <table>
@@ -862,6 +953,15 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
         <td>(None)</td>
     </tr>
 </table>
+
+The realm to use when sending an HTTP 401 status to the client application.
+
+{% syntax python %}
+{
+    'digest-auth-realm': 'Secure area'
+    # .. skip other options
+}
+{% endsyntax %}
 
 <h3 id="ws-security">WS-Security</h3>
 
@@ -878,6 +978,10 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
     </tr>
 </table>
 
+Dictates whether client applications are required to use the
+[Web Services Security: Username Token Profile V1.0 (PDF)] (http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0.pdf)
+![](/media/gfx/external-link.png) when connecting to the proxy.
+
 <h4 id="option-wsse-pwd-username">wsse-pwd-username</h4>
 
 <table>
@@ -890,6 +994,8 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
         <td>(None)</td>
     </tr>
 </table>
+
+The username for the client application to use when [wsse-pwd](#option-wsse-pwd) is in effect.
 
 <h4 id="option-wsse-pwd-password">wsse-pwd-password</h4>
 
@@ -907,6 +1013,12 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
     </tr>
 </table>
 
+A clear-text password to use when the password type is
+http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText.
+
+Note that *wsse-pwd-password* will have precedence if both *wsse-pwd-password*
+and [wsse-pwd-password-digest](#option-wsse-pwd-password-digest) are given.
+
 <h4 id="option-wsse-pwd-password-digest">wsse-pwd-password-digest</h4>
 
 <table>
@@ -923,6 +1035,13 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
     </tr>
 </table>
 
+A digest of the password to use when the password type is
+http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest.
+
+Note that [wsse-pwd-password](#option-wsse-pwd-password) will have precedence if both
+[wsse-pwd-password](#option-wsse-pwd-password)
+and *wsse-pwd-password-digest* are given.
+
 <h4 id="option-wsse-pwd-reject-empty-nonce-creation">wsse-pwd-reject-empty-nonce-creation</h4>
 
 <table>
@@ -935,6 +1054,28 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
         <td>None</td>
     </tr>
 </table>
+
+Whether requests not containing the
+*/soapenv:Envelope/soapenv:Header/wsse:Security/wsse:UsernameToken/wsse:Nonce*
+element should be rejected. It's recommended to set the value to True.
+
+<h4 id="option-wsse-pwd-reject-stale-tokens">wsse-pwd-reject-stale-tokens</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
+        <td>(None)</td>
+    </tr>
+</table>
+
+Whether requests containing stale tokens, tokens whose expiry limit has elapsed,
+should be rejected. It's recommended to set the value to True and the time
+after which the token is considered to have staled is given in
+[wsse-pwd-reject-expiry-limit](#option-wsse-pwd-reject-expiry-limit).
 
 <h4 id="option-wsse-pwd-reject-expiry-limit">wsse-pwd-reject-expiry-limit</h4>
 
@@ -949,6 +1090,10 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
     </tr>
 </table>
 
+The option is in seconds and says how long after the WS-Security token
+has been created it will still be considered fresh enough, that is, the client
+request will be rejected if **token_creation_time + wsse-pwd-reject-expiry-limit > current_time**.
+
 <h4 id="option-wsse-pwd-nonce-freshness-time">wsse-pwd-nonce-freshness-time</h4>
 
 <table>
@@ -961,6 +1106,10 @@ one of the certificate fields and FIELD_VALUE is the value you expect it to have
         <td>(None)</td>
     </tr>
 </table>
+
+The value must be set but currently sec-wall ignores it. It's meant to be used
+in future sec-wall versions to aid with preventing replay attacks. It's recommended
+to have it be equal to [wsse-pwd-reject-expiry-limit](#option-wsse-pwd-reject-expiry-limit).
 
 <h3 id="custom-http">Custom HTTP headers</h3>
 
