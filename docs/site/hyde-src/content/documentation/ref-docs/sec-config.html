@@ -1219,7 +1219,10 @@ consider the request be valid, like below:
 
 That is, the pattern is <b>'xpath-' + EXPR_NAME: EXPR_VALUE</b>, where EXPR_NAME is
 ignored and EXPR_VALUE is the value it must have. Note that EXPR_NAME may be anything
-as long as it's unique for a given URL configuration.
+as long as it's unique for a given URL configuration. EXPR_VALUE on the other hand
+is passed on directly to
+[lxml](http://lxml.de) ![](/media/gfx/external-link.png)
+for evaluation against the incoming requests.
 
 <h2 id="examples">Examples</h2>
 
