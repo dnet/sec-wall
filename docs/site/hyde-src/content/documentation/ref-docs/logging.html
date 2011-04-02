@@ -27,6 +27,21 @@
 
 <h2 id="intro">Introduction</h2>
 
+There are several layers of logging employed by sec-wall. Proper understanding
+of all of them is essential for mastering sec-wall yet not all of them will come
+in handy in day-to-day work - some of them are rarely needed, for instance, only
+when you're to deal with misbehaving proxy instances, others - like the log of
+requests passing through a proxy - will be used more frequently.
+
+What gets logged where and why stems directly from
+[how sec-wall has been designed](/documentation/arch/index.html)
+and the sketch diagram below captures the flow of information that controls the logging process.
+Note that all links are relative to
+[the config.py file](/documentation/ref-docs/config-file.html).
+
+<div style="text-align:center">
+  <img src="/media/gfx/logging.png" alt=""/>
+</div>
 
 <h2 id="examples">Examples</h2>
 
