@@ -9,7 +9,53 @@
 {% block section_title %}Configuring security for a particular URL{% endblock %}
 
 {% block exercises %}
-    <li>123
+    <li>Configure one or more URL patterns so that they match the following paths:
+        <ol>
+            <li>/service/crm/customer</li>
+            <li>/service/crm/customer-orders</li>
+            <li>/service/crm/customer-complaints</li>
+            <li>/service/billing/customer</li>
+            <li>/service/portal/customer</li>
+            <li>/pos/1229</li>
+            <li>/pos/ea67cb19</li>
+        </ol>
+    </li>
+    <li>Try accessing a URL for which the <a href="#option-host">host</a> hasn't been configured</li>
+    <li>Make the URL require <a href="#option-ssl">SSL-only access</a> and try opening it using plain HTTP.
+        Does it make any difference if the credentials are correct or not?</li>
+    <li>Configure the URL so that sec-wall doesn't <a href="#option-add-auth-info">add the auth info</a>.
+        Make it add the information without signing it off. Try the opposite, what happens when
+        the information isn't configured to be passed along yet sec-wall is to sign it off?</li>
+    <li>
+        Try configuring different combinations of <a href="#headers-enrichment">what headers get proxied over</a>
+        in different directions.
+    </li>
+    <li>Have sec-wall require any valid <a href="#client-certs">client SSL/TLS certificate</a>.
+        Make it require particular fields, for instance, the commonName.
+    </li>
+    <li>Configure <a href="#basic-auth">HTTP Basic Auth</a>, you can simply use
+        your browser for testing things out.
+    </li>
+    <li>Have the proxy require <a href="#digest-auth">HTTP Digest Auth</a>, use the browser for making sure
+        things have been configured properly
+    </li>
+    <li>Configure <a href="#ws-security">WS-Security</a>. What happens if both
+        <a href="#option-wsse-pwd-password ">wsse-pwd-password </a> and
+        <a href="#option-wsse-pwd-password-digest">wsse-pwd-password-digest</a>
+        have been configured? Set
+        <a href="#option-wsse-pwd-reject-empty-nonce-creation">wsse-pwd-reject-empty-nonce-creation</a> to True
+        and try sending a request without the nonce. Configure
+        <a href="#option-wsse-pwd-reject-stale-tokens">wsse-pwd-reject-stale-tokens</a>
+        and <a href="#option-wsse-pwd-reject-expiry-limit">wsse-pwd-reject-expiry-limit</a>
+        and try sending a request with an expired token.
+    </li>
+    <li><a href="#custom-http">Configure</a> the URL so that only requests whose
+        <b>User-Agent</b> and <b>Accept-Encoding</b> headers are equal to what your browser sends
+        through are allowed in. Try accessing the URL with a different browser.
+    </li>
+    <li>Use <a href="#xpath">XPath-based</a> access control. Prepare any XML
+        document and several expressions. What happens if at least one of the
+        conditions isn't fulfilled?
     </li>
 {% endblock %}
 
@@ -307,7 +353,7 @@ The table's right below and if you need usage examples, just
     </tr>
     <tr>
         <td rowspan="4"><a href="#headers-enrichment">Headers enrichment</a></td>
-        <td><a href="#option-from-client-ignore">from-client-ignore (ZZZ: mention the case doesn't matter)</a></td>
+        <td><a href="#option-from-client-ignore">from-client-ignore</a></td>
         <td>No</td>
         <td>[] (an empty list)</td>
     </tr>
@@ -615,7 +661,7 @@ X-sec-wall-auth-info-signed = SHA256(invocation_id + delimeter + instance_secret
 </table>
 
 List of client headers that should be ignored and never forwarded to the backend
-server.
+server. Note that the names are treated case-insensitively.
 
 Sample:
 
