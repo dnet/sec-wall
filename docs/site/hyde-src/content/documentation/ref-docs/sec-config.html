@@ -430,7 +430,7 @@ The table's right below and if you need usage examples, just
         <td rowspan="2"><a href="#custom-http">Custom HTTP headers</a></td>
         <td><a href="#option-custom-http">custom-http</a></td>
         <td>No</td>
-        <td>(None)</td>
+        <td>False</td>
     </tr>
     <tr>
         <td><a href="#option-custom-http-headers">custom-http-*</a></td>
@@ -1122,9 +1122,19 @@ to have it be equal to [wsse-pwd-reject-expiry-limit](#option-wsse-pwd-reject-ex
     </tr>
     <tr>
         <td>No</td>
-        <td>(None)</td>
+        <td>False</td>
     </tr>
 </table>
+
+Whether client applications should be let in depending on the occurence and
+values of [configured HTTP headers](#option-custom-http-headers).
+
+{% syntax python %}
+{
+    'custom-http': True
+    # .. skip other options
+}
+{% endsyntax %}
 
 <h4 id="option-custom-http-headers">custom-http-*</h4>
 
@@ -1138,6 +1148,23 @@ to have it be equal to [wsse-pwd-reject-expiry-limit](#option-wsse-pwd-reject-ex
         <td>Yes, if <a href="#option-custom-http">custom-http</a> is True</td>
     </tr>
 </table>
+
+There must be at least one HTTP configured when [custom-http](#option-custom-http)
+is True, such as in the example below where there are two of them -
+**User-Agent** is expected to be **MyBrowser** and **X-MyHeader** must be
+**MySecret** for sec-wall to let the request in.
+
+{% syntax python %}
+{
+    'custom-http': True,
+    'custom-http-User-Agent':'MyBrowser',
+    'custom-http-X-MyHeader':'MySecret'
+    # .. skip other options
+}
+{% endsyntax %}
+
+That is, the pattern is <b>'custom-http-' + HEADER_NAME: HEADER_VALUE</b>, where HEADER_NAME is
+one of the HTTP headers and HEADER_VALUE is the value it must have.
 
 <h3 id="xpath">XPath</h3>
 
@@ -1154,6 +1181,17 @@ to have it be equal to [wsse-pwd-reject-expiry-limit](#option-wsse-pwd-reject-ex
     </tr>
 </table>
 
+If True, whether the client request will be let in or not will depend on a set
+of XPath expressions, each of which must evaluate to True.
+
+{% syntax python %}
+{
+    'xpath': True
+    # .. skip other options
+}
+{% endsyntax %}
+
+
 <h4 id="option-xpath-expr">xpath-*</h4>
 
 <table>
@@ -1166,6 +1204,22 @@ to have it be equal to [wsse-pwd-reject-expiry-limit](#option-wsse-pwd-reject-ex
         <td>Yes, if <a href="#option-xpath">xpath</a> is True</td>
     </tr>
 </table>
+
+List of XPath expressions, each of them must evaluate to True for sec-wall to
+consider the request be valid, like below:
+
+{% syntax python %}
+{
+    'xpath': True,
+    'xpath-expr1':'//username/value/text() = "MyUsername"',
+    'xpath-expr2':'//secret/value/text() = "MySecret"'
+    # .. skip other options
+}
+{% endsyntax %}
+
+That is, the pattern is <b>'xpath-' + EXPR_NAME: EXPR_VALUE</b>, where EXPR_NAME is
+ignored and EXPR_VALUE is the value it must have. Note that EXPR_NAME may be anything
+as long as it's unique for a given URL configuration.
 
 <h2 id="examples">Examples</h2>
 
