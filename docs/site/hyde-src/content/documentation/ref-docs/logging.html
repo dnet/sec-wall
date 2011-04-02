@@ -36,12 +36,39 @@ requests passing through a proxy - will be used more frequently.
 What gets logged where and why stems directly from
 [how sec-wall has been designed](/documentation/arch/index.html)
 and the sketch diagram below captures the flow of information that controls the logging process.
-Note that all links are relative to
+Note that all paths are relative to
 [the config.py file](/documentation/ref-docs/config-file.html).
 
 <div style="text-align:center">
   <img src="/media/gfx/logging.png" alt=""/>
 </div>
+
+You'll remember that
+[sec-wall runs under a control of zdaemon](/documentation/arch/index.html), that's
+why when the proxy is starting or stopping, there's a log entry being written
+to the ./zdaemon.log file, basically the information which process is that of sec-wall
+and that it has just started or stopped.
+
+An unhandled error while processing an incoming client requests is always wrapped
+in an HTTP 500 error and any information that might aid with resolving
+the issue is being written to the ./logs/proxy.log file.
+
+If config.py or a given URL config say that
+[add-auth-info](/documentation/ref-docs/sec-config.html#option-add-auth-info),
+[sign-auth-info](/documentation/ref-docs/sec-config.html#option-sign-auth-info)
+or
+[add_invocation_id](/documentation/ref-docs/config-file.html#add_invocation_id)
+are in effect, the necessary HTTP headers are created. Their format is documented
+in
+[a separate section](/ZZZ).
+
+The regular log entries are being written to syslog by default and their format
+is documented
+in
+[a separate section](/ZZZ).
+Whether they're written at all though depends on the log level configured.
+They're emitted on either INFO or ERROR level so if you change the log level to,
+say, CRITICAL, you'll never have any regular log messages written to the logs.
 
 <h2 id="examples">Examples</h2>
 
