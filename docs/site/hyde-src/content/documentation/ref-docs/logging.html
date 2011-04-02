@@ -1,0 +1,38 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+    has_exercises: "True"
+    has_this_page: "True"
+%}
+
+{% block section_title %}Logging{% endblock %}
+
+{% block exercises %}
+    <li>123
+    </li>
+{% endblock %}
+
+{% block this_page %}
+    <li>123
+    </li>
+    <li><a href="#exercises">Exercises</a></li>
+{% endblock %}
+
+{% block content %}
+
+{% markdown %}
+
+<h1>Logging</h1>
+
+<h2 id="intro">Introduction</h2>
+
+
+<h2 id="examples">Examples</h2>
+
+There's [a whole chapter devoted to nothing but showing various examples of sec-wall's configuration files](/ZZZ),
+head over there for more information.
+
+{% endmarkdown %}
+
+{% endblock %}
