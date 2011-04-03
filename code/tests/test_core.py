@@ -111,13 +111,13 @@ def test_invocation_context_init_parameters():
     (_instance_name,  _instance_unique,  _message_number, _proc_start,
      _proc_end,  _ext_start,  _ext_end,  _env,  _url_config, _client_cert,
      _data,  _remote_address,  _auth_result,  _config_type,  _path_info,
-     _query_string,  _client_address,  _request_metod) = [uuid4().hex for x in range(18)]
+     _query_string,  _client_address,  _request_method) = [uuid4().hex for x in range(18)]
 
     ctx = InvocationContext(_instance_name,  _instance_unique,
             _message_number, _proc_start, _proc_end,  _ext_start,  _ext_end,
             _env,  _url_config, _client_cert, _data,  _remote_address,
             _auth_result,  _config_type,  _path_info, _query_string,
-            _client_address,  _request_metod)
+            _client_address,  _request_method)
 
     eq_(ctx.instance_name, _instance_name)
     eq_(ctx.instance_unique, _instance_unique)
@@ -136,7 +136,7 @@ def test_invocation_context_init_parameters():
     eq_(ctx.path_info, _path_info)
     eq_(ctx.query_string, _query_string)
     eq_(ctx.client_address, _client_address)
-    eq_(ctx.request_metod, _request_metod)
+    eq_(ctx.request_method, _request_method)
     eq_(ctx.stop_watch_format, '{0.seconds}.{0.microseconds:06d}')
     eq_(ctx.invocation_id, '{0}/{1}/{2}'.format(_instance_name, _instance_unique,
                                                 _message_number))
@@ -167,13 +167,13 @@ def test_invocation_context_format_log_message():
 
             (_instance_name,  _instance_unique,  _message_number, _url_config, _client_cert,
              _data,  _remote_address, _config_type,  _path_info,
-             _query_string,  _client_address,  _request_metod) = [uuid4().hex for x in range(12)]
+             _query_string,  _client_address,  _request_method) = [uuid4().hex for x in range(12)]
 
             ctx = InvocationContext(_instance_name,  _instance_unique,
                     _message_number, _proc_start, _proc_end,  _ext_start,  _ext_end,
                     _env,  _url_config, _client_cert, _data,  _remote_address,
                     _auth_result,  _config_type,  _path_info, _query_string,
-                    _client_address,  _request_metod)
+                    _client_address,  _request_method)
 
             msg = ctx.format_log_message(_code, _needs_details)
 
@@ -192,7 +192,7 @@ def test_invocation_context_format_log_message():
             eq_(code, _code)
             eq_(proc_start, str(_proc_start))
             eq_(remote_address, _remote_address)
-            eq_(req_info, _request_metod + ' ' + _path_info + _query_string)
+            eq_(req_info, _request_method + ' ' + _path_info + _query_string)
 
             _proc_total = _proc_end - _proc_start
             _ext_overhead = _ext_end - _ext_start

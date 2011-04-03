@@ -109,7 +109,7 @@ class InvocationContext(object):
                  proc_start=None, proc_end=None, ext_start=timedelta(), ext_end=timedelta(),
                  env=None, url_config={}, client_cert=None, data='',
                  remote_address=None, auth_result=None, config_type='', path_info=None,
-                 query_string=None, client_address=None, request_metod=None):
+                 query_string=None, client_address=None, request_method=None):
         self.instance_name = instance_name
         self.instance_unique = instance_unique
         self.message_number = message_number
@@ -127,7 +127,7 @@ class InvocationContext(object):
         self.path_info = path_info
         self.query_string = query_string
         self.client_address = client_address
-        self.request_metod = request_metod
+        self.request_method = request_method
         self.stop_watch_format = '{0.seconds}.{0.microseconds:06d}'
         self.invocation_id = '{0}/{1}/{2}'.format(instance_name, instance_unique, message_number)
         self.invocation_id_signed = ''
@@ -148,7 +148,7 @@ class InvocationContext(object):
         s = '{0};{1};{2};{3};{4} {5}{6};{7};{8};{9};{10};{11}'.format(
                 self.invocation_id, code,
                 self.proc_start, self.remote_address,
-                self.request_metod, self.path_info,
+                self.request_method, self.path_info,
                 self.query_string,
                 self.stop_watch_format.format(secwall_overhead),
                 self.stop_watch_format.format(ext_overhead),
