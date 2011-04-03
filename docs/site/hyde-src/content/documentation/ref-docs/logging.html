@@ -73,12 +73,13 @@ and
 are in effect, the necessary HTTP headers are created. Their format is documented
 in [a separate section](#http-headers).
 
-The regular log entries are being written to
+The regular log entries - showing what applications were accessing sec-wall, when it was,
+whether they succeeded or not and [similar things](#log-entries) - are being written to
 [syslog by default](#configuring-the-logger)
 and their format
 is documented
 in
-[a separate section](/ZZZ).
+[a separate section](#log-entries).
 Whether they're written at all though depends on
 [the log level configured](/documentation/ref-docs/config-file.html#log_level).
 They're emitted on either INFO or ERROR level so if you change the log level to,
@@ -132,8 +133,32 @@ recycled on each sec-wall's restart.
 <br/><br/>
 
 <h2 id="log-entries">Log entries</h2>
+
+Each client's accessing a sec-wall instance ends in a log entry being emitted
+to the logs. The log entries constitute both an access and an error log in the
+sense that they're being written regardless of the HTTP response code, be it
+2xx, 4xx, 5xx or any other.
+
 <h4 id="log-entries-default">Default configuration</h4>
+
+By default, if you haven't changed anything yet, sec-wall will be using local
+syslog. The messages will be written to
+<a href="/documentation/ref-docs/config-file.html#syslog_address">/dev/syslog</a>
+using the
+<a href="/documentation/ref-docs/config-file.html#syslog_facility">LOG_USER</a>
+facility. Each message will be on either INFO or ERROR level which means that
+all of the messages will land in syslog because the default
+log level is
+<a href="/documentation/ref-docs/config-file.html#log_level">INFO</a>.
+
 <h4 id="log-entries-configure">Configuring log entries</h4>
+
+Changing the configuration may mean modifying the information about where syslog
+is to be found, changing the log level or making sec-wall stop using syslog at all
+in favour of any of
+[the logging facilities Python supports](http://docs.python.org/library/logging.html) ![](/media/gfx/external-link.png)
+.
+
 <h4 id="log-entries-format">The log entry format</h4>
 
 <h2 id="examples">Examples</h2>
