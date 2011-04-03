@@ -161,6 +161,6 @@ class InvocationContext(object):
             s += ';"{0}";{1};{2};{3};{4};{5}'.format(
                 self.env.get('HTTP_USER_AGENT'), self.env.get('SERVER_SOFTWARE'),
                 self.env.get('SERVER_NAME'), self.env.get('SERVER_PORT'),
-                self.config_type, self.data)
+                self.config_type, self.data or '')
 
         return s

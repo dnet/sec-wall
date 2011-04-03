@@ -151,6 +151,10 @@ all of the messages will land in syslog because the default
 log level is
 <a href="/documentation/ref-docs/config-file.html#log_level">INFO</a>.
 
+Depending on your syslog's configuration, the entries will by default probably
+end up being written somewhere to /var/log, on Ubuntu it will be
+the /var/log/messages file.
+
 <h4 id="log-entries-configure">Configuring log entries</h4>
 
 Changing the configuration may mean modifying the information about where syslog
@@ -159,7 +163,167 @@ in favour of any of
 [the logging facilities Python supports](http://docs.python.org/library/logging.html) ![](/media/gfx/external-link.png)
 .
 
+Use
+[syslog_address](/documentation/ref-docs/config-file.html#syslog_address)
+and
+[syslog_facility](/documentation/ref-docs/config-file.html#syslog_facility)
+variables to change the sec-wall's syslog-related configuration, for instance, to have a
+sec-wall instance log to a remote syslog daemon.
+
+Changing
+[the log level](/documentation/ref-docs/config-file.html#log_level)
+a sec-wall proxy is running on influences a couple of
+things. Firstly, it dictates how many entries will be written to logs. The other
+thing is, the amount of things written in a single entry may be configured.
+
+A running proxy emits entries on either INFO or ERROR level. INFO is reserved
+for HTTP conversations that end in a successful authentication, that is, the client
+application had supplied the expected credentials and was let in. Any other situations
+will result in an ERROR entry being emitted to the logs.
+
+You can change the log level to ERROR if you'd like to be shown only erratic situations.
+Changing the log level in the other direction, to the DEBUG level, means a single
+log entry will contain more [details](#log-entries-format). Note that the details
+will also be added if the client hasn't been allowed in, when the incoming request
+has been rejected.
+
+One can always use
+<a href="/documentation/ref-docs/config-file.html#log_file_config">log_file_config</a>
+for completely overriding where entries are written to. You can use for configuring
+it to anything Python itself allows, including auto-rotated files, SMTP, queues
+and many more. Note that <a href="/documentation/ref-docs/config-file.html#log_file_config">log_file_config</a>
+has priority over the default syslog configuration so whatever
+<a href="/documentation/ref-docs/config-file.html#syslog_address">syslog_address</a> and
+<a href="/documentation/ref-docs/config-file.html#syslog_facility">syslog_facility</a>
+have been set to will be ignored.
+
 <h4 id="log-entries-format">The log entry format</h4>
+
+A single log entry consists of either 10 or 16 semicolon-separated fields - the
+exact number depends on whether the details shouldn't or should be logged in addition
+to the basic data. Note that a field may always be empty if there was no way
+to establish its proper vaule.
+
+Here are some clickable examples of both short and long log entries. They're broken
+out into several lines but each entry is actually emitted as a single line.
+
+<div style="text-align:left">
+<a href="#index-0">default/766a1eb215c643278626035f996d54cb/1</a>;<a href="#index-1">200</a>;<a href="#index-2">2011-04-03 18:21:43.036256</a>;<a href="#index-3">127.0.0.1</a>;<a href="#index-4">GET /foo/bar</a>;<a href="#index-5">0.002478</a>;<a href="#index-6">1.216932</a>;<a href="#index-7">1.219410</a>;<a href="#index-8">0</a>;<a href="#index-9">0</a>
+</div>
+<br/>
+
+<div style="text-align:left">
+<a href="#index-0">default/766a1eb215c643278626035f996d54cb/2</a>;<a href="#index-1">401</a>;<a href="#index-2">2011-04-03 18:23:47.195186</a>;<a href="#index-3">127.0.0.1</a>;<a href="#index-4">POST /foo/bar</a>;<a href="#index-5">0.000413</a>;<a href="#index-6">0.000000</a>;<a href="#index-7">0.000413</a>;<a href="#index-8">1</a>;<a href="#index-9">0006.0002</a>;<a href="#index-10">"Jakarta Commons-HttpClient/3.1"</a>;<a href="#index-11">gevent/0.13 Python/2.6</a>;<a href="#index-12">localhost6.localdomain6</a>;<a href="#index-13">15100</a>;<a href="#index-14">custom-http</a>;<a href="#index-15">&lt;soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"&gt;&lt;soapenv:Body&gt;&lt;x&gt;aaa&lt;/x&gt;&lt;/soapenv:Body&gt;&lt;/soapenv:Envelope&gt;</a>
+</div>
+<br/>
+
+The table below lists all the fields along with their description. Note that
+fields are 0-indexed. Again, fields 0-9 are the basic data and 10-15 are
+supplementary details.
+
+<table style="width:100%">
+    <tr>
+        <th>Index</th>
+        <th>Description</th>
+        <th>Example value</th>
+    </tr>
+    <tr id="index-0">
+        <td>0</td>
+        <td>Invocation ID, the same that may be injected into an
+            <a href="#http-headers-format">X-sec-wall-invocation-id</a> HTTP header</td>
+        <td>Production #19/e32cad2952e042529daabf021f92809d/191761</td>
+    </tr>
+    <tr id="index-1">
+        <td>1</td>
+        <td>HTTP status code returned to the client application</td>
+        <td>200</td>
+    </tr>
+    <tr id="index-2">
+        <td>2</td>
+        <td>Invocation's timestamp as returned by the Python's
+            <a href="http://docs.python.org/library/datetime.html#datetime.datetime.now">datetime.datetime.now</a>
+            function <img src="/media/gfx/external-link.png" alt="" />
+            </td>
+        <td>2011-04-03 19:34:27.864891</td>
+    </tr>
+    <tr id="index-3">
+        <td>3</td>
+        <td>IP address of the client application</td>
+        <td>10.158.1.81</td>
+    </tr>
+    <tr id="index-4">
+        <td>4</td>
+        <td>HTTP method and path accessed by the client</td>
+        <td>POST /services/loans</td>
+    </tr>
+    <tr id="index-5">
+        <td>5</td>
+        <td>The overhead incurred by sec-wall itself - the time in seconds spent in
+            sec-wall's code not including any external factors like invoking
+            the backend server</td>
+        <td>0.002478</td>
+    </tr>
+    <tr id="index-6">
+        <td>6</td>
+        <td>Time in seconds spent on waiting for the backend server to reply. Will
+            be equal to 0 seconds if the client request hadn't sucessfully passed through
+            the authentication phase and no backend server was invoked at all.</td>
+        <td>1.216932</td>
+    </tr>
+    <tr id="index-7">
+        <td>7</td>
+        <td>The sum of what's under the index <a href="#index-5">5</a> and <a href="#index-6">6</a>,
+            that is, the total time in seconds the client application had to wait for a sec-wall instance to reply</td>
+        <td>1.219410</td>
+    </tr>
+    <tr id="index-8">
+        <td>8</td>
+        <td>Boolean value indicating whether the client application was
+            successfully authenticated. '0' means 'yes', '1' - 'no'.</td>
+        <td>0</td>
+    </tr>
+    <tr id="index-9">
+        <td>9</td>
+        <td>Error code assigned to the given invocation. '0' means 'no errors at all'
+            and any other value indicates an error.</td>
+        <td>0005.0003</td>
+    </tr>
+    <tr id="index-10">
+        <td>10</td>
+        <td>The HTTP User-Agent header as sent by the client application</td>
+        <td>"Erlang XML-RPC Client 1.13"</td>
+    </tr>
+    <tr id="index-11">
+        <td>11</td>
+        <td>HTTP(S) server the given sec-wall instance was running on top of</td>
+        <td>gevent/0.13 Python/2.7</td>
+    </tr>
+    <tr id="index-12">
+        <td>12</td>
+        <td>Address the given instance was bound to</td>
+        <td>mysubdomain.example.com</td>
+    </tr>
+    <tr id="index-13">
+        <td>13</td>
+        <td>Port the proxy was listening on</td>
+        <td>15100</td>
+    </tr>
+    <tr id="index-14">
+        <td>14</td>
+        <td>The type of security configuration the client application was expected
+            to use, it's always one of the values from the
+            <a href="/documentation/ref-docs/config-file.html#validation_precedence">validation_precedence</a>
+            list.
+        </td>
+        <td>ssl-cert</td>
+    </tr>
+    <tr id="index-15">
+        <td>15</td>
+        <td>HTTP POST data sent in by the client application, assuming
+            there was any POST data sent through at all</td>
+        <td>&lt;soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"&gt;&lt;soapenv:Body&gt;&lt;x&gt;aaa&lt;/x&gt;&lt;/soapenv:Body&gt;&lt;/soapenv:Envelope&gt;</td>
+    </tr>
+</table>
 
 <h2 id="examples">Examples</h2>
 

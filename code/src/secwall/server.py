@@ -114,7 +114,7 @@ class _RequestApp(object):
         ctx.path_info = path_info
         ctx.query_string = query_string
         ctx.remote_address = env.get('REMOTE_ADDR')
-        ctx.request_metod = env.get('REQUEST_METHOD')
+        ctx.request_method = env.get('REQUEST_METHOD')
 
         for c, url_config in self.urls:
             match = c.test(path_info)
