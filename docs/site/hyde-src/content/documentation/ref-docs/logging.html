@@ -75,7 +75,7 @@ in [a separate section](#http-headers).
 
 The regular log entries - showing what applications were accessing sec-wall, when it was,
 whether they succeeded or not and [similar things](#log-entries) - are being written to
-[syslog by default](#configuring-the-logger)
+[syslog by default](#log-entries-configure)
 and their format
 is documented
 in
@@ -199,9 +199,9 @@ have been set to will be ignored.
 
 <h4 id="log-entries-format">The log entry format</h4>
 
-A single log entry consists of either 10 or 16 semicolon-separated fields - the
-exact number depends on whether the details shouldn't or should be logged in addition
-to the basic data. Note that a field may always be empty if there was no way
+A single log entry consists of either 10 or 16 semicolon-separated fields -
+<a href="#log-entries-configure">the exact number depends on whether the details shouldn't or should be logged</a>
+in addition to the basic data. Note that a field may always be empty if there was no way
 to establish its proper vaule.
 
 Here are some clickable examples of both short and long log entries. They're broken
