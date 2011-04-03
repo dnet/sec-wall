@@ -14,7 +14,20 @@
 {% endblock %}
 
 {% block this_page %}
-    <li>123
+    <li><a href="#intro">Introduction</a></li>
+    <li><a href="#http-headers">HTTP headers</a>
+        <ol>
+            <li><a href="#http-headers-default">Default configuration</a></li>
+            <li><a href="#http-headers-configure">Configuring HTTP headers</a></li>
+            <li><a href="#http-headers-format">The headers format</a></li>
+        </ol>
+    </li>
+    <li><a href="#log-entries">Log entries</a>
+        <ol>
+            <li><a href="#log-entries-default">Default configuration</a></li>
+            <li><a href="#log-entries-configure">Configuring log entries</a></li>
+            <li><a href="#log-entries-format">The log entry format</a></li>
+        </ol>
     </li>
     <li><a href="#exercises">Exercises</a></li>
 {% endblock %}
@@ -53,22 +66,75 @@ An unhandled error while processing an incoming client requests is always wrappe
 in an HTTP 500 error and any information that might aid with resolving
 the issue is being written to the ./logs/proxy.log file.
 
-If config.py or a given URL config say that
-[add-auth-info](/documentation/ref-docs/sec-config.html#option-add-auth-info),
-[sign-auth-info](/documentation/ref-docs/sec-config.html#option-sign-auth-info)
-or
+If config.py says that
 [add_invocation_id](/documentation/ref-docs/config-file.html#add_invocation_id)
+and
+[sign_invocation_id](/documentation/ref-docs/config-file.html#sign_invocation_id)
 are in effect, the necessary HTTP headers are created. Their format is documented
-in
-[a separate section](/ZZZ).
+in [a separate section](#http-headers).
 
-The regular log entries are being written to syslog by default and their format
+The regular log entries are being written to
+[syslog by default](#configuring-the-logger)
+and their format
 is documented
 in
 [a separate section](/ZZZ).
-Whether they're written at all though depends on the log level configured.
+Whether they're written at all though depends on
+[the log level configured](/documentation/ref-docs/config-file.html#log_level).
 They're emitted on either INFO or ERROR level so if you change the log level to,
 say, CRITICAL, you'll never have any regular log messages written to the logs.
+
+<h2 id="http-headers">HTTP headers</h2>
+<h4 id="http-headers-default">Default configuration</h4>
+The default configuration is governed by the config.py-wide variables:
+<a href="/documentation/ref-docs/config-file.html#add_invocation_id">add_invocation_id</a>
+and
+<a href="/documentation/ref-docs/config-file.html#sign_invocation_id">sign_invocation_id</a>.
+<br/>
+<br/>
+
+<h4 id="http-headers-configure">Configuring HTTP headers</h4>
+
+Visit the sections about
+<a href="/documentation/ref-docs/config-file.html#add_invocation_id">add_invocation_id</a>
+and
+<a href="/documentation/ref-docs/config-file.html#sign_invocation_id">sign_invocation_id</a>
+variables for information on how to influence when the invocation ID-related headers
+are being added.
+<br/>
+<br/>
+
+<h4 id="http-headers-format">The headers format</h4>
+
+An invocation ID is a string that uniquely identifies the given exchange of data
+between a client application and a sec-wall instance. As long as
+<a href="/documentation/ref-docs/config-file.html#INSTANCE_UNIQUE">the INSTANCE_UNIQUE variable</a>
+actually stays unique, the ID will be unique.
+<br/><br/>
+
+The exact formula for creating the <b>X-sec-wall-invocation-id</b> HTTP header is:
+<br/><br/>
+
+separator = '/'
+<br/>
+msg_number = msg_counter.next()
+<br/>
+invocation_id = <a href="/documentation/ref-docs/config-file.html#instance_name">instance_name</a>
+    + separator + <a href="/documentation/ref-docs/config-file.html#INSTANCE_UNIQUE">INSTANCE_UNIQUE</a> + separator + msg_number
+
+<br/><br/>
+
+where <i>msg_counter</i> is an
+<a href="http://docs.python.org/library/itertools.html#itertools.count">itertools.count</a>
+<img src="/media/gfx/external-link.png" alt="" /> instance, starting with 1,
+recycled on each sec-wall's restart.
+
+<br/><br/>
+
+<h2 id="log-entries">Log entries</h2>
+<h4 id="log-entries-default">Default configuration</h4>
+<h4 id="log-entries-configure">Configuring log entries</h4>
+<h4 id="log-entries-format">The log entry format</h4>
 
 <h2 id="examples">Examples</h2>
 
