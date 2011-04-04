@@ -1,0 +1,59 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+    has_exercises: "True"
+    has_this_page: "True"
+%}
+
+{% block section_title %}URL rewriting{% endblock %}
+
+{% block exercises %}
+    <li>Look up <b>Brian Ó Nualláin</b> on
+        <a href="http://www.wikipedia.org">Wikipedia</a>
+        <img src="/media/gfx/external-link.png" alt="" />
+        and read all of the novels mentioned there. (OK, that was supposed
+        to be taken semi-jokingly)
+    </li>
+{% endblock %}
+
+{% block this_page %}
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#exercises">Exercises</a></li>
+{% endblock %}
+
+{% block content %}
+
+{% markdown %}
+
+<h1>URL rewriting</h1>
+
+<h2 id="how-it-works">How it works</h2>
+
+sec-wall has support for changing the URLs on fly, that is, the URL a client
+application is accessing doesn't necessarily have to map 1:1 to what a backend
+server exposes, there's always an option of sec-wall's adjusting it to your needs.
+
+You doubtless remember that
+<a href="/documentation/ref-docs/sec-config.html#url-patterns">parts of the URLs to be matched need to be <i>named</i></a>
+and the names can be used for constructing new URLs, like in this example:
+
+<div style="text-align:center">
+    <img src="/media/gfx/url-rewrite.png" alt="" />
+</div>
+
+That is, it's possible to state that a pattern of the URL the client application
+invokes - such as <b>/before/\<customer_id:int\>/profile/\<customer_name:unicode\>/</b>
+gets mapped into a backend server's <b>/after/{customer_id}/cust-profile/{customer_name}/</b>
+pattern. Hence in runtime, a client application's invoking the <b>/before/2816917/profile/Brian Ó Nualláin/</b>
+URL will result in sec-wall's invoking the backend's URL of <b>/after/2816917/cust-profile/Brian Ó Nualláin/</b>
+
+
+<h2 id="examples">Examples</h2>
+
+There's [a whole chapter devoted to nothing but showing various examples of sec-wall's configuration files](/ZZZ),
+head over there for more information.
+
+{% endmarkdown %}
+
+{% endblock %}
