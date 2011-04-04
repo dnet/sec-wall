@@ -9,7 +9,37 @@
 {% block section_title %}Logging{% endblock %}
 
 {% block exercises %}
-    <li>123
+    <li>Start and stop a sec-wall instance several times. Look up its PID in
+        <a href="#intro">the zdaemon's log file</a>. Use
+        the <b>ps</b> command to confirm the PID's being reported correctly.
+    </li>
+    <li>
+        Try coming up with an incorrect configuration, one that means sending
+        the client a 500 HTTP status. What got logged into
+        <a href="#intro">the log of unhandled exceptions</a>?
+    </li>
+    <li>
+        Have sec-wall add
+        <a href="#intro"><b>X-sec-wall-invocation-id</b> and
+        <b>X-sec-wall-invocation-id-signed</b> HTTP headers</a>.
+        Confirm that both the backend server and the client application receive
+        the same headers. Confirm the headers are genuinly unique.
+    </li>
+    <li>
+        <a href="#log-entries-configure">Reconfigure the proxy</a> to use a remote syslog daemon through UDP.
+    </li>
+    <li>
+        What gets logged to syslog in case an HTTP 500 error has been encountered?
+    </li>
+    <li>
+        Change the log level to <a href="#log-entries-configure">DEBUG</a>,
+        confirm the details are being logged now.
+    </li>
+    <li>
+        Use <a href="#log-entries-configure">the log_file_config variable</a>
+        for reconfiguring sec-wall to use Python's built-in
+        <a href="http://docs.python.org/library/logging.html#rotatingfilehandler">RotatingFileHandler</a>
+        <img src="/media/gfx/external-link.png" alt="" />.
     </li>
 {% endblock %}
 
