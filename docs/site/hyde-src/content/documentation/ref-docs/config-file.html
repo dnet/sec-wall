@@ -129,7 +129,7 @@ absolutely none of sec-wall's business to understand where these values come fro
 in other words, the whole configuration may, for instance,  be actually stored in
 [LDAP](http://en.wikipedia.org/wiki/LDAP) ![](/media/gfx/external-link.png),
 fetched through
-[RabbitMQ](http://rabbitmq.org) ![](/media/gfx/external-link.png)
+[RabbitMQ](http://www.rabbitmq.com) ![](/media/gfx/external-link.png)
 and pumped into said variables using
 [Telepathy](http://telepathy.freedesktop.org/wiki/) ![](/media/gfx/external-link.png).
 The chapters below all picture it like if the variables were manually set to static strings
@@ -204,7 +204,7 @@ A UUID4 identifier
 </div>
 
 A string used as a salt when
-<a href="/ZZZ">cryptographically signing the requests</a> and in the
+<a href="#sign_invocation_id">cryptographically signing the requests</a> and in the
 automatically generated default configuration - for denying the access
 to all client applications. The default value is a UUID4 which should
 be enough for most needs. There's really no reason for changing it but
@@ -546,7 +546,7 @@ Path to a logging configuration file, must be in
 <a href="http://docs.python.org/library/logging.html#configuring-logging">the format Python stdlib's logging.fileConfig function can understand</a> ![](/media/gfx/external-link.png).
 Configuration read from the file pointed to
 by this variable will override any other logging-related options set in the config.py
-file. <a href="ZZZ">Click here to read more about confiruging sec-wall's logging features</a>.
+file. <a href="/documentation/ref-docs/logging.html">Click here to read more about confiruging sec-wall's logging features</a>.
 
 See also: [log_level](#log_level), [syslog_address](#syslog_address) and [syslog_facility](#syslog_facility).
 
@@ -696,7 +696,7 @@ b'/dev/log'
 Address of the syslog to use by default. Note that if it's a string, it must be prepended
 with 'b' (just like the default is). In can also point to a UDP address in the form
 of a two-element list, such as ['127.0.0.1', 514]. See
-[the logging documentation](/ZZZ) for more regarding sec-wall's approach to logging.
+[the logging documentation](/documentation/ref-docs/logging.html) for more regarding sec-wall's approach to logging.
 
 See also: [log_file_config](#log_file_config), [log_level](#log_level) and [syslog_facility](#syslog_facility).
 
@@ -743,7 +743,7 @@ urls = [
 
 <h2 id="examples">Examples</h2>
 
-There's [a whole chapter devoted to nothing but showing various examples of sec-wall's configuration files](/ZZZ),
+There's [a whole chapter devoted to nothing but showing various examples of sec-wall's configuration files](/documentation/usage-examples/index.html),
 head over there for more information.
 
 {% endmarkdown %}

@@ -39,10 +39,10 @@ designed for securing a backend server and we'll make it require
 <img src="/media/gfx/external-link.png" alt="" /> .
 We'll be doing it from scratch, with no previous experience with sec-wall assumed.
 
-The only thing you need to make sure of is that <a href="TODO" title="The installation guide">sec-wall has already been
+The only thing you need to make sure of is that <a href="/documentation/getting-started/index.html" title="The installation guide">sec-wall has already been
 installed</a> and it's ready to use. If you're not sure if sec-wall's already installed,
 you can simply type *sec-wall* in the command line shell and any response similar
-to the one below means you're good to go. Head over to <a href="TODO">the installation guide</a>
+to the one below means you're good to go. Head over to <a href="/documentation/getting-started/index.html">the installation guide</a>
 if it seems the sec-wall package has not been installed on your system yet.
 
 {% syntax bash %}
@@ -158,7 +158,7 @@ password "bar". The URL to be secured will be of the
 /account/\<account_name:unicode\> pattern, that is, there will be an /account prefix
 followed by any string and any other URL will be picked up by the default pattern.
 /account/hey-joe and /account/123456 will match the config while /my/settings/hey-joe
-will not. We'll be proxying the requests over to the  <a href="/">http://tutorial.sec-wall.gefira.pl</a> domain in this particular case.
+will not. We'll be proxying the requests over to the  <a href="http://tutorial.sec-wall.gefira.pl">http://tutorial.sec-wall.gefira.pl</a> domain in this particular case.
 Assigning labels to chosen parts of a URL ('account_name' here) is useful when a URL
 rewrite is needed - it won't be used in the tutorial but it's good to know that
 <a href="#">it's possible to rewrite the URLs with sec-wall</a>.
@@ -304,14 +304,14 @@ don't hesitate to have a look at the [support page][support]. See you there!
 [nohup]: http://en.wikipedia.org/wiki/Nohup "(external link) nohup on Wikipedia"
 [localhost]: http://localhost:15100/account/hey-there
 [invalid]: http://localhost:15100/invalid/blog/page/1
-[ssltls]: TODO
-[wsse]: TODO
-[auth_digest]: TODO
-[custom_headers]: TODO
-[xpath]: TODO
-[matching_rewriting]: TODO
-[enrichment]: TODO
-[support]: ../../support/index.html
+[ssltls]: /documentation/ref-docs/sec-config.html#client-certs
+[wsse]: /documentation/ref-docs/sec-config.html#ws-security
+[auth_digest]: /documentation/ref-docs/sec-config.html#digest-auth
+[custom_headers]: /documentation/ref-docs/sec-config.html#custom-http
+[xpath]: /documentation/ref-docs/sec-config.html#xpath
+[matching_rewriting]: /documentation/ref-docs/url-rewrite.html
+[enrichment]: /documentation/ref-docs/sec-config.html#headers-enrichment
+[support]: /support/index.html
 
 {% endmarkdown %}
 

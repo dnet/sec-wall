@@ -237,7 +237,7 @@ for pattern matching and this particular patterns should read:
     '/client/2/billing' but any other won't match the pattern.
 
 You sure have noticed that expressions are named, it's *service_name* in the examples
-above, and the names come in handy when configuring <a href="/ZZZ">URL-rewriting</a>.
+above, and the names come in handy when configuring <a href="/documentation/ref-docs/url-rewrite.html">URL-rewriting</a>.
 
 In run-time, patterns are checked in the order they're given in the *urls*
 variable and the first match wins. The other ones are ignored and there won't
@@ -321,7 +321,7 @@ header's value is equal to 'sSekreTT', here's how the config will look like:
 {% endsyntax %}
 
 The table's right below and if you need usage examples, just
-<a href="/ZZZ" title="Usage examples">click here</a>.
+<a href="/documentation/usage-examples/index.html" title="Usage examples">click here</a>.
 
 <table style="width:100%">
     <tr>
@@ -495,9 +495,9 @@ The table's right below and if you need usage examples, just
         <td>(None)</td>
     </tr>
     <tr>
-        <td><a href="/ZZZ">URL-rewriting</a></td>
-        <td><a href="/ZZZ">rewrite</a> (not exactly a security option, added here for completness
-        and documented <a href="/ZZZ" title="URL-rewriting docs">elsewhere</a>)</td>
+        <td><a href="/documentation/ref-docs/url-rewrite.html">URL-rewriting</a></td>
+        <td><a href="/documentation/ref-docs/url-rewrite.html">rewrite</a> (not exactly a security option, added here for completness
+        and documented <a href="/documentation/ref-docs/url-rewrite.html" title="URL-rewriting docs">elsewhere</a>)</td>
         <td>No</td>
         <td>(None)</td>
     </tr>
@@ -520,7 +520,7 @@ The table's right below and if you need usage examples, just
 
 Host the client requests should be proxied over to, including scheme (http:// or https://)
 and an optional port number of the backend server  but no URL path because the path - unless
-[URL-rewriting](/ZZZ)
+[URL-rewriting](/documentation/ref-docs/url-rewrite.html)
 is in effect - will be copied over as-is.
 
 That is, by default, if sec-wall is running on
@@ -636,9 +636,9 @@ The exact formula is as follows:
 
 delimeter = ':'
 <br/>
-invocation_id = <a href="/ZZZ">as documented in the logging docs</a>
+invocation_id = <a href="/documentation/ref-docs/logging.html">as documented in the logging docs</a>
 <br/>
-instance_secret = <a href="/ZZZ">INSTANCE_SECRET</a>
+instance_secret = <a href="/documentation/ref-docs/config-file.html#INSTANCE_SECRET">INSTANCE_SECRET</a>
 <br/>
 auth_info = <a href="#option-add-auth-info">X-sec-wall-auth-info</a>
 <br/>
@@ -1025,7 +1025,7 @@ The realm to use when sending an HTTP 401 status to the client application.
 </table>
 
 Dictates whether client applications are required to use the
-[Web Services Security: Username Token Profile V1.0 (PDF)] (http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0.pdf)
+<a href="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0.pdf">Web Services Security: Username Token Profile V1.0 (PDF)</a>
 ![](/media/gfx/external-link.png) when connecting to the proxy.
 
 <h4 id="option-wsse-pwd-username">wsse-pwd-username</h4>
@@ -1272,7 +1272,7 @@ for evaluation against the incoming requests.
 
 <h2 id="examples">Examples</h2>
 
-There's [a whole chapter devoted to nothing but showing various examples of sec-wall's configuration files](/ZZZ),
+There's [a whole chapter devoted to nothing but showing various examples of sec-wall's configuration files](/documentation/usage-examples/index.html),
 head over there for more information.
 
 {% endmarkdown %}
