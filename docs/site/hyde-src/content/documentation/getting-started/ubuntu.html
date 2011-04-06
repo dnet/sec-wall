@@ -1,0 +1,42 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}Installing sec-wall on Ubuntu{% endblock %}
+
+{% block content %}
+
+<h1>Installing sec-wall on Ubuntu</h1>
+
+{% markdown %}
+
+<ul>
+    <li>Most of the dependencies can be apt-installed
+{% syntax bash %}
+$ sudo apt-get install python-pip python-pesto python-gevent python-zdaemon python-yaml python-lxml
+{% endsyntax %}
+    </li>
+
+    <li>For the time being, Spring Python needs to be installed via pip
+{% syntax bash %}
+$ sudo pip install springpython
+{% endsyntax %}
+    </li>
+
+    <li>Everything's ready for installing sec-wall now
+{% syntax bash %}
+$ sudo pip install sec-wall
+{% endsyntax %}
+    </li>
+
+    <li>
+        That's it, head on to the <a href="/documentation/index.html">documentation</a> and have fun!
+    </li>
+
+</ul>
+
+{% endmarkdown %}
+
+{% endblock %}

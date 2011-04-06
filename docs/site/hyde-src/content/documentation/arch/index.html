@@ -14,15 +14,15 @@
 
 **sec-wall** is a software for securing access to other software.
 It grew out of the necessity of securing big, proprietary and clumsy application servers that were
-exposing HTTP services (mostly [SOAP][soap])
+exposing HTTP services (mostly [SOAP][soap] ![](/media/gfx/external-link.png))
 to
 surrounding application servers deployed in a diverse mix of Linux,
 Windows, proprietary UNIX and mainframe systems, all of that running in a closed, internal
-[SOA][soa] environment.
+[SOA][soa] ![](/media/gfx/external-link.png) environment.
 Original design requirements for sec-wall included:
 
 * performance allowing for up to several thousand short-lived connections and requests a second
-  under a virtualized system running on top of a basic [Blade server][blade],
+  under a virtualized system running on top of a basic [Blade server][blade] ![](/media/gfx/external-link.png),
   any throughput beyond it would be considered a plus,
 * support for a wide range of authentication &amp; authorization options,
 * complete transparency regardless of whether the client and backend applications
@@ -41,11 +41,11 @@ Original design requirements for sec-wall included:
 The requirement for serving many connections on simple servers ruled out solutions
 based on multithreading or multiprocessing and left the author with the only
 choice that didn't sound like locking oneself up in a concrete approach to handling
-concurrency, the choice was to use [libevent][libevent]. Because the application
-was to be written in Python, [gevent][gevent], a highly Pythonic
+concurrency, the choice was to use [libevent][libevent] ![](/media/gfx/external-link.png). Because the application
+was to be written in Python, [gevent][gevent] ![](/media/gfx/external-link.png), a highly Pythonic
 wrapper was chosen as a layer for exposing libevent's features to sec-wall. Another
 compelling reason was the gevent's monkey patching utility which allows for many
-of the Python's standard library modules - such as [urllib2][urllib2] -
+of the Python's standard library modules - such as [urllib2][urllib2] ![](/media/gfx/external-link.png) -
 to essentially become asynchronous and cooperative with gevent's core. Apart from its pythonicity,
 gevent's code is clean and easy to follow, which means an easier learning curve
 should there ever be any need for contributing patches upstream. A contributing
@@ -74,7 +74,7 @@ The command line options are simple to the point of being dumb, *--init*, *--sta
 and *--stop* accept a single and the same argument, so the purpose of those options
 should be self-explanatory for people in a hurry.
 Have a look at
-[secwall.main][secwall.main]
+[secwall.main][secwall.main] ![](/media/gfx/external-link.png)
 in the source code for details on how command line arguments are being parsed. Note that the *--fork* option is treated differently,
 that's because it's not part of what regular users should see,
 it would be tempting to simply add it to sec-wall the command but it was felt
@@ -82,7 +82,7 @@ that's not the way it should be, an internal detail should not be exposed in a
 user's tool.
 
 Once started, sec-wall is a long running process, a daemon. What the command line
-options *--start* and *--stop* actually do is invoking a [zdaemon][zdaemon]
+options *--start* and *--stop* actually do is invoking a [zdaemon][zdaemon] ![](/media/gfx/external-link.png)
 command in a subprocess. *--start* creates a zdaemon.conf file and tells the zdaemon
 process to start using it, zdaemon in turn runs the sec-wall's Python code, mediates
 access to stdout &amp; stderr and automatically restarts sec-wall in case it's needed.
@@ -90,7 +90,7 @@ The *stop* option does the opposite, first tells zdaemon to stop the sec-wall's 
 processing loop and, once it's stopped, it then removes the automatically generated zdaemon.conf
 file so that the working directory is left at the state it was prior to running
 the *--start* option save for any log files generated when sec-wall was up.
-[secwall.cli][secwall.cli]
+[secwall.cli][secwall.cli] ![](/media/gfx/external-link.png)
 is the place where the actual processing of command line options takes place;
 note that a good deal of code belongs to the *secwall.cli._Command* base class which among
 other things takes care of communicating with zdaemon through the zdaemon's UNIX
@@ -98,13 +98,13 @@ socket interface - that lets the subclasses focus on their business functionalit
 
 As with any non-trivial software, sec-wall may be easily divided into major components,
 the building blocks that cooperate to reach a desired effect. Those blocks are glued
-together using [Spring Python's][spring-python] Inversion
+together using [Spring Python's][spring-python] ![](/media/gfx/external-link.png) Inversion
 of Control concept. What it means is that the parts become loosely coupled
 and independent, that allows for easier testing and swapping the parts without
 having to worry about breaking things due to intermingled dependencies between
 various parts of the code. Apart from that, most of the interal sec-wall's configuration,
 such as default error messages, are stored in the IoC context. The context
-lives in [secwall.app_context][secwall.app_context],
+lives in [secwall.app_context][secwall.app_context] ![](/media/gfx/external-link.png),
 it's a regular Python file with one class, any methods adorned with an *@Object*
 decorator become container-managed objects which basically means they will be invoked
 when sec-wall's starting and their return value will be stored for a later re-use.
@@ -136,7 +136,7 @@ The main sec-wall's parts are:
   have one then the connection will be closed as soon as the main WSGI app's \__call\__
   method gets executed (explained below),
 - secwall.server._RequestApp, known as *wsgi_request_app* in the IoC context;
-  the [WSGI][wsgi] application
+  the [WSGI][wsgi] ![](/media/gfx/external-link.png) application
   whose \__call\__ method is executed on each accepted request. Note the *accepted*
   part, the fact that \__call\__ gets called means the client connection to a proxy
   has already been established, in particular, if it's an SSL/TLS connection it means
@@ -182,13 +182,13 @@ The main sec-wall's parts are:
   is a good candidate for a patch to gevent so it's quite possible that it will
   disappear in future versions of sec-wall,
 
-- secwall.wsse.WSSE, implements the [UsernameToken Profile 1.0][username-token-profile-1.0]
+- secwall.wsse.WSSE, implements the [UsernameToken Profile 1.0][username-token-profile-1.0] ![](/media/gfx/external-link.png)
   part of the family of Web Services Security recommendations. The code has been
   written with re-usability in mind and can be easily used in other
   projects. Do note however that sec-wall currently **does not** maintain a cache
   of nounces used, though a subclass of the WSSE class might as well define one. Future
   versions of sec-wall may be able to improve the situation by using a cache
-  based on [memcached][memcached] or on similar tools.
+  based on [memcached][memcached] ![](/media/gfx/external-link.png) or on similar tools.
 
 <div style="text-align:center">
   <img src="/media/gfx/internals.png" alt="A visualization of dependencies between sec-wall's interal components (not including zdaemon, which is an external dependency)" title="A visualization of dependencies between sec-wall's interal components (not including zdaemon, which is an external dependency)"/>
@@ -208,7 +208,7 @@ must have a clear explanation of its purpose.
 It's very important that the project's web page which holds the documentation
 be acccessible to anyone, including people with impairments. The project will
 strive to achieve the highest possible conformance with the
-latest version of the [W3C Web Content Accessibility Guidelines][wcag20] and with
+latest version of the [W3C Web Content Accessibility Guidelines][wcag20] ![](/media/gfx/external-link.png) and with
 other similar industry standards and recommendations. Any suggestions for the better
 implementation in that regards are always very much welcome.
 
@@ -217,13 +217,13 @@ with great care; any omissions, ambiguities or typos will have a status of
 regular functional bugs. In short, documentation is just as much a part of the
 project as the business functionality and test cases are.
 
-The website has been built using [Hyde][hyde], a static website generator written
-in Python on top of [Django][django] and a dozen of other libraries. Most of the website's
-content is written using the [markdown][markdown] markup, the rest is regular HTML
+The website has been built using [Hyde][hyde] ![](/media/gfx/external-link.png), a static website generator written
+in Python on top of [Django][django] ![](/media/gfx/external-link.png) and a dozen of other libraries. Most of the website's
+content is written using the [markdown][markdown] ![](/media/gfx/external-link.png) markup, the rest is regular HTML
 used in places such as div layouts. The website is very simple and focused
 on the actual content instead of bells and whistles so it shouldn't be very hard
-to keep its current [XHTML 1.0 Strict][xhtml] compatibility while keeping in mind that
-at some point it should be ported to [HTML 5.0][html50].
+to keep its current [XHTML 1.0 Strict][xhtml] ![](/media/gfx/external-link.png) compatibility while keeping in mind that
+at some point it should be ported to [HTML 5.0][html50] ![](/media/gfx/external-link.png).
 
 <hr />
 
@@ -231,7 +231,7 @@ sec-wall is a security software and as any piece of software, but as a security 
 one in particular, it deserves to be thoroughly tested before making any stable releases
 thus it should be no surprise that in terms of source lines of code there are more
 test cases then there is the actual business functionality. The project also uses
-[coverage.py][coverage] to keep a 100% code coverage for ensuring that there's
+[coverage.py][coverage] ![](/media/gfx/external-link.png) to keep a 100% code coverage for ensuring that there's
 no unnecessary code, that is, it can be assumed that a line of code may be safely removed if there isn't any
 test case to cover it unless there are very good reasons for not testing the line
 in question. For instance, wsse.server._RequestHandler is a subclass of
@@ -240,7 +240,7 @@ a couple of its own lines. In this particular situation it would be an overkill
 to test all the not so trivial branches of the overridden method, tests only cover
 those lines that are directly related to what's been added by sec-wall, the rest has been
 excluded from influencing the line coverage machinery by adding a *# pragma: no cover* comment.
-It is the project's practice that any particular commit made to the [trunk branch][sec-wall-trunk]
+It is the project's practice that any particular commit made to the [trunk branch][sec-wall-trunk] ![](/media/gfx/external-link.png)
 is guaranteed to be fully tested but the same doesn't apply to feature or private
 branches created, for instance, to resolve a particular bug.
 
