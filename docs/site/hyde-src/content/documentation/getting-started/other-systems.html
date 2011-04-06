@@ -1,0 +1,50 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}Installing sec-wall on any system{% endblock %}
+
+{% block content %}
+
+<h1>Installing sec-wall on any system</h1>
+
+{% markdown %}
+
+
+<ul>
+    <li>
+        sec-wall's written in a highly portable programming language, Python,
+        and its dependencies should allow for anyone to install it on just about
+        any operating system. You just need to make sure you have the necessary
+        packages installed - don't forget that they have their own dependencies
+        in turn. All of the pieces mentioned below can be found at <a href="http://pypi.python.org/pypi">PyPI</a> <img src="/media/gfx/external-link.png" alt="" />:
+        <ol>    
+            <li><a href="http://www.gevent.org/">gevent</a> <img src="/media/gfx/external-link.png" alt="" /></li>
+            <li><a href="http://lxml.de/">lxml</a> <img src="/media/gfx/external-link.png" alt="" /></li>
+            <li><a href="http://pypi.python.org/pypi/pesto">pesto</a> <img src="/media/gfx/external-link.png" alt="" /></li>
+            <li><a href="http://pypi.python.org/pypi/pip">pip</a> <img src="/media/gfx/external-link.png" alt="" /></li>
+            <li><a href="http://pyyaml.org/">PyYAML</a> <img src="/media/gfx/external-link.png" alt="" /></li>
+            <li><a href="http://pypi.python.org/pypi/springpython">Spring Python</a> <img src="/media/gfx/external-link.png" alt="" /></li>
+            <li><a href="http://pypi.python.org/pypi/zdaemon">zdaemon</a> <img src="/media/gfx/external-link.png" alt="" /></li>
+        </ol>
+    </li>
+    
+    <li>
+        Having installed the dependencies, you can now 
+        <a href="https://launchpad.net/sec-wall/+download">download the sec-wall's .tar.gz package</a>
+        <img src="/media/gfx/external-link.png" alt="" />
+        and install it manually with pip.
+    </li>
+
+    <li>
+        Once you've got it all installed, head on to the <a href="/documentation/index.html">documentation</a> and have fun!
+        And hey, don't forget to <a href="/support/index.html">tell the project</a> where you've installed sec-wall on. Thanks!
+    </li>
+
+</ul>
+
+{% endmarkdown %}
+
+{% endblock %}

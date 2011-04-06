@@ -1,0 +1,45 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}Installing sec-wall on Fedora &trade;{% endblock %}
+
+{% block content %}
+
+<h1><img src="/media/gfx/logo-fedora.png" style="vertical-align:middle" alt="Ubuntu Linux logo" /> Installing sec-wall on Fedora &trade;</h1>
+
+{% markdown %}
+
+<ul>
+    <li>Most of the dependencies can be yum-installed
+{% syntax text %}
+# yum install python-pip python-gevent python-lxml python-devel libyaml libyaml-devel
+{% endsyntax %}
+    </li>
+
+    <li>For the time being, Spring Python, pesto, PyYAML and zdaemon need to be installed via pip
+{% syntax text %}
+# pip-python install springpython
+# pip-python install pesto
+# pip-python install pyyaml 
+# pip-python install zdaemon
+{% endsyntax %}
+    </li>
+
+    <li>Everything's ready for installing sec-wall now
+{% syntax text %}
+# pip install sec-wall
+{% endsyntax %}
+    </li>
+
+    <li>
+        That's it, head on to the <a href="/documentation/index.html">documentation</a> and have fun!
+    </li>
+
+</ul>
+
+{% endmarkdown %}
+
+{% endblock %}
