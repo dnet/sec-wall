@@ -9,7 +9,10 @@
 {% block section_title %}URL rewriting{% endblock %}
 
 {% block exercises %}
-    <li>Look up <b>Brian Ó Nualláin</b> on
+    <li>Configure URL rewriting so that the /foo/123/bar/ZXC/baz/9900/ URL
+        gets rewritten into /qq/ZXC?foo=123?baz=9900
+    </li>
+    <li>Look up <b>Flann O'Brien</b> on
         <a href="http://www.wikipedia.org">Wikipedia</a>
         <img src="/media/gfx/external-link.png" alt="" />
         and read all of the novels mentioned there. (OK, that was supposed
@@ -45,9 +48,28 @@ and the names can be used for constructing new URLs, like in this example:
 That is, it's possible to state that a pattern of the URL the client application
 invokes - such as <b>/before/\<customer_id:int\>/profile/\<customer_name:unicode\>/</b>
 gets mapped into a backend server's <b>/after/{customer_id}/cust-profile/{customer_name}/</b>
-pattern. Hence in runtime, a client application's invoking the <b>/before/2816917/profile/Brian Ó Nualláin/</b>
-URL will result in sec-wall's invoking the backend's URL of <b>/after/2816917/cust-profile/Brian Ó Nualláin/</b>
+pattern. Hence in runtime, a client application's invoking the <b>/before/2816917/profile/Flann O'Brien/</b>
+URL will result in sec-wall's invoking the backend's URL of <b>/after/2816917/cust-profile/Flann O'Brien/</b> -
+in other words, the names matched may be put between curly bracket to help form new URLs.
 
+The complete configuration, one that should be added to
+<a href="/documentation/ref-docs/config-file.html">the config.py file</a>,
+might look like the one below, the key is to use the <b>rewrite</b> option of
+a given URL's configuration dictionary.
+
+{% syntax python %}
+def url_rewrite_sample():
+    return {
+        'custom-http': True,
+        'custom-http-Accept-Language':'en-us,en;q=0.5',
+        'host': 'http://example.com/',
+        'rewrite': '/after/{customer_id}/cust-profile/{customer_name}/'
+    }
+
+urls = [
+    ('/before/<customer_id:int>/profile/<customer_name:unicode>/', url_rewrite_sample()),
+]
+{% endsyntax %}
 
 <h2 id="examples">Examples</h2>
 

@@ -63,7 +63,7 @@
           <y:Geometry height="28.0" width="416.0" x="35.95808978086251" y="357.96875"/>
           <y:Fill color="#CCCCFF" transparent="false"/>
           <y:BorderStyle color="#CCCCFF" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="252.138671875" x="81.9306640625" y="5.015625">/before/2816917/profile/Brian Ó Nualláin/</y:NodeLabel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="235.556640625" x="90.2216796875" y="5.015625">/before/2816917/profile/Flann O'Brien/</y:NodeLabel>
         </y:GenericNode>
       </data>
     </node>
@@ -73,7 +73,7 @@
           <y:Geometry height="28.0" width="416.0" x="35.95808978086251" y="439.96875"/>
           <y:Fill color="#CCCCFF" transparent="false"/>
           <y:BorderStyle color="#CCCCFF" type="line" width="1.0"/>
-          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="271.345703125" x="72.3271484375" y="5.015625">/after/2816917/cust-profile/Brian Ó Nualláin/</y:NodeLabel>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="17.96875" modelName="internal" modelPosition="c" textColor="#000000" visible="true" width="254.763671875" x="80.6181640625" y="5.015625">/after/2816917/cust-profile/Flann O'Brien/</y:NodeLabel>
         </y:GenericNode>
       </data>
     </node>
