@@ -477,10 +477,11 @@ a.permalink {
   visibility:hidden;
 }
 
-div.default {
-    background-color: #DDDDEE;
+span.default {
+    display:block;
+    background-color: #dde;
     border: 1px solid #999999;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     text-shadow: none;
     padding: 10px;
     font: 0.9em 'trebuchet ms',arial,sans-serif;

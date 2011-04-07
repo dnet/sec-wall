@@ -47,7 +47,7 @@
         Use <a href="#log_file_config">log_file_config</a> and change the way
         logging messages are being emitted. For instance - but let that not bind
         you in any way - try configuring it to use
-        <a href="http://plumberjack.blogspot.com/2010/09/queuehandler-and-zeromq-support.html" alt="Using ZeroMQ for logging">ZeroMQ</a>
+        <a href="http://plumberjack.blogspot.com/2010/09/queuehandler-and-zeromq-support.html" title="Using ZeroMQ for logging">ZeroMQ</a>
         <img src="/media/gfx/external-link.png" alt="" /> instead of syslog.
     </li>
     <li>
@@ -105,8 +105,8 @@
         </li>
     </ol>
   </li>
-  <li><a href="#examples">Examples</a>
-  <li><a href="#exercises">Exercises</a>
+  <li><a href="#examples">Examples</a></li>
+  <li><a href="#exercises">Exercises</a></li>
 {% endblock %}
 
 {% block content %}
@@ -199,9 +199,9 @@ and you just need to make sure they don't get inadvertently deleted.
 <h5 id="INSTANCE_SECRET">INSTANCE_SECRET</h5>
 
 Default:
-<div class="default">
+<span class="default">
 A UUID4 identifier
-</div>
+</span>
 
 A string used as a salt when
 <a href="#sign_invocation_id">cryptographically signing the requests</a> and in the
@@ -227,9 +227,9 @@ INSTANCE_SECRET = ':1@{8Q+W#Ilzk?:C23A{JD23A{UXQK@#:X{Z)A@#ALCSM#)'
 <h5 id="INSTANCE_UNIQUE">INSTANCE_UNIQUE</h5>
 
 Default:
-<div class="default">
+<span class="default">
 A UUID4 identifier regenerated on each sec-wall's restart
-</div>
+</span>
 
 An identifier assigned to the instance for the purpose of uniquely identifying the requests
 transmitted through the proxy. Contrast with <a href="#instance_name">instance_name</a>
@@ -252,10 +252,10 @@ See also: [instance_name](#instance_name).
 <h5 id="urls">urls</h5>
 
 Default:
-<div class="default">
+<span class="default">
 A catch-all pattern which points to a configuration that requires the client
          SSL certificate's commonName field be equal to INSTANCE_SECRET
-</div>
+</span>
 
 A list of 2-element lists or tuples each of which describes the URL pattern to
 be secured and the particular security configuration guarding the given URL pattern.
@@ -322,12 +322,12 @@ instance as a whole,
 <h5 id="add_default_if_not_found">add_default_if_not_found</h5>
 
 Default:
-<div class="default">
+<span class="default">
 True
-</div>
+</span>
 
 On startup, when reading the <a href="#urls">URLs to be secured</a>, sec-wall makes a note
-of whether it has seen the catch-all <b>/*</b> URL pattern (that's a slash followed
+of whether it has seen the catch-all <b>/\*</b> URL pattern (that's a slash followed
 by an asterisk, meaning "any URL"). If all URLs have been read and no configuration
 for the /* pattern has been found, the boolean value of <i>add_default_if_not_found</i>
 dictates whether one should be added. The value to be added will be read from
@@ -343,9 +343,9 @@ See also: [default_url_config](#default_url_config).
 <h5 id="add_invocation_id">add_invocation_id</h5>
 
 Default:
-<div class="default">
+<span class="default">
 True
-</div>
+</span>
 
 A boolean value indicating whether the backend the requests are proxied over to
 and the client sending the requests in should receive an <b>X-sec-wall-invocation-id</b>
@@ -362,14 +362,14 @@ See also: [INSTANCE_UNIQUE](#INSTANCE_UNIQUE) and [sign_invocation_id](#sign_inv
 <h5 id="ca_certs">ca_certs</h5>
 
 Default:
-<div class="default">
+<span class="default">
 An absolute value  of '.' + crypto_dir + 'ca-cert.pem' where '.' denotes a directory
 the config.py file is in and [crypto_dir](#crypto_dir) is a base directory
 for keeping the crypto material. For instance, if config.py is in
 /home/sec-wall/production/ and [crypto_dir](#crypto_dir) will be set
 to its default value of ./crypto then ca_certs will be equal to
 /home/sec-wall/production/crypto/ca-cert.pem
-</div>
+</span>
 
 A string representing the path to a list of concatenated PEM-encoded certificates
 of Certificate Authorities you're willing to trust. Note that the file should
@@ -381,14 +381,14 @@ See also: [certfile](#certfile), [crypto_dir](#crypto_dir), [keyfile](#keyfile),
 <h5 id="certfile">certfile</h5>
 
 Default:
-<div class="default">
+<span class="default">
 An absolute value  of '.' + crypto_dir + 'server-cert.pem' where '.' denotes a directory
 the config.py file is in and [crypto_dir](#crypto_dir) is a base directory
 for keeping the crypto material. For instance, if config.py is in
 /home/sec-wall/production/ and [crypto_dir](#crypto_dir) will be set
 to its default value of ./crypto then ca_certs will be equal to
 /home/sec-wall/production/crypto/server-cert.pem
-</div>
+</span>
 
 Path to a PEM-encoded server certificate which is used if the instance is to be
 run in the HTTPS mode.
@@ -398,9 +398,9 @@ See also: [ca_certs](#ca_certs), [crypto_dir](#crypto_dir), [keyfile](#keyfile),
 <h5 id="client_cert_401_www_auth">client_cert_401_www_auth</h5>
 
 Default:
-<div class="default">
+<span class="default">
 A string 'Transport mode="tls-client-certificate"'
-</div>
+</span>
 
 Value to be used in the <b>WWW-Authenticate</b> header with the purpose of signaling
 to the client that its request wouldn't have been rejected straight away had the client sent a client certificate in.
@@ -411,10 +411,10 @@ Inspired by the
 <h5 id="crypto_dir">crypto_dir</h5>
 
 Default:
-<div class="default">
+<span class="default">
 An absolute value  of './crypto' + where '.' denotes a directory
 the config.py file is in.
-</div>
+</span>
 
 The value of crypto_dir is used by default in <a href="#ca_certs">ca_certs</a>,
 <a href="#certfile">certfile</a> and <a href="#keyfile">keyfile</a> so that the
@@ -521,14 +521,14 @@ See also: [forbidden](#forbidden), [no_url_match](#no_url_match) and [not_author
 <h5 id="keyfile">keyfile</h5>
 
 Default:
-<div class="default">
+<span class="default">
 An absolute value  of '.' + crypto_dir + 'server-priv.pem' where '.' denotes a directory
 the config.py file is in and [crypto_dir](#crypto_dir) is a base directory
 for keeping the crypto material. For instance, if config.py is in
 /home/sec-wall/production/ and [crypto_dir](#crypto_dir) will be set
 to its default value of ./crypto then keyfile will be equal to
 /home/sec-wall/production/crypto/server-priv.pem
-</div>
+</span>
 
 Path to a PEM-encoded server's private key which is used if the instance is to be
 run in the HTTPS mode.
@@ -538,9 +538,9 @@ See also: [certfile](#certfile), [ca_certs](#ca_certs), [crypto_dir](#crypto_dir
 <h5 id="log_file_config">log_file_config</h5>
 
 Default:
-<div class="default">
+<span class="default">
 None
-</div>
+</span>
 
 Path to a logging configuration file, must be in
 <a href="http://docs.python.org/library/logging.html#configuring-logging">the format Python stdlib's logging.fileConfig function can understand</a> ![](/media/gfx/external-link.png).
@@ -553,9 +553,9 @@ See also: [log_level](#log_level), [syslog_address](#syslog_address) and [syslog
 <h5 id="log_level">log_level</h5>
 
 Default:
-<div class="default">
+<span class="default">
 'INFO'
-</div>
+</span>
 
 A string representing the log level the instance is running on. Must be one of
 [the levels Python's logging module understands](http://docs.python.org/library/logging.html#logging-levels) ![](/media/gfx/external-link.png).
@@ -566,9 +566,9 @@ See also: [log_file_config](#log_file_config), [syslog_address](#syslog_address)
 <h5 id="no_url_match">no_url_match</h5>
 
 Default:
-<div class="default">
+<span class="default">
 ['404', 'Not Found', 'text/plain', str('Not Found')]
-</div>
+</span>
 
 A four-element list whose elements indicate that although the client's auth
 data allowed it to establish a connection to the proxy, there was no configuration
@@ -585,9 +585,9 @@ See also: [forbidden](#forbidden), [internal_server_error](#internal_server_erro
 <h5 id="not_authorized">not_authorized</h5>
 
 Default:
-<div class="default">
+<span class="default">
 ['401', 'Not Authorized', 'text/plain', str('You are not authorized to access this resource')]
-</div>
+</span>
 
 A four-element list whose elements indicate that the client connectin to the instance
 is not authorized to access the URL. The elements are:
