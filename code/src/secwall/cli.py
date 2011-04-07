@@ -27,6 +27,10 @@ import glob, imp, logging, logging.config, os, subprocess, sys, syslog, uuid
 from secwall.core import LoggingFormatter
 from secwall.server import HTTPProxy, HTTPSProxy
 
+# A crude hack, no doubt, but otherwise sec-wall on Python 2.7/Fedora (other
+# systems presumably as well) bails out when starting.
+subprocess._has_poll = False
+
 class _Command(object):
     """ A base class for all CLI commands.
     """
