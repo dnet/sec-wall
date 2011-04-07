@@ -1,0 +1,47 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}HTTP Basic Authentication{% endblock %}
+
+{% block content %}
+
+<h1>HTTP Basic Authentication</h1>
+
+{% markdown %}
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+{% syntax python %}
+# -*- coding: utf-8 -*-
+
+# stdlib
+import uuid
+
+# Don't share it with anyone.
+INSTANCE_SECRET = '5bf4e78c256746eda2ce3e0e73f256d0'
+
+# May be shared with the outside world.
+INSTANCE_UNIQUE = uuid.uuid4().hex
+
+# ##############################################################################
+
+def default():
+    return {
+        'wsse-pwd': True,
+        'wsse-pwd-username': True,
+        'host': 'http://examples.sec-wall.gefira.pl'
+    }
+
+urls = [
+    ('/*', default()),
+]
+{% endsyntax %}
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+{% endmarkdown %}
+
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}Reconfiguring logging to use the Python's built-in RotatingFileHandler{% endblock %}
+
+{% block content %}
+
+<h1>Reconfiguring logging to use the Python's built-in RotatingFileHandler</h1>
+
+{% markdown %}
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+Contents of ./sec-wall-logging.conf pointed to by the 
+[log_file_config](/documentation/ref-docs/config-file.html#log_file_config) variable:
+
+{% syntax ini %}
+[loggers]
+keys=root
+ 
+[handlers]
+keys=rotatingFileHandler
+ 
+[formatters]
+keys=simpleFormatter
+ 
+[logger_root]
+level=INFO
+handlers=rotatingFileHandler
+ 
+[handler_rotatingFileHandler]
+class=logging.handlers.RotatingFileHandler
+formatter=simpleFormatter
+args=('sec-wall.log',)
+ 
+[formatter_simpleFormatter]
+format=%(asctime)s - %(name)s - %(levelname)s - %(message)s
+datefmt=
+{% endsyntax %}
+
+[config.py](/documentation/ref-docs/config-file.html):
+
+{% syntax python %}
+# -*- coding: utf-8 -*-
+
+# stdlib
+import uuid
+
+# Don't share it with anyone.
+INSTANCE_SECRET = '5bf4e78c256746eda2ce3e0e73f256d0'
+
+# May be shared with the outside world.
+INSTANCE_UNIQUE = uuid.uuid4().hex
+
+log_file_config = './sec-wall-logging.conf'
+
+# ##############################################################################
+
+def default():
+    return {
+        'basic-auth':True,
+        'basic-auth-username':'MyUser',
+        'basic-auth-password':'MySecret', # Needs to be given in clear text
+        'basic-auth-realm':'Secure area',
+        'host': 'http://examples.sec-wall.gefira.pl'
+    }
+
+urls = [
+    ('/*', default()),
+]
+{% endsyntax %}
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+{% endmarkdown %}
+
+{% endblock %}

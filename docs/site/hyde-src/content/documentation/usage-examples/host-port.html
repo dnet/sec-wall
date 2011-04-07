@@ -1,0 +1,52 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}Changing the host and port a sec-wall instance is running on{% endblock %}
+
+{% block content %}
+
+<h1>Changing the host and port a sec-wall instance is running on</h1>
+
+{% markdown %}
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+{% syntax python %}
+# -*- coding: utf-8 -*-
+
+# stdlib
+import uuid
+
+# Don't share it with anyone.
+INSTANCE_SECRET = '5bf4e78c256746eda2ce3e0e73f256d0'
+
+# May be shared with the outside world.
+INSTANCE_UNIQUE = uuid.uuid4().hex
+
+host = '192.168.1.140'
+port = 13939
+
+# ##############################################################################
+
+def default():
+    return {
+        'basic-auth':True,
+        'basic-auth-username':'MyUser',
+        'basic-auth-password':'MySecret', # Needs to be given in clear text
+        'basic-auth-realm':'Secure area',
+        'host': 'http://examples.sec-wall.gefira.pl'
+    }
+
+urls = [
+    ('/*', default()),
+]
+{% endsyntax %}
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+{% endmarkdown %}
+
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}Authentication based on XPath expressions{% endblock %}
+
+{% block content %}
+
+<h1>Authentication based on XPath expressions</h1>
+
+{% markdown %}
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+{% syntax python %}
+# -*- coding: utf-8 -*-
+
+# stdlib
+import uuid
+
+# Don't share it with anyone.
+INSTANCE_SECRET = '5bf4e78c256746eda2ce3e0e73f256d0'
+
+# May be shared with the outside world.
+INSTANCE_UNIQUE = uuid.uuid4().hex
+
+# ##############################################################################
+
+def default():
+    return {
+        'xpath': True,
+        'xpath-1': "/a/b/c/d/text() = 'ddd' and //foobar/text() = 'baz'",
+        'xpath-2': "//foobar/@myattr='myvalue'",
+        'host': 'http://examples.sec-wall.gefira.pl'
+    }
+
+urls = [
+    ('/*', default()),
+]
+{% endsyntax %}
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+{% endmarkdown %}
+
+{% endblock %}

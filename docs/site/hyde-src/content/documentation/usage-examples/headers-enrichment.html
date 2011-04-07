@@ -1,0 +1,61 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}Adding and removing HTTP headers on the fly{% endblock %}
+
+{% block content %}
+
+<h1>Adding and removing HTTP headers on the fly</h1>
+
+{% markdown %}
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+{% syntax python %}
+# -*- coding: utf-8 -*-
+
+# stdlib
+import uuid
+
+# Don't share it with anyone.
+INSTANCE_SECRET = '5bf4e78c256746eda2ce3e0e73f256d0'
+
+# May be shared with the outside world.
+INSTANCE_UNIQUE = uuid.uuid4().hex
+
+# ##############################################################################
+
+def default():
+    return {
+        'basic-auth':True,
+        'basic-auth-username':'MyUser',
+        'basic-auth-password':'MySecret', # Again, don't forget that it needs to be given in clear text
+        'basic-auth-realm':'Secure area',
+        'host': 'http://examples.sec-wall.gefira.pl',
+        
+        # Backend server will never see what client sends in
+        'from-client-ignore': ['User-Agent', 'Connection'], 
+
+        # Add some headers dynamically
+        'to-backend-add': {'X-MyCustomHeader1': 'MyValue1', 'User-Agent': 'My Fancy User Agent'},
+        
+        # Client will not receive these backend-generated headers
+        'from-backend-ignore': ['Accept-Ranges', 'Etag'], 
+        
+        # Let's say we want to force the Content Type a client receives
+        'to-client-add': {'Content-Type': 'text/xml; charset=UTF-8'}
+    }
+
+urls = [
+    ('/*', default()),
+]
+{% endsyntax %}
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+{% endmarkdown %}
+
+{% endblock %}
