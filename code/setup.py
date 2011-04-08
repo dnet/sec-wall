@@ -31,7 +31,7 @@ setup(
 
       author = "Dariusz Suchojad",
       author_email = "dsuch at gefira.pl",
-      url = "https://launchpad.net/sec-wall",
+      url = "http://sec-wall.gefira.pl/",
       description = "A feature packed high-performance security proxy",
       long_description = "sec-wall is a high-performance security proxy supporting SSL/TLS, WS-Security, HTTP Auth Basic/Digest, extensible authentication schemes based on custom HTTP headers and XPath expressions, powerful URL matching/rewriting and an optional headers enrichment. It's a security wall you can conveniently fence the otherwise defenseless backend servers with.",
       platforms = ["OS Independent"],
