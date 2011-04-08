@@ -158,10 +158,10 @@ password "bar". The URL to be secured will be of the
 /account/\<account_name:unicode\> pattern, that is, there will be an /account prefix
 followed by any string and any other URL will be picked up by the default pattern.
 /account/hey-joe and /account/123456 will match the config while /my/settings/hey-joe
-will not. We'll be proxying the requests over to the  <a href="http://tutorial.sec-wall.gefira.pl">http://tutorial.sec-wall.gefira.pl</a> domain in this particular case.
+will not. We'll be proxying the requests over to the  <a href="http://example.com">http://example.com</a> domain in this particular case.
 Assigning labels to chosen parts of a URL ('account_name' here) is useful when a URL
 rewrite is needed - it won't be used in the tutorial but it's good to know that
-<a href="#">it's possible to rewrite the URLs with sec-wall</a>.
+<a href="/documentation/ref-docs/url-rewrite.html">it's possible to rewrite the URLs with sec-wall</a>.
 
 The whole configuration file should now read like below:
 
@@ -201,7 +201,7 @@ def tutorial():
         'basic-auth-realm': 'sec-wall tutorial',
         'basic-auth-username': 'foo',
         'basic-auth-password': 'bar',
-        'host': 'http://tutorial.sec-wall.gefira.pl'
+        'host': 'http://example.com'
     }
 
 urls = [
@@ -227,7 +227,7 @@ of our intent.
 That's exactly what's needed for configuring sec-wall. Regardless of the
 authentication & authorization scheme, you simply need to choose a URL pattern
 and assign a dictionary of options to that pattern. All the possible
-<a href="#">options are listed and explained in the reference documentation</a>.
+<a href="/documentation/ref-docs/sec-config.html">options are listed and explained in the reference documentation</a>.
 
 Note the flexibility that comes with the approach of assigning options to URL patterns -
 although it's a simple tutorial only and we won't be doing it, there's absolutely
@@ -295,7 +295,7 @@ modified by you and then the proxy can be started and stopped as needed.
 
 Of course, that's only a quick tutorial meant to get you quickly started and
 it doesn't cover that much of what sec-wall has to offer. There's still [SSL/TLS][ssltls],
-[WSSE][wsse], [HTTP Auth Digest][auth_digest], [custom HTTP headers][custom_headers]
+[WS-Security][wsse], [HTTP Auth Digest][auth_digest], [custom HTTP headers][custom_headers]
 [XPath expressions][xpath], [URL matching/rewriting][matching_rewriting] and
 the option of [enriching the headers][enrichment]. If there's anything
 missing in sec-wall and you'd like to see it be added in future releases, please
