@@ -14,14 +14,15 @@
 
 <ul>
     <li>Most of the dependencies can be apt-installed
-{% syntax text %}
-# apt-get install python-pip python-pesto python-gevent python-zdaemon python-yaml python-lxml
+{% syntax bash %}
+$ sudo apt-get install python-pip python-pesto python-gevent python-yaml python-lxml
 {% endsyntax %}
     </li>
 
-    <li>For the time being, Spring Python needs to be installed via pip
-{% syntax text %}
-# pip install springpython
+    <li>For the time being, Spring Python and zdaemon need to be installed via pip
+{% syntax bash %}
+$ sudo pip install springpython
+$ sudo pip install zdaemon
 {% endsyntax %}
     </li>
 
