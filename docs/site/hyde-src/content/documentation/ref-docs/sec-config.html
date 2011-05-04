@@ -1255,10 +1255,13 @@ List of XPath expressions, each of them must evaluate to True for sec-wall to
 consider the request be valid, like below:
 
 {% syntax python %}
+
+from lxml import etree
+
 {
     'xpath': True,
-    'xpath-expr1':'//username/value/text() = "MyUsername"',
-    'xpath-expr2':'//secret/value/text() = "MySecret"'
+    'xpath-expr1': etree.XPath('//username/value/text() = "MyUsername"'),
+    'xpath-expr2': etree.XPath('//secret/value/text() = "MySecret"')
     # .. skip other options
 }
 {% endsyntax %}
