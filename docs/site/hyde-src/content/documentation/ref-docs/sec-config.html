@@ -426,13 +426,18 @@ The table's right below and if you need usage examples, just
         <td>(None)</td>
     </tr>
     <tr>
-        <td rowspan="8"><a href="#ws-security">WS-Security</a></td>
+        <td rowspan="9"><a href="#ws-security">WS-Security</a></td>
         <td><a href="#option-wsse-pwd">wsse-pwd</a></td>
         <td>No</td>
         <td>False</td>
     </tr>
     <tr>
         <td><a href="#option-wsse-pwd-username">wsse-pwd-username</a></td>
+        <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
+        <td>(None)</td>
+    </tr>
+    <tr>
+        <td><a href="#option-wsse-pwd-realm">wsse-pwd-realm</a></td>
         <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
         <td>(None)</td>
     </tr>
@@ -1064,6 +1069,21 @@ http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1
 
 Note that *wsse-pwd-password* will have precedence if both *wsse-pwd-password*
 and [wsse-pwd-password-digest](#option-wsse-pwd-password-digest) are given.
+
+<h4 id="option-wsse-pwd-realm">wsse-pwd-realm</h4>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>Yes, if <a href="#option-wsse-pwd">wsse-pwd</a> is True</td>
+        <td>(None)</td>
+    </tr>
+</table>
+
+The name of the realm the process of authentication takes place in.
 
 <h4 id="option-wsse-pwd-password-digest">wsse-pwd-password-digest</h4>
 
