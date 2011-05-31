@@ -2006,6 +2006,9 @@ class HTTPRequestHandlerTestCase(unittest.TestCase):
 
                 def makefile(*ignored_args, **ignored_kwargs):
                     pass
+                
+                def sendall(*ignored_args, **ignored_kwargs):
+                    pass
 
             class _WSGIInput(object):
                 def _discard(*ignored_args, **ignored_kwargs):
@@ -2050,17 +2053,25 @@ class HTTPRequestHandlerTestCase(unittest.TestCase):
             handler.wsgi_input = _WSGIInput()
             handler.requestline = uuid.uuid4().hex
             handler.request_version = uuid.uuid4().hex
-            handler.wfile = _WFile()
+            
+            try:
+                handler.wfile = _WFile()
+                check_wfile = True # Will be Trued in older gevent versions
+            except AttributeError:
+                handler._wfile = _WFile()
+                check_wfile = False 
+                
             handler.status = True
             handler.headers_sent = False
             handler.response_use_chunked = True
 
             handler.handle_one_response()
 
-            # This will be equal to the expected value only if the
-            # handler.application.__call__ above will have been succeeded.
-            assert_true(handler.wfile.data.startswith(handler.request_version + ' ' + '200 OK'),
-                        (handler.request_version, handler.wfile.data))
+            if check_wfile:
+                # This will be equal to the expected value only if the
+                # handler.application.__call__ above will have been succeeded.
+                assert_true(handler.wfile.data.startswith(handler.request_version + ' ' + '200 OK'),
+                            (handler.request_version, handler.wfile.data))
 
 def test_loggers():
     """ Makes sure all the relevant classes define a logger object.
