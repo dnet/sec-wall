@@ -129,12 +129,19 @@ class _RequestApp(object):
     def _on_request(self, ctx, start_response, env, url_config, client_cert, match=None):
         """ Checks security, invokes the backend server, returns the response.
         """
+        
+        # If True, we know we're being accessed using SSL.
+        has_ssl = False
+        
         # Some quick SSL-related checks first.
         if url_config.get('ssl'):
 
             # Has the URL been accessed through SSL/TLS?
             if env.get('wsgi.url_scheme') != 'https':
                 return self._403(ctx, start_response)
+            
+            # OK, we're now sure we're being invoked through SSL.
+            has_ssl = True
 
             # Is the client cert required?
             if url_config.get('ssl-cert') and not client_cert:
@@ -144,20 +151,33 @@ class _RequestApp(object):
         data = data if data else None
         ctx.data = data
 
-        for config_type in self.config.validation_precedence:
-            if config_type in url_config:
-
-                handler = getattr(self, '_on_' + config_type.replace('-', '_'))
-                auth_result = handler(env, url_config, client_cert, data)
-
-                ctx.auth_result = auth_result
-                ctx.config_type = config_type
-
-                if not auth_result:
-                    return self._401(ctx, start_response, self._get_www_auth(url_config, config_type))
-                break
+        # ssl-wrap-only implies 'ssl':True but everyone's free to forget about
+        # setting it so we may wind up ostensibly using SSL yet in reality
+        # we'd be using plain HTTP. That's why there's an additional check
+        # for 'has_ssl' below.
+        if url_config.get('ssl-wrap-only'):
+            if not has_ssl:
+                return self._403(ctx, start_response)
+            else:
+                # There will be no authentication performed and we need to fill
+                # in the information ourselves here so that what goes to logs
+                # doesn't use the ctx's defaults.
+                ctx.auth_result = AuthResult(True, '0')
         else:
-            return self._500(ctx, start_response)
+            for config_type in self.config.validation_precedence:
+                if config_type in url_config:
+    
+                    handler = getattr(self, '_on_' + config_type.replace('-', '_'))
+                    auth_result = handler(env, url_config, client_cert, data)
+    
+                    ctx.auth_result = auth_result
+                    ctx.config_type = config_type
+    
+                    if not auth_result:
+                        return self._401(ctx, start_response, self._get_www_auth(url_config, config_type))
+                    break
+            else:
+                return self._500(ctx, start_response)
 
         rewrite = url_config.get('rewrite')
         if rewrite:

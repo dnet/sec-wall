@@ -1811,6 +1811,105 @@ class RequestAppTestCase(unittest.TestCase):
 
             finally:
                 wsgi_input.close()
+                
+    def test_wrap_only_ok(self):
+        """ Tests whether SSL wrapping only, without any auth schemes, works OK.
+        """
+        with Replacer() as r:
+            
+            pattern = '/foo'
+            _host = 'https://' + uuid.uuid4().hex
+            _url_config = {'ssl':True, 'ssl-wrap-only':True, 'host':_host}
+            
+            _code = uuid.uuid4().hex
+            _status = uuid.uuid4().hex
+            _response = uuid.uuid4().hex
+            _headers = {'Content-Type': uuid.uuid4().hex}
+            
+            config = _DummyConfig([[pattern, _url_config]])
+            
+            expected_url = _host + pattern
+            
+            def _x_start_response(code_status, headers):
+                pass
+            
+            def _x_response(self, ctx, *ignored):
+                eq_(ctx.auth_result.status, True)
+                eq_(ctx.auth_result.code, '0')
+            
+            def _do_open(*args, **ignored_kwargs):
+                req = args[2]
+                eq_(expected_url, req.get_full_url())
+                
+                class _DummyResponse(object):
+                    def __init__(self, *ignored_args, **ignored_kwargs):
+                        self.msg = _status
+                        self._headers = _headers
+                        self.code = _code
+
+                    def info(*ignored_args, **ignored_kwargs):
+                        return _TestHeaders(_headers)
+
+                    def readline(*ignored_args, **ignored_kwargs):
+                        return 'aaa'
+
+                    def read(*ignored_args, **ignored_kwargs):
+                        return _response
+
+                    def getcode(*ignored_args, **ignored_kwargs):
+                        return _code
+
+                    def close(*ignored_args, **ignored_kwargs):
+                        pass
+
+                return _DummyResponse()
+
+            r.replace('urllib2.AbstractHTTPHandler.do_open', _do_open)
+            r.replace('secwall.server._RequestApp._response', _x_response)
+
+            wsgi_input = cStringIO.StringIO()
+
+            try:
+                wsgi_input.write(uuid.uuid4().hex)
+
+                _path_info = '/foo'
+                _env = {'PATH_INFO':_path_info, 'wsgi.input':wsgi_input,
+                        'wsgi.url_scheme':'https'}
+                
+                req_app = server._RequestApp(config, app_ctx)
+                req_app(_env, _x_start_response, None)
+
+            finally:
+                wsgi_input.close()
+                
+    def test_wrap_only_403_on_no_ssl(self):
+        """ HTTP 403 status code should be returned when 'ssl-wrap-only' yet
+        'ssl' is anything but True.
+        """
+        pattern = '/foo'
+        _host = 'https://' + uuid.uuid4().hex
+        _url_config = {'ssl-wrap-only':True, 'host':_host}
+        config = _DummyConfig([[pattern, _url_config]])
+        
+        expected_url = _host + pattern
+        
+        def _x_start_response(code_status, headers):
+            eq_(code_status, '403 Forbidden')
+
+        wsgi_input = cStringIO.StringIO()
+
+        try:
+            wsgi_input.write(uuid.uuid4().hex)
+
+            _path_info = '/foo'
+            _env = {'PATH_INFO':_path_info, 'wsgi.input':wsgi_input,
+                    'wsgi.url_scheme':'https'}
+            
+            req_app = server._RequestApp(config, app_ctx)
+            req_app(_env, _x_start_response, None)
+
+        finally:
+            wsgi_input.close()
 
 class HTTPProxyTestCase(unittest.TestCase):
     """ Tests related to the the secwall.server.HTTPProxy class, the plain
