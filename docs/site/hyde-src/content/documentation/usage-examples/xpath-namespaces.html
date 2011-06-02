@@ -1,0 +1,61 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}Using XPath with namespaces{% endblock %}
+
+{% block content %}
+
+<h1>Using XPath with namespaces</h1>
+
+{% markdown %}
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+{% syntax python %}
+# -*- coding: utf-8 -*-
+
+# stdlib
+import os.path as path, uuid
+
+# Don't share it with anyone.
+INSTANCE_SECRET = '5bf4e78c256746eda2ce3e0e73f256d0'
+
+# May be shared with the outside world.
+INSTANCE_UNIQUE = uuid.uuid4().hex
+
+# Useful constants
+cur_dir = path.dirname(__file__)
+
+# Crypto
+keyfile = path.join(cur_dir, './crypto/server-priv.pem')
+certfile = path.join(cur_dir, './crypto/server-cert.pem')
+ca_certs = path.join(cur_dir, './crypto/ca-cert.pem')
+
+server_type = 'https'
+
+# ##############################################################################
+
+def default():
+    return {
+        'ssl': True,
+        'ssl-cert': True,
+        'ssl-cert-commonName': 'My Client',
+        'ssl-cert-organizationName': 'My Company',
+        'host': 'http://example.com'
+    }
+
+urls = [
+    ('/*', default()),
+]
+{% endsyntax %}
+
+[Read more about this example at the author's blog](http://www.gefira.pl/blog/2011/06/01/securing-sec-wall-services-using-xpath-with-namespaces/) ![](/media/gfx/external-link.png)
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+{% endmarkdown %}
+
+{% endblock %}
