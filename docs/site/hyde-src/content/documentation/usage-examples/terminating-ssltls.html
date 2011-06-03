@@ -1,0 +1,48 @@
+{% extends "base/_layout.html" %}
+
+{% hyde
+    section_title: Documentation
+%}
+
+{% block section_title %}Terminating SSL/TLS only, with no authentication{% endblock %}
+
+{% block content %}
+
+<h1>Terminating SSL/TLS only, with no authentication</h1>
+
+{% markdown %}
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+{% syntax python %}
+# -*- coding: utf-8 -*-
+
+# stdlib
+import uuid
+
+# Don't share it with anyone.
+INSTANCE_SECRET = 'e915433970f44fcab3594c1ab847657c'
+
+# May be shared with the outside world.
+INSTANCE_UNIQUE = uuid.uuid4().hex
+
+# ##############################################################################
+
+def default():
+    return {
+        'ssl': True,
+        'ssl-wrap-only': True,
+        'host': 'http://example.com'
+    }
+
+urls = [
+    ('/*', default()),
+]
+
+{% endsyntax %}
+
+[Browse the usage examples](/documentation/usage-examples/index.html)
+
+{% endmarkdown %}
+
+{% endblock %}

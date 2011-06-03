@@ -76,6 +76,7 @@
                 <ol>
                     <li><a href="#option-host">host</a></li>
                     <li><a href="#option-ssl">ssl</a></li>
+                    <li><a href="#option-ssl-wrap-only">ssl-wrap-only</a></li>
                     <li><a href="#option-add-auth-info">add-auth-info</a></li>
                     <li><a href="#option-sign-auth-info">sign-auth-info</a></li>
                 </ol>
@@ -331,13 +332,19 @@ The table's right below and if you need usage examples, just
         <th>Default</th>
     </tr>
     <tr>
-        <td rowspan="4"><a href="#general-options">General options</a></td>
+        <td rowspan="5"><a href="#general-options">General options</a></td>
         <td><a href="#option-host">host</a></td>
         <td>Yes</td>
         <td>(None)</td>
     </tr>
     <tr>
         <td><a href="#option-ssl">ssl</a></td>
+        <td>Must be True if <a href="#option-ssl-wrap-only">ssl-wrap-only</a> is True,
+        otherwise not required</td>
+        <td>False</td>
+    </tr>
+    <tr>
+        <td><a href="#option-ssl-wrap-only">ssl-wrap-only</a></td>
         <td>No</td>
         <td>False</td>
     </tr>
@@ -541,7 +548,8 @@ without ever touching the URL path.
         <th>Default</th>
     </tr>
     <tr>
-        <td>No</td>
+        <td>Must be True if <a href="#option-ssl-wrap-only">ssl-wrap-only</a> is True,
+        otherwise not required</td>
         <td>False</td>
     </tr>
 </table>
@@ -549,6 +557,26 @@ without ever touching the URL path.
 If True, indicates that the sec-wall's URL must be accessed through HTTPS, plain HTTP
 connections are forbidden - regardless of whether the client credentials had been supplied
 and were correct.
+
+<h4 id="option-ssl-wrap-only">ssl-wrap-only</h4>
+<i>(new in 1.1)</i>
+
+<table>
+    <tr>
+        <th>Required</th>
+        <th>Default</th>
+    </tr>
+    <tr>
+        <td>No</td>
+        <td>False</td>
+    </tr>
+</table>
+
+If True, indicates that the sec-wall instance is to wrap the client connection
+to proxy using SSL/TLS <b>without</b> performing any authentication steps 
+of whatsoever. In other words, the client connection will be encrypted but no
+authentication will be performed and any auth configuration will be ignored
+for the given URL pattern.
 
 <h4 id="option-add-auth-info">add-auth-info</h4>
 
