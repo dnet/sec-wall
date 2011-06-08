@@ -248,8 +248,7 @@ class _RequestApp(object):
             for name in ctx.url_config['from-backend-ignore']:
                 headers.pop(name, None)
 
-            for name, value in ctx.url_config['to-client-add'].items():
-                headers[name] = value
+            headers.update(ctx.url_config['to-client-add'])
         else:
             # Special-case the 'Server' header.
             if 'Server' in self.from_backend_ignore:
