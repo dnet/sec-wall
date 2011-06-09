@@ -81,7 +81,7 @@ class _RequestApp(object):
 
             # Just in case the user didn't do it, upper-case all the headers
             # to make all the comparisons case-insensitive.
-            url_config['from-client-ignore'][:] = [elem.upper() for elem in url_config.get('from-client-ignore', {})]
+            url_config['from-client-ignore'][:] = map(str.upper, url_config.get('from-client-ignore', {}))
 
         if not seen_default and self.add_default_if_not_found:
             self.urls.append((default_pattern, self.config.default_url_config))
@@ -526,7 +526,7 @@ class _RequestApp(object):
                 return AuthResult(False, AUTH_XPATH_EXPR_MISMATCH)
         else:
             auth_result = AuthResult(True, '0')
-            auth_result.auth_info = [str(e) for e in expressions]
+            auth_result.auth_info = map(str, expressions)
 
             return auth_result
 
