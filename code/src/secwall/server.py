@@ -198,7 +198,7 @@ class _RequestApp(object):
                 req.add_header(name, value)
 
         # Custom headers to be sent to the backend server.
-        for name, value in to_backend_add.items():
+        for name, value in to_backend_add.iteritems():
             req.add_header(name, value)
 
         # Sign and return the invocation ID.
