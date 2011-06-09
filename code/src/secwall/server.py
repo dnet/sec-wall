@@ -286,7 +286,7 @@ class _RequestApp(object):
         header_value = www_auth[config_type]
 
         if config_type in('basic-auth', 'wsse-pwd'):
-            header_value = header_value.format(realm=url_config[config_type + '-' + 'realm'])
+            header_value = header_value.format(realm=url_config[config_type + '-realm'])
         elif config_type == 'digest-auth':
             realm = url_config['digest-auth-realm']
             nonce = uuid.uuid4().hex
