@@ -1584,7 +1584,7 @@ class RequestAppTestCase(unittest.TestCase):
             'ssl-cert-serialNumber': '12345678',
             'ssl-cert-localityName':'Mountain View'
         }
-        ssl_expected = "{ssl-cert-commonName: foobar-baz, ssl-cert-localityName: Mountain+View, ssl-cert-serialNumber: '12345678'}\n"
+        ssl_expected = "{ssl-cert-commonName: foobar-baz, ssl-cert-localityName: Mountain+View, ssl-cert-serialNumber: '12345678'}"
                 
         wsse_fields = {
             'wsse-pwd':True,
