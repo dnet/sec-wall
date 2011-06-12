@@ -26,9 +26,9 @@ from datetime import timedelta
 # PyYAML
 from yaml import dump
 try:
-    from yaml import CDumper as Dumper
+    from yaml import CSafeDumper as SafeDumper
 except ImportError:                      # pragma: no cover
-    from yaml import Dumper              # pragma: no cover
+    from yaml import SafeDumper          # pragma: no cover
 
 version_info = ('1', '0', '0')
 version = '.'.join(version_info)
@@ -69,7 +69,7 @@ class AuthResult(object):
 
     @auth_info.setter
     def auth_info(self, value):
-        self._auth_info = dump(value, Dumper=Dumper).strip()
+        self._auth_info = dump(value, Dumper=SafeDumper).strip()
 
     def __repr__(self):
         return '<{0} at {1} status={2} code={3} description={4} auth_info={5}>'.format(
