@@ -177,21 +177,24 @@ class WSSE(object):
             msg = 'Unsupported password type=[{0}], not in [{1}]'.format(wsse_password_type, supported_wsse_password_types)
             self.error(msg, soap=soap)
 
-        wsu_username_created = wsu_username_created_xpath(soap)
-        if config['wsse-pwd-reject-empty-nonce-creation'] and not all((wsse_nonce, wsu_username_created)):
-            self.error('Both nonce and creation timestamp must be given', soap=soap)
-        else:
-            if wsu_username_created:
-                wsu_username_created = wsu_username_created[0].text
-
-        # Check nonce freshness and report error if the UsernameToken is stale.
         now = datetime.utcnow()
-        token_created = datetime.strptime(wsu_username_created, soap_date_time_format)
-
-        elapsed = (now - token_created)
-
-        if config['wsse-pwd-reject-stale-tokens'] and elapsed.seconds > config['wsse-pwd-reject-expiry-limit']:
-            self.on_username_token_expired(config, elapsed, soap)
+        
+        if config['wsse-pwd-reject-empty-nonce-creation']:
+            
+            wsu_username_created = wsu_username_created_xpath(soap)
+            if not all((wsse_nonce, wsu_username_created)):
+                self.error('Both nonce and creation timestamp must be given', soap=soap)
+            else:
+                if wsu_username_created:
+                    wsu_username_created = wsu_username_created[0].text
+    
+            # Check nonce freshness and report error if the UsernameToken is stale.
+            token_created = datetime.strptime(wsu_username_created, soap_date_time_format)
+    
+            elapsed = (now - token_created)
+    
+            if config['wsse-pwd-reject-stale-tokens'] and elapsed.seconds > config['wsse-pwd-reject-expiry-limit']:
+                self.on_username_token_expired(config, elapsed, soap)
 
         if config.get('wsse-pwd-password-digest'):
             expected_password =  self._get_digest(config['wsse-pwd-password'],
@@ -203,7 +206,7 @@ class WSSE(object):
             self.on_invalid_password(config, wsse_username, wsse_password, soap)
 
         # Have we already seen such a nonce?
-        if self.check_nonce(wsse_nonce, now, config['wsse-pwd-nonce-freshness-time']):
+        if self.check_nonce(wsse_nonce, now, config.get('wsse-pwd-nonce-freshness-time')):
             self.on_nonce_non_unique(config, wsse_nonce, now, soap)
 
         # All good, we let the client in.
