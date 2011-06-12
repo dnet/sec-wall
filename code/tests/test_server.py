@@ -30,13 +30,6 @@ from lxml import etree
 # gevent
 from gevent import wsgi
 
-# PyYAML
-from yaml import dump
-try:
-    from yaml import CDumper as Dumper
-except ImportError:                      # pragma: no cover
-    from yaml import Dumper              # pragma: no cover
-
 # nose
 from nose.tools import assert_false, assert_raises, assert_true, eq_
 
