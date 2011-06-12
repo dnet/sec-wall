@@ -85,7 +85,7 @@ def test_auth_result_repr():
     a1.auth_info = auth_info
     r = repr(a1)
 
-    pattern = '<AuthResult at {0} status={1} code={2} description={3} auth_info={{abc: def}}\n>'
+    pattern = '<AuthResult at {0} status={1} code={2} description={3} auth_info={{abc: def}}>'
     pattern = pattern.format(at_pattern, status, code, description)
 
     regexp = re.compile(pattern)

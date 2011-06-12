@@ -1591,7 +1591,7 @@ class RequestAppTestCase(unittest.TestCase):
             'wsse-pwd-password-digest': False
         }
         wsse_username = wsse_fields['wsse-pwd-username']
-        wsse_expected = b"{{wsse-pwd-username: {0}}}\n".format(str(wsse_username))
+        wsse_expected = b"{{wsse-pwd-username: {0}}}".format(str(wsse_username))
         wsse_request = """<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:typ="http://example.org/math/types/">
         <soapenv:Header>
            <wsse:Security soapenv:mustUnderstand="1" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
@@ -1618,7 +1618,7 @@ class RequestAppTestCase(unittest.TestCase):
             'basic-auth-password':'bar',
         }
         basic_auth_username = basic_auth_fields['basic-auth-username']
-        basic_auth_expected = b"{{basic-auth-username: {0}}}\n".format(
+        basic_auth_expected = b"{{basic-auth-username: {0}}}".format(
             urllib.quote_plus(str(basic_auth_username)))
         
         custom_http_fields = {
@@ -1628,7 +1628,7 @@ class RequestAppTestCase(unittest.TestCase):
         }
         custom_http_foo = custom_http_fields['custom-http-foo']
         custom_http_bar = custom_http_fields['custom-http-bar']
-        custom_http_expected = b"{{custom-http-bar: {0}, custom-http-foo: {1}}}\n".format(
+        custom_http_expected = b"{{custom-http-bar: {0}, custom-http-foo: {1}}}".format(
             custom_http_bar, custom_http_foo)
         
         xpath_fields = {
@@ -1638,7 +1638,7 @@ class RequestAppTestCase(unittest.TestCase):
         }
         xpath_x = xpath_fields['xpath-x']
         xpath_y = xpath_fields['xpath-y']
-        xpath_expected = b"[{0}, {1}]\n".format(xpath_y, xpath_x)
+        xpath_expected = b"[{0}, {1}]".format(xpath_y, xpath_x)
         
         ssl_data = TestData(ssl_fields, ssl_expected)
         wsse_data = TestData(wsse_fields, wsse_expected)

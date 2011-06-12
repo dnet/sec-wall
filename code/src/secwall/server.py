@@ -209,7 +209,7 @@ class _RequestApp(object):
             req.add_header('X-sec-wall-invocation-id-signed', ctx.invocation_id_signed)
 
         if url_config.get('add-auth-info', True):
-            req.add_header('X-sec-wall-auth-info', ctx.auth_result.auth_info.strip())
+            req.add_header('X-sec-wall-auth-info', ctx.auth_result.auth_info)
 
         if url_config.get('sign-auth-info', True):
             h = hashlib.sha256()

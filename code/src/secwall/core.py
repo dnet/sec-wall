@@ -69,7 +69,7 @@ class AuthResult(object):
 
     @auth_info.setter
     def auth_info(self, value):
-        self._auth_info = dump(value, Dumper=Dumper)
+        self._auth_info = dump(value, Dumper=Dumper).strip()
 
     def __repr__(self):
         return '<{0} at {1} status={2} code={3} description={4} auth_info={5}>'.format(
