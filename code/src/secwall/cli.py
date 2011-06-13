@@ -21,11 +21,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 # stdlib
 from logging.handlers import SysLogHandler
-import glob, imp, logging, logging.config, os, subprocess, sys, syslog, uuid
+import imp, logging, logging.config, os, subprocess, sys, uuid
 
 # sec-wall
 from secwall.core import LoggingFormatter
-from secwall.server import HTTPProxy, HTTPSProxy
 
 # A crude hack, no doubt, but otherwise sec-wall on Python 2.7/Fedora (other
 # systems presumably as well) bails out when starting.
