@@ -35,7 +35,6 @@ from gevent.hub import GreenletExit
 from pesto.dispatch import ExtensiblePattern
 
 # sec-wall
-from secwall import wsse
 from secwall.constants import *
 from secwall.core import AuthResult, InvocationContext, SecurityException, SecWallException
 
