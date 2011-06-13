@@ -20,10 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 # stdlib
-import logging, time
 from hashlib import sha1
-from string import Template
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # lxml
 from lxml import etree
