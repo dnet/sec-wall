@@ -40,7 +40,7 @@ def test_app_context():
     assert_true(issubclass(SecWallContext, PythonConfig))
     ctx = ApplicationContext(SecWallContext())
 
-    eq_(len(ctx.object_defs), 34)
+    eq_(len(ctx.object_defs), 33)
 
     assert_equal(ctx.get_object('http_proxy_class'), HTTPProxy)
     assert_equal(ctx.get_object('https_proxy_class'), HTTPSProxy)

@@ -46,7 +46,9 @@ class _RequestApp(object):
         self.config = config
         self.urls = []
         self.app_ctx = app_ctx
-        self.wsse = self.app_ctx.get_object('wsse')
+        wsse_impl = getattr(self.config, 'wsse_impl', 'secwall.wsse.WSSE')
+        wsse_mod = __import__(wsse_impl.rsplit('.', 1)[0])
+        self.wsse = reduce(getattr, wsse_impl.split('.')[1:], wsse_mod)()
 
         self.server_tag = config.server_tag
         self.instance_name = config.instance_name
